@@ -52,8 +52,25 @@ diamond stylus
 DMM Lathe
 
 
-Broadcaster
-custom s2c packet for disc uuid and disc data for players who enter radius and haven't had it sent to them (check in set on server)
-custom s2c packet for disc uuid, current tick, volume (maybe), and source location (entity or blockpos) for everyone in radius when playing
-these both may actually be able to be done through item and block entity nbt
-when client gets the packet, create a Player
+Broadcaster (server)
+keep disc data in item nbt
+maybe have item have uuid?
+make jukebox block entity send custom packet when player enters radius
+    - when client gets the packet, decode record data to Score and store in uuid to Score map (cache on client)
+s2c packet includes the included music disc (uuid or ItemStack, not sure yet) and current tick
+    - when client gets the packet, make a Player from the Score
+s2c packet sent to all users in radius if interrupted, either thru isDone or thru specific events (ex jukebox break, disc eject)
+
+Score (client/server??? not sure yet)
+holds record data
+can create Players
+
+Player (client)
+plays the associated sounds on each tick, maybe display thing on InGameHud on start
+
+Recorder/Reciever (server)
+takes in all sounds around it (server side)
+
+Disc (???)
+holds Score
+holds uuid

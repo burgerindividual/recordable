@@ -1,0 +1,59 @@
+custom records should have name and lore (title and author)
+custom color?
+
+nbt should have dictionary and raw data
+
+what's the deal with registry sync?
+
+for client with unknown sound, play nothing for that note and show in toast notif
+
+
+opt A:
+normal jukebox should play mono
+
+custom should play stereo with speakers
+
+maybe something with headphones?
+(render the wire lol)
+
+opt B:
+normal jukebox should play stereo and just get quieter the further away you are
+
+
+volume directly correlates with distance
+distance = volume > 1.0F ? (double)(16.0F * volume) : 16.0
+
+portable recorder for note block setups?
+
+Lacquer
+1 log/wood block
+
+blank record in existing loot tables
+or
+L = lacquer
+I = iron
+
+L
+I
+L
+or
+LL
+II
+
+vinyl press
+
+(maybe) Direct Metal Mastering?
+copper blanks as master
+C = copper
+
+CC
+
+diamond stylus
+DMM Lathe
+
+
+Broadcaster
+custom s2c packet for disc uuid and disc data for players who enter radius and haven't had it sent to them (check in set on server)
+custom s2c packet for disc uuid, current tick, volume (maybe), and source location (entity or blockpos) for everyone in radius when playing
+these both may actually be able to be done through item and block entity nbt
+when client gets the packet, create a Player

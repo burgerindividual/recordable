@@ -74,3 +74,39 @@ takes in all sounds around it (server side)
 Disc (???)
 holds Score
 holds uuid
+
+(at some point) midi conversion?
+
+
+sound relative to block out of jukebox
+output:
+relative = false
+pos = block + relative sound pos
+
+sound relative to player out of headphones
+output:
+relative = true
+pos = relative sound pos
+
+only records get their sounds stopped (i think), so ignore stops for now
+
+format:
+
+per tick:
+option 1:
+2 bytes tick no. (unsigned)
+1 byte sound count (unsigned)
+(count * 24) byte sound list
+option 2 (final tick):
+2 bytes tick no. (unsigned)
+1 byte sound count (value of 0)
+
+per sound:
+4 byte id (unsigned)
+4 byte float relative x pos
+4 byte float relative y pos
+4 byte float relative z pos
+4 byte float volume
+4 byte float pitch
+
+store record uuid/hash -> data in LMDB

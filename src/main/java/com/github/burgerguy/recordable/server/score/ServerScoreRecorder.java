@@ -1,6 +1,8 @@
 package com.github.burgerguy.recordable.server.score;
 
+import com.mojang.util.UUIDTypeAdapter;
 import java.nio.ByteBuffer;
+import java.util.UUID;
 import org.lwjgl.system.MemoryUtil;
 
 /**
@@ -35,7 +37,8 @@ public abstract class ServerScoreRecorder {
     private ByteBuffer rawScoreBuffer;
 
     public ServerScoreRecorder() {
-        this.rawScoreBuffer = MemoryUtil.memAlloc()
+        UUID.randomUUID().toString()
+        this.rawScoreBuffer = MemoryUtil.memAlloc(MAX_RECORD_SIZE_BYTES); // free after storing in DB
     }
 
     public abstract double getXPos();

@@ -110,3 +110,9 @@ per sound:
 4 byte float pitch
 
 store record uuid/hash -> data in LMDB
+
+delete LMDB entry if no instances of items exist anymore.
+server cleanup after time elapsed or during save
+
+client never cleanup?
+should clients even have file based dbs? should they instead be per-run maps?

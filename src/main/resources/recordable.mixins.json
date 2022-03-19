@@ -1,9 +1,9 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "net.fabricmc.example.mixin",
+  "package": "com.github.burgerguy.recordable.mixin",
   "compatibilityLevel": "JAVA_17",
-  "mixins": [
+  "server": [
   ],
   "client": [
   ],

@@ -19,7 +19,7 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "com.github.burgerguy.recordable.Recordable"
+      "com.github.burgerguy.recordable.shared.Recordable"
     ]
   },
   "mixins": [

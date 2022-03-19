@@ -1,10 +1,12 @@
-package com.github.burgerguy.recordable.server.score;
+package com.github.burgerguy.recordable.server.score.record;
 
-import com.github.burgerguy.recordable.server.database.RecordDB;
+import com.github.burgerguy.recordable.server.database.RecordDatabase;
 import java.io.Closeable;
 import java.nio.ByteBuffer;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.registry.Registry;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.level.Level;
 import org.lwjgl.system.MemoryUtil;
 
 /**
@@ -30,51 +32,53 @@ import org.lwjgl.system.MemoryUtil;
  * if no final tick is provided, the final tick is the last tick with sounds played
  */
 // TODO: add good equals and hashcode methods
-public abstract class ServerScoreRecorder implements Closeable {
+public abstract class ScoreRecorder implements Closeable {
     public static final int MAX_TICKS = 65535;
     public static final int MAX_SOUNDS_PER_TICK = 255;
     public static final int SOUND_SIZE_BYTES = 24;
     public static final int MAX_RECORD_SIZE_BYTES = 524288; // 512 KiB
 
-    private final RecordDB database;
-    private final RecordingCallback recordingCallback;
+    private final RecordDatabase database;
+    private final OnStopCallback onStopCallback;
 
     private ByteBuffer rawScoreBuffer;
     private ByteBuffer tickHeaderPointer;
-    private boolean recording;
     private short currentTick;
     private byte currentTickSoundCount;
 
     /**
-     * The start callback should be used for recorder registration, etc.
-     * The stop callback should be used for recorder de-registration, saving the disk item, etc.
+     * The stop callback should be used for saving the disk item, etc and can happen even when stop isn't invoked by the user.
      */
-    public ServerScoreRecorder(RecordDB database, RecordingCallback recordingCallback) {
+    public ScoreRecorder(RecordDatabase database, OnStopCallback onStopCallback) {
         this.database = database;
-        this.recordingCallback = recordingCallback;
+        this.onStopCallback = onStopCallback;
     }
 
     public abstract double getXPos();
     public abstract double getYPos();
     public abstract double getZPos();
 
+    public abstract boolean isInRange(double x, double y, double z, ResourceKey<Level> dimension, float volume);
+
+    public abstract boolean isRecording();
+    protected abstract void setRecording(boolean recording);
+
     /**
      * Starts the recording process and allocates the needed memory.
      */
     public void start() {
-        if (recording) throw new IllegalStateException("Recorder started while recording");
-        recording = true;
+        if (isRecording()) throw new IllegalStateException("Recorder started while recording");
+        setRecording(true);
 
         rawScoreBuffer = MemoryUtil.memAlloc(MAX_RECORD_SIZE_BYTES); // free after storing in DB
-
-        recordingCallback.onStart(this);
     }
 
     /**
      * Stops the recording process and calls the stop callback with the record id.
+     * This also stores the recording in the database and frees the allocated memory.
      */
     public void stop() {
-        if (!recording) throw new IllegalStateException("Recorder stopped while not recording");
+        if (!isRecording()) throw new IllegalStateException("Recorder stopped while not recording");
 
         // add blank final tick directly to the end of the buffer if no sounds were played on it
         if (currentTickSoundCount == 0) {
@@ -84,17 +88,13 @@ public abstract class ServerScoreRecorder implements Closeable {
 
         currentTick = 0;
         currentTickSoundCount = 0;
-        recording = false;
+        setRecording(false);
 
-        long id = database.storeRecord(rawScoreBuffer);
+        long id = database.storeRecord(rawScoreBuffer.flip());
         MemoryUtil.memFree(rawScoreBuffer);
         rawScoreBuffer = null;
 
-        recordingCallback.onStop(this, id);
-    }
-
-    public boolean isRecording() {
-        return recording;
+        onStopCallback.onStop(this, id);
     }
 
     /**
@@ -112,7 +112,7 @@ public abstract class ServerScoreRecorder implements Closeable {
      */
     public void endTick() {
         // this probably happened because we force stopped
-        if (!recording) return;
+        if (!isRecording()) return;
 
         if (currentTickSoundCount > 0) {
             tickHeaderPointer.putShort(currentTick);
@@ -126,9 +126,9 @@ public abstract class ServerScoreRecorder implements Closeable {
      * Has to be called between beginTick and endTick
      */
     public void recordSound(SoundEvent sound, double x, double y, double z, float volume, float pitch) {
-        if (!recording) throw new IllegalStateException("Tried to record sound while not recording");
+        if (!isRecording()) throw new IllegalStateException("Tried to record sound while not recording");
 
-        rawScoreBuffer.putInt(Registry.SOUND_EVENT.getRawId(sound)); // sound ID, registry needs to be synced with server
+        rawScoreBuffer.putInt(Registry.SOUND_EVENT.getId(sound)); // sound ID, registry needs to be synced with server
 
         // relative pos to sound source from recording location
         rawScoreBuffer.putFloat((float) (x - getXPos()));
@@ -156,9 +156,8 @@ public abstract class ServerScoreRecorder implements Closeable {
         tickHeaderPointer = null;
     }
 
-    public interface RecordingCallback {
-        void onStart(ServerScoreRecorder recorder);
-        void onStop(ServerScoreRecorder recorder, long recordId);
+    public interface OnStopCallback {
+        void onStop(ScoreRecorder recorder, long recordId);
     }
 
 }

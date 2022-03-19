@@ -72,7 +72,7 @@ Recorder/Reciever (server)
 takes in all sounds around it (server side)
 inject into ServerWorld.playSound?
 
-Disc (???)
+Disk (???)
 holds Score
 holds uuid
 
@@ -114,6 +114,7 @@ store record uuid/hash -> data in LMDB
 
 delete LMDB entry if no instances of items exist anymore.
 server cleanup after time elapsed or during save
+maybe turn into command? could take a long time.
 
 client never cleanup?
 should clients even have file based dbs? should they instead be per-run maps?

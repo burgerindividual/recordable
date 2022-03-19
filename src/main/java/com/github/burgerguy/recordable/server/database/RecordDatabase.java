@@ -6,18 +6,18 @@ import java.nio.file.Path;
 import org.lmdbjava.*;
 import org.lwjgl.system.MemoryStack;
 
-public class RecordDB implements Closeable {
+public class RecordDatabase implements Closeable {
     public static final String DB_NAME = "64 Bit ID to Record Data";
 
     private final Env<ByteBuffer> dbEnv;
     private final Dbi<ByteBuffer> internalDb;
     private long nextId;
 
-    public RecordDB(Path dbFile) {
+    public RecordDatabase(Path dbFile) {
         this.dbEnv = Env.create()
                     .setMaxDbs(1)
                     .setMapSize(134217728) // 2^27, 134mb ish
-                    .open(dbFile.toFile(), EnvFlags.MDB_WRITEMAP);
+                    .open(dbFile.toFile(), EnvFlags.MDB_WRITEMAP, EnvFlags.MDB_NOSUBDIR);
         // use long keys for performance
         this.internalDb = dbEnv.openDbi(DB_NAME, DbiFlags.MDB_CREATE, DbiFlags.MDB_INTEGERKEY);
 
@@ -30,7 +30,7 @@ public class RecordDB implements Closeable {
         long id = nextId;
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             // LMDB usually expects big endian, but because we're using direct long keys, we can keep it as native
-            ByteBuffer idBuffer = memoryStack.malloc(8, 8).putLong(nextId);
+            ByteBuffer idBuffer = memoryStack.malloc(8, 8).putLong(nextId).flip();
             internalDb.put(idBuffer, value);
         }
         nextId++;

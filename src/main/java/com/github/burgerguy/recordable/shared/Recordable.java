@@ -8,6 +8,7 @@ import com.github.burgerguy.recordable.server.score.record.RecorderRegistryConta
 import com.github.burgerguy.recordable.server.score.record.ScoreRecorder;
 import com.github.burgerguy.recordable.shared.block.RecordPlayerBlock;
 import com.github.burgerguy.recordable.shared.block.RecorderBlock;
+import com.github.burgerguy.recordable.shared.block.RecorderBlockEntity;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -45,6 +46,9 @@ public class Recordable implements ModInitializer {
 		// item registry
 		Registry.register(Registry.ITEM, RecorderBlock.IDENTIFIER, new BlockItem(RecorderBlock.INSTANCE, new FabricItemSettings().group(CreativeModeTab.TAB_MISC)));
 		Registry.register(Registry.ITEM, RecordPlayerBlock.IDENTIFIER, new BlockItem(RecordPlayerBlock.INSTANCE, new FabricItemSettings().group(CreativeModeTab.TAB_MISC)));
+
+		// block entity registry
+		Registry.register(Registry.BLOCK_ENTITY_TYPE, RecorderBlockEntity.IDENTIFIER, RecorderBlockEntity.INSTANCE);
 
 		CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
 			dispatcher.register(

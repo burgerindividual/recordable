@@ -1,21 +1,29 @@
 package com.github.burgerguy.recordable.mixin.server.score.database;
 
-import com.github.burgerguy.recordable.server.database.RecordDatabase;
-import com.github.burgerguy.recordable.server.database.RecordDatabaseContainer;
+import com.github.burgerguy.recordable.server.database.ScoreDatabase;
+import com.github.burgerguy.recordable.server.database.ScoreDatabaseContainer;
+import com.github.burgerguy.recordable.server.database.TickVolumeCache;
 import net.minecraft.server.MinecraftServer;
 import org.spongepowered.asm.mixin.Mixin;
 
 @Mixin(MinecraftServer.class)
-public class MinecraftServerExtended implements RecordDatabaseContainer {
-    private RecordDatabase recordDatabase;
+public class MinecraftServerExtended implements ScoreDatabaseContainer {
+    private ScoreDatabase scoreDatabase;
+    private TickVolumeCache tickVolumeCache;
 
     @Override
-    public RecordDatabase getRecordDatabase() {
-        return recordDatabase;
+    public ScoreDatabase getScoreDatabase() {
+        return scoreDatabase;
     }
 
     @Override
-    public void setRecordDatabase(RecordDatabase database) {
-        this.recordDatabase = database;
+    public TickVolumeCache getTickVolumeCache() {
+        return tickVolumeCache;
+    }
+
+    @Override
+    public void setScoreDatabase(ScoreDatabase database) {
+        this.scoreDatabase = database;
+        this.tickVolumeCache = new TickVolumeCache(database);
     }
 }

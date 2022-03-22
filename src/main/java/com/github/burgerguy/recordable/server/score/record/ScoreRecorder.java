@@ -1,12 +1,10 @@
 package com.github.burgerguy.recordable.server.score.record;
 
-import com.github.burgerguy.recordable.server.database.RecordDatabase;
+import com.github.burgerguy.recordable.server.database.ScoreDatabase;
 import java.io.Closeable;
 import java.nio.ByteBuffer;
 import net.minecraft.core.Registry;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.world.level.Level;
 import org.lwjgl.system.MemoryUtil;
 
 /**
@@ -38,7 +36,7 @@ public abstract class ScoreRecorder implements Closeable {
     public static final int SOUND_SIZE_BYTES = 24;
     public static final int MAX_RECORD_SIZE_BYTES = 524288; // 512 KiB
 
-    private final RecordDatabase database;
+    private final ScoreDatabase database;
     private final OnStopCallback onStopCallback;
 
     private ByteBuffer rawScoreBuffer;
@@ -49,7 +47,7 @@ public abstract class ScoreRecorder implements Closeable {
     /**
      * The stop callback should be used for saving the disk item, etc and can happen even when stop isn't invoked by the user.
      */
-    public ScoreRecorder(RecordDatabase database, OnStopCallback onStopCallback) {
+    public ScoreRecorder(ScoreDatabase database, OnStopCallback onStopCallback) {
         this.database = database;
         this.onStopCallback = onStopCallback;
     }
@@ -58,7 +56,7 @@ public abstract class ScoreRecorder implements Closeable {
     public abstract double getYPos();
     public abstract double getZPos();
 
-    public abstract boolean isInRange(double x, double y, double z, ResourceKey<Level> dimension, float volume);
+    public abstract boolean isInRange(double x, double y, double z, float volume);
 
     public abstract boolean isRecording();
     protected abstract void setRecording(boolean recording);
@@ -90,7 +88,7 @@ public abstract class ScoreRecorder implements Closeable {
         currentTickSoundCount = 0;
         setRecording(false);
 
-        long id = database.storeRecord(rawScoreBuffer.flip());
+        long id = database.storeScore(rawScoreBuffer.flip());
         MemoryUtil.memFree(rawScoreBuffer);
         rawScoreBuffer = null;
 

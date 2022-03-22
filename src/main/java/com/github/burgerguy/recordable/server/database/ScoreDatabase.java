@@ -6,14 +6,14 @@ import java.nio.file.Path;
 import org.lmdbjava.*;
 import org.lwjgl.system.MemoryStack;
 
-public class RecordDatabase implements Closeable {
+public class ScoreDatabase implements Closeable {
     public static final String DB_NAME = "64 Bit ID to Record Data";
 
     private final Env<ByteBuffer> dbEnv;
     private final Dbi<ByteBuffer> internalDb;
     private long nextId;
 
-    public RecordDatabase(Path dbFile) {
+    public ScoreDatabase(Path dbFile) {
         this.dbEnv = Env.create()
                     .setMaxDbs(1)
                     .setMapSize(134217728) // 2^27, 134mb ish
@@ -26,7 +26,7 @@ public class RecordDatabase implements Closeable {
         }
     }
 
-    public long storeRecord(ByteBuffer value) {
+    public long storeScore(ByteBuffer value) {
         long id = nextId;
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             // LMDB usually expects big endian, but because we're using direct long keys, we can keep it as native
@@ -37,16 +37,17 @@ public class RecordDatabase implements Closeable {
         return id;
     }
 
-    public ByteBuffer getRecord(long id) {
-        try (MemoryStack memoryStack = MemoryStack.stackPush();
-            Txn<ByteBuffer> readTxn = dbEnv.txnRead()) {
+    public ScoreRequest requestScore(long id) {
+        try (MemoryStack memoryStack = MemoryStack.stackPush()) {
+            // not in try-with-resources because returned value should close it
+            Txn<ByteBuffer> readTxn = dbEnv.txnRead();
             // LMDB usually expects big endian, but because we're using direct long keys, we can keep it as native
             ByteBuffer idBuffer = memoryStack.malloc(8, 8).putLong(nextId);
-            return internalDb.get(readTxn, idBuffer);
+            return new ScoreRequest(internalDb.get(readTxn, idBuffer), readTxn);
         }
     }
 
-    public boolean deleteRecord(long id) {
+    public boolean deleteScore(long id) {
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             // LMDB usually expects big endian, but because we're using direct long keys, we can keep it as native
             ByteBuffer idBuffer = memoryStack.malloc(8, 8).putLong(nextId);
@@ -57,5 +58,24 @@ public class RecordDatabase implements Closeable {
     @Override
     public void close() {
         dbEnv.close();
+    }
+
+    public static class ScoreRequest implements AutoCloseable {
+        private final ByteBuffer data;
+        private final Txn<ByteBuffer> txn;
+
+        private ScoreRequest(ByteBuffer data, Txn<ByteBuffer> txn) {
+            this.data = data;
+            this.txn = txn;
+        }
+
+        public ByteBuffer getData() {
+            return data;
+        }
+
+        @Override
+        public void close() {
+            txn.close();
+        }
     }
 }

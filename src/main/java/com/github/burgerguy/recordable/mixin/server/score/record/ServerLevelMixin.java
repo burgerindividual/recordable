@@ -1,6 +1,7 @@
 package com.github.burgerguy.recordable.mixin.server.score.record;
 
 import com.github.burgerguy.recordable.server.score.record.RecorderRegistry;
+import com.github.burgerguy.recordable.server.score.record.RecorderRegistryContainer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
@@ -13,18 +14,23 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ServerLevel.class)
-public abstract class ServerLevelMixin {
+public abstract class ServerLevelMixin implements RecorderRegistryContainer {
 
-    @Shadow public abstract ServerLevel getLevel();
+    private final RecorderRegistry recorderRegistry = new RecorderRegistry();
+
+    @Override
+    public RecorderRegistry getRecorderRegistry() {
+        return recorderRegistry;
+    }
 
     @Inject(method = "playSound(Lnet/minecraft/world/entity/player/Player;DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V", at = @At("TAIL"))
     private void captureSound(Player player, double x, double y, double z, SoundEvent sound, SoundSource category, float volume, float pitch, CallbackInfo ci) {
-        RecorderRegistry.captureSound(
+        // we probably don't need to deal with dimensions, because dimensions are stored in their own ServerLevel
+        recorderRegistry.captureSound(
                 sound,
                 x,
                 y,
                 z,
-                this.getLevel().dimension(),
                 volume,
                 pitch
         );
@@ -32,12 +38,11 @@ public abstract class ServerLevelMixin {
 
     @Inject(method = "playSound(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V", at = @At("TAIL"))
     private void captureSound(Player player, Entity entity, SoundEvent sound, SoundSource category, float volume, float pitch, CallbackInfo ci) {
-        RecorderRegistry.captureSound(
+        recorderRegistry.captureSound(
                 sound,
                 entity.getX(),
                 entity.getY(),
                 entity.getZ(),
-                this.getLevel().dimension(),
                 volume,
                 pitch
         );

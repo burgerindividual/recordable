@@ -1,30 +1,33 @@
 package com.github.burgerguy.recordable.server.score.record;
 
 import com.github.burgerguy.recordable.server.database.ScoreDatabase;
-import net.minecraft.world.entity.Entity;
+import com.github.burgerguy.recordable.shared.block.RecorderBlock;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 
-public class EntityScoreRecorder extends ScoreRecorder {
-    private final Entity entity;
-    private boolean recording;
+public class BlockScoreRecorder extends ScoreRecorder {
+    private final BlockPos blockPos;
+    private final ServerLevel level;
 
-    public EntityScoreRecorder(Entity entity, ScoreDatabase database, OnStopCallback onStopCallback) {
+    public BlockScoreRecorder(BlockPos blockPos, ServerLevel level, ScoreDatabase database, OnStopCallback onStopCallback) {
         super(database, onStopCallback);
-        this.entity = entity;
+        this.blockPos = blockPos;
+        this.level = level;
     }
 
     @Override
     public double getXPos() {
-        return entity.getX();
+        return blockPos.getX() + .5;
     }
 
     @Override
     public double getYPos() {
-        return entity.getY();
+        return blockPos.getY() + .5;
     }
 
     @Override
     public double getZPos() {
-        return entity.getZ();
+        return blockPos.getZ() + .5;
     }
 
     @Override
@@ -38,11 +41,11 @@ public class EntityScoreRecorder extends ScoreRecorder {
 
     @Override
     public boolean isRecording() {
-        return recording;
+        return level.getBlockState(blockPos).getValue(RecorderBlock.RECORDING);
     }
 
     @Override
     protected void setRecording(boolean recording) {
-        this.recording = recording;
+        level.getBlockState(blockPos).setValue(RecorderBlock.RECORDING, recording);
     }
 }

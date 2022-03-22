@@ -24,9 +24,9 @@ import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
 public class RecorderBlock extends BaseEntityBlock {
-    public static final Block INSTANCE = new Block(FabricBlockSettings.of(Material.METAL).strength(4.0f));
-    public static final ResourceLocation IDENTIFIER = new ResourceLocation(Recordable.MOD_ID, "recorder");
     public static final BooleanProperty RECORDING = BooleanProperty.create("recording");
+    public static final ResourceLocation IDENTIFIER = new ResourceLocation(Recordable.MOD_ID, "recorder");
+    public static final Block INSTANCE = new RecorderBlock(FabricBlockSettings.of(Material.METAL).strength(4.0f));
 
     public RecorderBlock(Properties properties) {
         super(properties);
@@ -41,9 +41,11 @@ public class RecorderBlock extends BaseEntityBlock {
     @SuppressWarnings("deprecation")
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-        state = state.cycle(RECORDING);
-        level.setBlock(pos, state, 2); // TODO: probably don't need this until rendering stuff? maybe?
-        return InteractionResult.SUCCESS;
+        if (!level.isClientSide) {
+            state = state.cycle(RECORDING);
+            level.setBlock(pos, state, 2); // TODO: probably don't need this until rendering stuff? maybe?
+        }
+        return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
     @SuppressWarnings("deprecation")
@@ -57,17 +59,5 @@ public class RecorderBlock extends BaseEntityBlock {
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new RecorderBlockEntity(pos, state);
-    }
-
-    @Nullable
-    @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
-        return !level.isClientSide && state.getValue(RECORDING) ? createTickerHelper(blockEntityType, RecorderBlockEntity.INSTANCE, RecorderBlockEntity::tick) : null;
-    }
-
-    @Nullable
-    @Override
-    public <T extends BlockEntity> GameEventListener getListener(Level level, T blockEntity) {
-        return super.getListener(level, blockEntity);
     }
 }

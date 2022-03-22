@@ -7,7 +7,7 @@ import net.minecraft.server.MinecraftServer;
 import org.spongepowered.asm.mixin.Mixin;
 
 @Mixin(MinecraftServer.class)
-public class MinecraftServerExtended implements ScoreDatabaseContainer {
+public class MinecraftServerMixin implements ScoreDatabaseContainer {
     private ScoreDatabase scoreDatabase;
     private TickVolumeCache tickVolumeCache;
 

@@ -6,6 +6,7 @@ import com.github.burgerguy.recordable.server.score.record.EntityScoreRecorder;
 import com.github.burgerguy.recordable.server.score.record.RecorderRegistry;
 import com.github.burgerguy.recordable.server.score.record.RecorderRegistryContainer;
 import com.github.burgerguy.recordable.server.score.record.ScoreRecorder;
+import com.github.burgerguy.recordable.shared.block.CopperRecordItem;
 import com.github.burgerguy.recordable.shared.block.RecordPlayerBlock;
 import com.github.burgerguy.recordable.shared.block.RecorderBlock;
 import com.github.burgerguy.recordable.shared.block.RecorderBlockEntity;
@@ -13,6 +14,7 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.minecraft.Util;
 import net.minecraft.commands.Commands;
@@ -46,6 +48,7 @@ public class Recordable implements ModInitializer {
 		// item registry
 		Registry.register(Registry.ITEM, RecorderBlock.IDENTIFIER, new BlockItem(RecorderBlock.INSTANCE, new FabricItemSettings().group(CreativeModeTab.TAB_MISC)));
 		Registry.register(Registry.ITEM, RecordPlayerBlock.IDENTIFIER, new BlockItem(RecordPlayerBlock.INSTANCE, new FabricItemSettings().group(CreativeModeTab.TAB_MISC)));
+		Registry.register(Registry.ITEM, CopperRecordItem.IDENTIFIER, CopperRecordItem.INSTANCE);
 
 		// block entity registry
 		Registry.register(Registry.BLOCK_ENTITY_TYPE, RecorderBlockEntity.IDENTIFIER, RecorderBlockEntity.INSTANCE);
@@ -100,6 +103,11 @@ public class Recordable implements ModInitializer {
 		});
 		ServerLifecycleEvents.SERVER_STOPPING.register(s -> {
 			((ScoreDatabaseContainer) s).getScoreDatabase().close();
+		});
+
+		// force stop all recorders, fixing block state
+		ServerWorldEvents.UNLOAD.register((s, sw) -> {
+			((RecorderRegistryContainer) sw).getRecorderRegistry().closeAll();
 		});
 
 		ServerTickEvents.START_WORLD_TICK.register(sw -> ((RecorderRegistryContainer) sw).getRecorderRegistry().beginTick());

@@ -1,18 +1,15 @@
 package com.github.burgerguy.recordable.server.score.record;
 
 import com.github.burgerguy.recordable.server.database.ScoreDatabase;
-import com.github.burgerguy.recordable.shared.block.RecorderBlock;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
 
 public class BlockScoreRecorder extends ScoreRecorder {
     private final BlockPos blockPos;
-    private final ServerLevel level;
+    private boolean recording;
 
-    public BlockScoreRecorder(BlockPos blockPos, ServerLevel level, ScoreDatabase database, OnStopCallback onStopCallback) {
+    public BlockScoreRecorder(BlockPos blockPos, ScoreDatabase database, OnStopCallback onStopCallback) {
         super(database, onStopCallback);
         this.blockPos = blockPos;
-        this.level = level;
     }
 
     @Override
@@ -41,11 +38,11 @@ public class BlockScoreRecorder extends ScoreRecorder {
 
     @Override
     public boolean isRecording() {
-        return level.getBlockState(blockPos).getValue(RecorderBlock.RECORDING);
+        return recording;
     }
 
     @Override
     protected void setRecording(boolean recording) {
-        level.getBlockState(blockPos).setValue(RecorderBlock.RECORDING, recording);
+        this.recording = recording;
     }
 }

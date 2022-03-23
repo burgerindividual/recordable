@@ -109,9 +109,6 @@ public abstract class ScoreRecorder implements Closeable {
      * Only mixins will call this. You probably don't want to call it manually.
      */
     public void endTick() {
-        // this probably happened because we force stopped
-        if (!isRecording()) return;
-
         if (currentTickSoundCount > 0) {
             tickHeaderPointer.putShort(currentTick);
             tickHeaderPointer.put(currentTickSoundCount);
@@ -149,6 +146,7 @@ public abstract class ScoreRecorder implements Closeable {
      */
     @Override
     public void close() {
+        setRecording(false);
         MemoryUtil.memFree(rawScoreBuffer);
         rawScoreBuffer = null;
         tickHeaderPointer = null;

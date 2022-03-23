@@ -33,6 +33,17 @@ public class RecorderRegistry {
         }
     }
 
+    /**
+     * Should be called when the server is shutting down, or
+     */
+    public void closeAll() {
+        for (ScoreRecorder recorder : recorders) {
+            if (recorder.isRecording()) {
+                recorder.close();
+            }
+        }
+    }
+
     public void beginTick() {
         for (ScoreRecorder recorder : recorders) {
             if (recorder.isRecording()) {

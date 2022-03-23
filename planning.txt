@@ -118,3 +118,5 @@ maybe turn into command? could take a long time.
 
 client never cleanup?
 should clients even have file based dbs? should they instead be per-run maps?
+
+add custom made sample discs to creative menu and dungeons

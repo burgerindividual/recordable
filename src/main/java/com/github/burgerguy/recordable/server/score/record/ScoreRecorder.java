@@ -1,6 +1,7 @@
 package com.github.burgerguy.recordable.server.score.record;
 
 import com.github.burgerguy.recordable.server.database.ScoreDatabase;
+import com.github.burgerguy.recordable.shared.score.ScoreConstants;
 import java.io.Closeable;
 import java.nio.ByteBuffer;
 import net.minecraft.core.Registry;
@@ -31,11 +32,6 @@ import org.lwjgl.system.MemoryUtil;
  */
 // TODO: add good equals and hashcode methods
 public abstract class ScoreRecorder implements Closeable {
-    public static final int MAX_TICKS = 65535;
-    public static final int MAX_SOUNDS_PER_TICK = 255;
-    public static final int SOUND_SIZE_BYTES = 24;
-    public static final int MAX_RECORD_SIZE_BYTES = 524288; // 512 KiB
-
     private final ScoreDatabase database;
     private final OnStopCallback onStopCallback;
 
@@ -68,7 +64,7 @@ public abstract class ScoreRecorder implements Closeable {
         if (isRecording()) throw new IllegalStateException("Recorder started while recording");
         setRecording(true);
 
-        rawScoreBuffer = MemoryUtil.memAlloc(MAX_RECORD_SIZE_BYTES); // free after storing in DB
+        rawScoreBuffer = MemoryUtil.memAlloc(ScoreConstants.MAX_RECORD_SIZE_BYTES); // free after storing in DB
     }
 
     /**

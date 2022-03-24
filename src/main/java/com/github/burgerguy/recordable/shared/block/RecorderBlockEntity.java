@@ -73,20 +73,8 @@ public class RecorderBlockEntity extends BlockEntity {
         if (!level.isClientSide) {
             ServerLevel serverLevel = (ServerLevel) level;
             scoreRecorder = new BlockScoreRecorder(getBlockPos(), ((ScoreDatabaseContainer) serverLevel.getServer()).getScoreDatabase(), (r, id) -> {
-                ItemStack recordItem = this.recordItem;
-                this.recordItem = null;
                 recordItem.addTagElement("scoreId", LongTag.valueOf(id));
-
-                float multiplier = 0.7F;
-                double randOffX = (double)(level.random.nextFloat() * multiplier) + 0.15;
-                double randOffY = (double)(level.random.nextFloat() * multiplier) + 0.66;
-                double randOffZ = (double)(level.random.nextFloat() * multiplier) + 0.15;
-                BlockPos pos = getBlockPos();
-
-                ItemEntity itemEntity = new ItemEntity(level, pos.getX() + randOffX, pos.getY() + randOffY, pos.getZ() + randOffZ, recordItem);
-                itemEntity.setDefaultPickUpDelay();
-
-                level.addFreshEntity(itemEntity);
+                dropAndRemoveRecord();
             });
             ((RecorderRegistryContainer) serverLevel).getRecorderRegistry().addRecorder(scoreRecorder);
         }
@@ -95,12 +83,32 @@ public class RecorderBlockEntity extends BlockEntity {
     @Override
     public void setRemoved() {
         super.setRemoved();
-        if (level == null || !level.isClientSide) {
+        if (level == null) throw new IllegalStateException("Removed recorder block entity with no level");
+        if (!level.isClientSide) {
             ServerLevel serverLevel = (ServerLevel) level;
             ((RecorderRegistryContainer) serverLevel).getRecorderRegistry().removeRecorder(scoreRecorder);
             scoreRecorder.close();
             scoreRecorder = null;
         }
+        dropAndRemoveRecord();
+    }
+
+    private void dropAndRemoveRecord() {
+        if (level == null) throw new IllegalStateException("Tried to drop record from recorder block entity with no level");
+        if (!level.isClientSide) {
+            float multiplier = 0.7F;
+            double randOffX = (double) (level.random.nextFloat() * multiplier) + 0.15;
+            double randOffY = (double) (level.random.nextFloat() * multiplier) + 0.66;
+            double randOffZ = (double) (level.random.nextFloat() * multiplier) + 0.15;
+            BlockPos pos = getBlockPos();
+
+            ItemEntity itemEntity = new ItemEntity(level, pos.getX() + randOffX, pos.getY() + randOffY, pos.getZ() + randOffZ, recordItem);
+            itemEntity.setDefaultPickUpDelay();
+
+            level.addFreshEntity(itemEntity);
+        }
+
+        this.recordItem = null;
     }
 
     @Nullable

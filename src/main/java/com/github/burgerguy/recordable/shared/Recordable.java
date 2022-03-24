@@ -11,11 +11,13 @@ import com.github.burgerguy.recordable.shared.block.RecordPlayerBlock;
 import com.github.burgerguy.recordable.shared.block.RecorderBlock;
 import com.github.burgerguy.recordable.shared.block.RecorderBlockEntity;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.Util;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -36,8 +38,10 @@ public class Recordable implements ModInitializer {
 
 	public static final String SCORE_DATABASE_FILE_NAME = "scores.db";
 
-	public static final ResourceLocation PLAY_SCORE_AT_POS_CHANNEL_ID = new ResourceLocation(MOD_ID, "play_score_at_pos");
-	public static final ResourceLocation PLAY_SCORE_AT_ENTITY_CHANNEL_ID = new ResourceLocation(MOD_ID, "play_score_at_entity");
+	public static final ResourceLocation PLAY_SCORE_AT_POS_ID = new ResourceLocation(MOD_ID, "play_score_at_pos");
+	public static final ResourceLocation PLAY_SCORE_AT_ENTITY_ID = new ResourceLocation(MOD_ID, "play_score_at_entity");
+	public static final ResourceLocation REQUEST_SCORE_ID = new ResourceLocation(MOD_ID, "request_score");
+	public static final ResourceLocation SEND_SCORE_ID = new ResourceLocation(MOD_ID, "send_score");
 
 	@Override
 	public void onInitialize() {
@@ -97,22 +101,24 @@ public class Recordable implements ModInitializer {
 		});
 
 		// event registry
-		ServerLifecycleEvents.SERVER_STARTING.register(s -> {
+		ServerLifecycleEvents.SERVER_STARTING.register(server -> {
 			// kinda conc, but should be fine for now
-			((ScoreDatabaseContainer) s).setScoreDatabase(new ScoreDatabase(s.getWorldPath(LevelResource.ROOT).resolve(SCORE_DATABASE_FILE_NAME)));
+			((ScoreDatabaseContainer) server).setScoreDatabase(new ScoreDatabase(server.getWorldPath(LevelResource.ROOT).resolve(SCORE_DATABASE_FILE_NAME)));
 		});
-		ServerLifecycleEvents.SERVER_STOPPING.register(s -> {
-			((ScoreDatabaseContainer) s).getScoreDatabase().close();
+		ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
+			((ScoreDatabaseContainer) server).getScoreDatabase().close();
 		});
 
 		// force stop all recorders, fixing block state
-		ServerWorldEvents.UNLOAD.register((s, sw) -> {
-			((RecorderRegistryContainer) sw).getRecorderRegistry().closeAll();
+		ServerWorldEvents.UNLOAD.register((server, serverLevel) -> {
+			((RecorderRegistryContainer) serverLevel).getRecorderRegistry().closeAll();
 		});
 
-		ServerTickEvents.START_WORLD_TICK.register(sw -> ((RecorderRegistryContainer) sw).getRecorderRegistry().beginTick());
-		ServerTickEvents.END_WORLD_TICK.register(sw -> ((RecorderRegistryContainer) sw).getRecorderRegistry().endTick());
+		ServerTickEvents.START_WORLD_TICK.register(serverLevel -> ((RecorderRegistryContainer) serverLevel).getRecorderRegistry().beginTick());
+		ServerTickEvents.END_WORLD_TICK.register(serverLevel -> ((RecorderRegistryContainer) serverLevel).getRecorderRegistry().endTick());
 
-
+		ServerPlayNetworking.registerGlobalReceiver(REQUEST_SCORE_ID, (server, player, handler, buffer, responseSender) -> {
+			// TODO: pass error to client, crash theirs
+		});
 	}
 }

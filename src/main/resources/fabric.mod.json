@@ -20,6 +20,9 @@
   "entrypoints": {
     "main": [
       "com.github.burgerguy.recordable.shared.Recordable"
+    ],
+    "client": [
+      "com.github.burgerguy.recordable.client.RecordableClient"
     ]
   },
   "mixins": [

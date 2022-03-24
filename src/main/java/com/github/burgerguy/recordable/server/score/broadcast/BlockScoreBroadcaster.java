@@ -41,7 +41,7 @@ public class BlockScoreBroadcaster extends VolumeRadiusScoreBroadcaster {
 
     @Override
     protected ResourceLocation getPacketChannelId() {
-        return Recordable.PLAY_SCORE_AT_POS_CHANNEL_ID;
+        return Recordable.PLAY_SCORE_AT_POS_ID;
     }
 
     @Override

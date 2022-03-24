@@ -1,6 +1,6 @@
 package com.github.burgerguy.recordable.server.database;
 
-import com.github.burgerguy.recordable.server.score.record.ScoreRecorder;
+import com.github.burgerguy.recordable.shared.score.ScoreConstants;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import java.nio.ByteBuffer;
@@ -20,7 +20,7 @@ public class TickVolumeCache {
             try(ScoreDatabase.ScoreRequest rawScoreData = scoreDatabase.requestScore(id)) {
                 ByteBuffer buffer = rawScoreData.getData();
 
-                float[] volumeArray = new float[ScoreRecorder.MAX_TICKS];
+                float[] volumeArray = new float[ScoreConstants.MAX_TICKS];
                 int tickCount = 0;
                 while (buffer.hasRemaining()) {
                     short tick = buffer.getShort();
@@ -35,7 +35,7 @@ public class TickVolumeCache {
                             if (soundVolume > loudestVolume) {
                                 loudestVolume = soundVolume;
                             }
-                            buffer.position(buffer.position() + ScoreRecorder.SOUND_SIZE_BYTES - 4); // negate 4 because we just read a float
+                            buffer.position(buffer.position() + ScoreConstants.SOUND_SIZE_BYTES - 4); // negate 4 because we just read a float
                         }
                         // final sound, need to bump position less
                         float soundVolume = buffer.getFloat();

@@ -2,7 +2,7 @@ package com.github.burgerguy.recordable.shared.block;
 
 import com.github.burgerguy.recordable.server.database.ScoreDatabaseContainer;
 import com.github.burgerguy.recordable.server.score.record.BlockScoreRecorder;
-import com.github.burgerguy.recordable.server.score.record.RecorderRegistryContainer;
+import com.github.burgerguy.recordable.server.score.record.ScoreRecorderRegistryContainer;
 import com.github.burgerguy.recordable.shared.Recordable;
 import javax.annotation.Nullable;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
@@ -76,7 +76,7 @@ public class RecorderBlockEntity extends BlockEntity {
                 recordItem.addTagElement("scoreId", LongTag.valueOf(id));
                 dropAndRemoveRecord();
             });
-            ((RecorderRegistryContainer) serverLevel).getRecorderRegistry().addRecorder(scoreRecorder);
+            ((ScoreRecorderRegistryContainer) serverLevel).getScoreRecorderRegistry().addRecorder(scoreRecorder);
         }
     }
 
@@ -86,7 +86,7 @@ public class RecorderBlockEntity extends BlockEntity {
         if (level == null) throw new IllegalStateException("Removed recorder block entity with no level");
         if (!level.isClientSide) {
             ServerLevel serverLevel = (ServerLevel) level;
-            ((RecorderRegistryContainer) serverLevel).getRecorderRegistry().removeRecorder(scoreRecorder);
+            ((ScoreRecorderRegistryContainer) serverLevel).getScoreRecorderRegistry().removeRecorder(scoreRecorder);
             scoreRecorder.close();
             scoreRecorder = null;
         }

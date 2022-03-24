@@ -2,21 +2,18 @@ package com.github.burgerguy.recordable.server.score.broadcast;
 
 import com.github.burgerguy.recordable.server.database.TickVolumeCache;
 import com.github.burgerguy.recordable.shared.Recordable;
-import com.github.burgerguy.recordable.shared.block.RecordPlayerBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 
 public class BlockScoreBroadcaster extends VolumeRadiusScoreBroadcaster {
 
     private final BlockPos blockPos;
-    private final ServerLevel level;
+    private boolean playing;
 
-    public BlockScoreBroadcaster(long scoreId, TickVolumeCache tickVolumeCache, ServerLevel level, BlockPos blockPos) {
+    public BlockScoreBroadcaster(long scoreId, TickVolumeCache tickVolumeCache, BlockPos blockPos) {
         super(scoreId, tickVolumeCache);
         this.blockPos = blockPos;
-        this.level = level;
     }
 
     @Override
@@ -27,7 +24,11 @@ public class BlockScoreBroadcaster extends VolumeRadiusScoreBroadcaster {
 
     @Override
     public boolean isPlaying() {
-        return level.getBlockState(blockPos).getValue(RecordPlayerBlock.PLAYING);
+        return playing;
+    }
+
+    public void setPlaying(boolean playing) {
+        this.playing = playing;
     }
 
     @Override

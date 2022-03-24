@@ -3,15 +3,14 @@ package com.github.burgerguy.recordable.shared;
 import com.github.burgerguy.recordable.server.database.ScoreDatabase;
 import com.github.burgerguy.recordable.server.database.ScoreDatabaseContainer;
 import com.github.burgerguy.recordable.server.score.record.EntityScoreRecorder;
-import com.github.burgerguy.recordable.server.score.record.RecorderRegistry;
-import com.github.burgerguy.recordable.server.score.record.RecorderRegistryContainer;
+import com.github.burgerguy.recordable.server.score.record.ScoreRecorderRegistry;
+import com.github.burgerguy.recordable.server.score.record.ScoreRecorderRegistryContainer;
 import com.github.burgerguy.recordable.server.score.record.ScoreRecorder;
 import com.github.burgerguy.recordable.shared.block.CopperRecordItem;
 import com.github.burgerguy.recordable.shared.block.RecordPlayerBlock;
 import com.github.burgerguy.recordable.shared.block.RecorderBlock;
 import com.github.burgerguy.recordable.shared.block.RecorderBlockEntity;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -71,7 +70,7 @@ public class Recordable implements ModInitializer {
 														if (sourceEntity != null) sourceEntity.sendMessage(new TextComponent("Force stopped recording"), Util.NIL_UUID);
 													}
 											);
-											((RecorderRegistryContainer) context.getSource().getLevel()).getRecorderRegistry().addRecorder(scoreRecorder);
+											((ScoreRecorderRegistryContainer) context.getSource().getLevel()).getScoreRecorderRegistry().addRecorder(scoreRecorder);
 											scoreRecorder.start();
 										}
 										Entity sourceEntity = context.getSource().getEntity();
@@ -88,7 +87,7 @@ public class Recordable implements ModInitializer {
 					Commands.literal("stopremoverecordingall").executes(
 							context -> {
 								for (ServerLevel level : context.getSource().getServer().getAllLevels()) {
-									RecorderRegistry recorderRegistry = ((RecorderRegistryContainer) level).getRecorderRegistry();
+									ScoreRecorderRegistry recorderRegistry = ((ScoreRecorderRegistryContainer) level).getScoreRecorderRegistry();
 									recorderRegistry.stopAll();
 									recorderRegistry.removeAll();
 								}
@@ -111,11 +110,11 @@ public class Recordable implements ModInitializer {
 
 		// force stop all recorders, fixing block state
 		ServerWorldEvents.UNLOAD.register((server, serverLevel) -> {
-			((RecorderRegistryContainer) serverLevel).getRecorderRegistry().closeAll();
+			((ScoreRecorderRegistryContainer) serverLevel).getScoreRecorderRegistry().closeAll();
 		});
 
-		ServerTickEvents.START_WORLD_TICK.register(serverLevel -> ((RecorderRegistryContainer) serverLevel).getRecorderRegistry().beginTick());
-		ServerTickEvents.END_WORLD_TICK.register(serverLevel -> ((RecorderRegistryContainer) serverLevel).getRecorderRegistry().endTick());
+		ServerTickEvents.START_WORLD_TICK.register(serverLevel -> ((ScoreRecorderRegistryContainer) serverLevel).getScoreRecorderRegistry().beginTick());
+		ServerTickEvents.END_WORLD_TICK.register(serverLevel -> ((ScoreRecorderRegistryContainer) serverLevel).getScoreRecorderRegistry().endTick());
 
 		ServerPlayNetworking.registerGlobalReceiver(REQUEST_SCORE_ID, (server, player, handler, buffer, responseSender) -> {
 			// TODO: pass error to client, crash theirs

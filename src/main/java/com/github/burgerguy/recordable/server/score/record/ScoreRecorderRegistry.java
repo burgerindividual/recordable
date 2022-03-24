@@ -2,14 +2,12 @@ package com.github.burgerguy.recordable.server.score.record;
 
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import java.util.Set;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.world.level.Level;
 
-public class RecorderRegistry {
+public class ScoreRecorderRegistry {
     private final Set<ScoreRecorder> recorders;
 
-    public RecorderRegistry() {
+    public ScoreRecorderRegistry() {
         this.recorders = new ObjectOpenHashSet<>();
     }
 

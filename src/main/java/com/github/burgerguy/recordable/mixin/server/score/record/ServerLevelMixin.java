@@ -1,25 +1,24 @@
 package com.github.burgerguy.recordable.mixin.server.score.record;
 
-import com.github.burgerguy.recordable.server.score.record.RecorderRegistry;
-import com.github.burgerguy.recordable.server.score.record.RecorderRegistryContainer;
+import com.github.burgerguy.recordable.server.score.record.ScoreRecorderRegistry;
+import com.github.burgerguy.recordable.server.score.record.ScoreRecorderRegistryContainer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ServerLevel.class)
-public abstract class ServerLevelMixin implements RecorderRegistryContainer {
+public abstract class ServerLevelMixin implements ScoreRecorderRegistryContainer {
 
-    private final RecorderRegistry recorderRegistry = new RecorderRegistry();
+    private final ScoreRecorderRegistry recorderRegistry = new ScoreRecorderRegistry();
 
     @Override
-    public RecorderRegistry getRecorderRegistry() {
+    public ScoreRecorderRegistry getScoreRecorderRegistry() {
         return recorderRegistry;
     }
 

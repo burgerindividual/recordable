@@ -1,4 +1,4 @@
-package com.github.burgerguy.recordable.client.score.player;
+package com.github.burgerguy.recordable.client.score.play;
 
 import com.github.burgerguy.recordable.client.score.PartialSoundInstance;
 import com.github.burgerguy.recordable.client.score.ScheduledSoundGroup;

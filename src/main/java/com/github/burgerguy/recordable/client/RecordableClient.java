@@ -8,7 +8,7 @@ public class RecordableClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         ClientPlayNetworking.registerGlobalReceiver(Recordable.PLAY_SCORE_AT_POS_ID, (client, handler, buf, responseSender) -> {
-            responseSender.createPacket()
+//            responseSender.createPacket()
         });
     }
 }

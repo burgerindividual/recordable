@@ -13,18 +13,11 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.material.Material;
 
 public class RecordPlayerBlock extends Block {
-    public static final BooleanProperty PLAYING = BooleanProperty.create("playing");
     public static final ResourceLocation IDENTIFIER = new ResourceLocation(Recordable.MOD_ID, "record_player");
     public static final Block INSTANCE = new RecordPlayerBlock(FabricBlockSettings.of(Material.METAL).strength(4.0f));
 
     public RecordPlayerBlock(Properties properties) {
         super(properties);
-        registerDefaultState(defaultBlockState().setValue(PLAYING, false));
-    }
-
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(PLAYING);
     }
 
     @SuppressWarnings("deprecation")

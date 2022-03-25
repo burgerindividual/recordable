@@ -6,7 +6,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.sounds.SoundEvent;
 
-public record Score(ScheduledSoundGroup[] orderedScheduledSoundGroups, short endTick) {
+public record Score(ScheduledSoundGroup[] orderedScheduledSoundGroups, short finalTick) {
 
     /**
      * See ScoreRecorder docs for buffer format.

@@ -3,30 +3,40 @@ package com.github.burgerguy.recordable.client.score.play;
 import com.github.burgerguy.recordable.client.score.PartialSoundInstance;
 import com.github.burgerguy.recordable.client.score.ScheduledSoundGroup;
 import com.github.burgerguy.recordable.client.score.Score;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.client.sounds.SoundManager;
 
 public abstract class ScorePlayer {
-    private int currentTick = 0;
-    private int arrayIdx = 0;
-    private Score score;
+    private final Score score;
+    private final SoundManager soundManager;
 
-    public ScorePlayer() {
+    private int currentTick;
+    private int arrayIdx;
+
+    private boolean playing;
+    private boolean done;
+
+    public ScorePlayer(Score score, short startTick, SoundManager soundManager) {
+        this.score = score;
+        this.soundManager = soundManager;
+        this.currentTick = startTick;
     }
 
     public void tick() {
-        if (isDone()) return;
+        if (isDone()) throw new IllegalStateException("Score player ticked after done");
 
-        if (currentTick >= score.endTick()) {
+        if (currentTick > score.finalTick()) {
             stop();
             return;
         }
+
+        if (!playing) return; // paused, don't increment tick
 
         if (arrayIdx < score.orderedScheduledSoundGroups().length) {
             ScheduledSoundGroup scheduledSoundGroup = score.orderedScheduledSoundGroups()[arrayIdx];
             if (currentTick == scheduledSoundGroup.tick()) {
                 for (PartialSoundInstance partialSoundInstance : scheduledSoundGroup.sounds()) {
-                    Minecraft.getInstance().getSoundManager().play(createSoundInstance(partialSoundInstance));
+                    soundManager.play(createSoundInstance(partialSoundInstance));
                 }
                 arrayIdx++;
             }
@@ -36,29 +46,19 @@ public abstract class ScorePlayer {
 
     public abstract SoundInstance createSoundInstance(PartialSoundInstance partialSoundInstance);
 
-    public void play(Score score, short startTick) {
-        this.score = score;
-        this.currentTick = startTick;
+    public void setPlaying(boolean playing) {
+        this.playing = playing;
     }
 
-    public void play(Score score) {
-        play(score, (short) 0);
+    public boolean isPlaying() {
+        return playing;
     }
 
     public void stop() {
-//        serverWorld.getServer().getPlayerManager().sendToAround(
-//                null,
-//                x,
-//                y,
-//                z,
-//                volume > 1.0F ? (double)(16.0F * volume) : 16.0,
-//                serverWorld.getRegistryKey(),
-//                new StopSoundS2CPacket(null, SoundCategory.RECORDS) // TODO: send a bunch of packets for all played types of sounds
-//        );
-        score = null;
+        done = true;
     }
 
     public boolean isDone() {
-        return score == null;
+        return done;
     }
 }

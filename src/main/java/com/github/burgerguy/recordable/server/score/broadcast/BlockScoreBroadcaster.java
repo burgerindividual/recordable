@@ -37,6 +37,7 @@ public class BlockScoreBroadcaster extends VolumeRadiusScoreBroadcaster {
         // long id
         // short starting tick
         // long packed blockpos
+        // long hashed timestamp
         return 8 + 2 + 8;
     }
 

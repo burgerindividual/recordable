@@ -1,11 +1,17 @@
 package com.github.burgerguy.recordable.client.score.play;
 
 import com.github.burgerguy.recordable.client.score.PartialSoundInstance;
+import com.github.burgerguy.recordable.client.score.Score;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.sounds.SoundSource;
 
 public class RelativeScorePlayer extends ScorePlayer {
+
+    public RelativeScorePlayer(Score score, short startTick, SoundManager soundManager) {
+        super(score, startTick, soundManager);
+    }
 
     @Override
     public SoundInstance createSoundInstance(PartialSoundInstance partialSoundInstance) {

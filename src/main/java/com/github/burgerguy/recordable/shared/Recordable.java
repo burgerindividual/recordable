@@ -56,49 +56,6 @@ public class Recordable implements ModInitializer {
 		// block entity registry
 		Registry.register(Registry.BLOCK_ENTITY_TYPE, RecorderBlockEntity.IDENTIFIER, RecorderBlockEntity.INSTANCE);
 
-		CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
-			dispatcher.register(
-					Commands.literal("addstartrecording").then(
-							Commands.argument("targets", EntityArgument.entities()).executes(
-									context -> {
-										for(Entity entity : EntityArgument.getEntities(context, "targets")) {
-											ScoreRecorder scoreRecorder = new EntityScoreRecorder(
-													entity,
-													((ScoreDatabaseContainer) context.getSource().getServer()).getScoreDatabase(),
-													(sr, id) -> {
-														Entity sourceEntity = context.getSource().getEntity();
-														if (sourceEntity != null) sourceEntity.sendMessage(new TextComponent("Force stopped recording"), Util.NIL_UUID);
-													}
-											);
-											((ScoreRecorderRegistryContainer) context.getSource().getLevel()).getScoreRecorderRegistry().addRecorder(scoreRecorder);
-											scoreRecorder.start();
-										}
-										Entity sourceEntity = context.getSource().getEntity();
-										if (sourceEntity != null) sourceEntity.sendMessage(new TextComponent("Added and started recorder"), Util.NIL_UUID);
-										return 1;
-									}
-							)
-					)
-			);
-		});
-
-		CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
-			dispatcher.register(
-					Commands.literal("stopremoverecordingall").executes(
-							context -> {
-								for (ServerLevel level : context.getSource().getServer().getAllLevels()) {
-									ScoreRecorderRegistry recorderRegistry = ((ScoreRecorderRegistryContainer) level).getScoreRecorderRegistry();
-									recorderRegistry.stopAll();
-									recorderRegistry.removeAll();
-								}
-								Entity sourceEntity = context.getSource().getEntity();
-								if (sourceEntity != null) sourceEntity.sendMessage(new TextComponent("Stopped and removed all recorders"), Util.NIL_UUID);
-								return 1;
-							}
-					)
-			);
-		});
-
 		// event registry
 		ServerLifecycleEvents.SERVER_STARTING.register(server -> {
 			// kinda conc, but should be fine for now

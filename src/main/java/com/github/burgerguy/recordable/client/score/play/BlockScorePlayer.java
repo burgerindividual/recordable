@@ -1,8 +1,10 @@
 package com.github.burgerguy.recordable.client.score.play;
 
 import com.github.burgerguy.recordable.client.score.PartialSoundInstance;
+import com.github.burgerguy.recordable.client.score.Score;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundSource;
 
@@ -10,7 +12,8 @@ public class BlockScorePlayer extends ScorePlayer {
 
     private final BlockPos blockPos;
 
-    public BlockScorePlayer(BlockPos blockPos) {
+    public BlockScorePlayer(Score score, short startTick, SoundManager soundManager, BlockPos blockPos) {
+        super(score, startTick, soundManager);
         this.blockPos = blockPos;
     }
 

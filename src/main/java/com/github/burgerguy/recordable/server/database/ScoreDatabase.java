@@ -45,7 +45,7 @@ public class ScoreDatabase implements Closeable {
             // not in try-with-resources because returned value should close it
             Txn<ByteBuffer> readTxn = dbEnv.txnRead();
             // LMDB usually expects big endian, but because we're using direct long keys, we can keep it as native
-            ByteBuffer idBuffer = memoryStack.malloc(8, 8).putLong(scoreId);
+            ByteBuffer idBuffer = memoryStack.malloc(8, 8).putLong(scoreId).flip();
 
             ByteBuffer data = internalDb.get(readTxn, idBuffer);
             return new ScoreRequest(data, readTxn);
@@ -55,7 +55,7 @@ public class ScoreDatabase implements Closeable {
     public boolean deleteScore(long scoreId) {
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             // LMDB usually expects big endian, but because we're using direct long keys, we can keep it as native
-            ByteBuffer idBuffer = memoryStack.malloc(8, 8).putLong(scoreId);
+            ByteBuffer idBuffer = memoryStack.malloc(8, 8).putLong(scoreId).flip();
             return internalDb.delete(idBuffer);
         }
     }

@@ -6,10 +6,7 @@ import com.github.burgerguy.recordable.server.score.record.EntityScoreRecorder;
 import com.github.burgerguy.recordable.server.score.record.ScoreRecorderRegistry;
 import com.github.burgerguy.recordable.server.score.record.ScoreRecorderRegistryContainer;
 import com.github.burgerguy.recordable.server.score.record.ScoreRecorder;
-import com.github.burgerguy.recordable.shared.block.CopperRecordItem;
-import com.github.burgerguy.recordable.shared.block.RecordPlayerBlock;
-import com.github.burgerguy.recordable.shared.block.RecorderBlock;
-import com.github.burgerguy.recordable.shared.block.RecorderBlockEntity;
+import com.github.burgerguy.recordable.shared.block.*;
 import io.netty.buffer.Unpooled;
 import java.nio.ByteBuffer;
 import net.fabricmc.api.ModInitializer;
@@ -60,6 +57,7 @@ public class Recordable implements ModInitializer {
 
 		// block entity registry
 		Registry.register(Registry.BLOCK_ENTITY_TYPE, RecorderBlockEntity.IDENTIFIER, RecorderBlockEntity.INSTANCE);
+		Registry.register(Registry.BLOCK_ENTITY_TYPE, RecordPlayerBlockEntity.IDENTIFIER, RecordPlayerBlockEntity.INSTANCE);
 
 		// event registry
 		ServerLifecycleEvents.SERVER_STARTING.register(server -> {
@@ -86,7 +84,7 @@ public class Recordable implements ModInitializer {
 			try (ScoreDatabase.ScoreRequest scoreRequest = scoreDatabase.requestScore(scoreId);
 				 MemoryStack memoryStack = MemoryStack.stackPush()) {
 				FriendlyByteBuf newPacketBuffer = new FriendlyByteBuf(Unpooled.wrappedBuffer(memoryStack.malloc(Long.BYTES)));
-				newPacketBuffer.writeVarLong(scoreId);
+				newPacketBuffer.writeLong(scoreId);
 
 				ByteBuffer scoreData = scoreRequest.getData();
 				if (scoreData != null) {

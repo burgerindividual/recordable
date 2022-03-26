@@ -1,5 +1,6 @@
 package com.github.burgerguy.recordable.shared.block;
 
+import com.github.burgerguy.recordable.server.score.broadcast.BlockScoreBroadcaster;
 import com.github.burgerguy.recordable.server.score.record.BlockScoreRecorder;
 import com.github.burgerguy.recordable.shared.Recordable;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
@@ -12,6 +13,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
 public class CopperRecordItem extends Item {
     public static final Item INSTANCE = new CopperRecordItem(new FabricItemSettings().group(CreativeModeTab.TAB_MISC));
@@ -26,7 +28,8 @@ public class CopperRecordItem extends Item {
         Level level = context.getLevel();
         BlockPos blockPos = context.getClickedPos();
 
-        if (level.getBlockEntity(blockPos) instanceof RecorderBlockEntity recorderBlockEntity && !recorderBlockEntity.hasRecord()) {
+        BlockEntity blockEntity = level.getBlockEntity(blockPos);
+        if (blockEntity instanceof RecorderBlockEntity recorderBlockEntity && !recorderBlockEntity.hasRecord()) {
             ItemStack itemStack = context.getItemInHand();
 
             if (!itemStack.getOrCreateTag().contains("scoreId", Tag.TAG_LONG)) {
@@ -36,6 +39,24 @@ public class CopperRecordItem extends Item {
                     if (scoreRecorder == null) return InteractionResult.FAIL;
                     if (!scoreRecorder.isRecording()) {
                         scoreRecorder.start();
+                        return InteractionResult.SUCCESS;
+                    }
+                    return InteractionResult.PASS;
+                }
+                return InteractionResult.CONSUME;
+            }
+        } else if (blockEntity instanceof RecordPlayerBlockEntity recordPlayerBlockEntity && !recordPlayerBlockEntity.hasRecord()) {
+            ItemStack itemStack = context.getItemInHand();
+
+            if (itemStack.getOrCreateTag().contains("scoreId", Tag.TAG_LONG)) {
+                recordPlayerBlockEntity.setRecordItem(itemStack.split(1));
+                if (!level.isClientSide) {
+                    BlockScoreBroadcaster scoreBroadcaster = recordPlayerBlockEntity.getScoreBroadcaster();
+                    if (scoreBroadcaster == null) return InteractionResult.FAIL;
+                    if (!scoreBroadcaster.isPlaying()) {
+                        // can't be null because we checked in this branch
+                        //noinspection ConstantConditions
+                        scoreBroadcaster.play(itemStack.getTag().getLong("scoreId"));
                         return InteractionResult.SUCCESS;
                     }
                     return InteractionResult.PASS;

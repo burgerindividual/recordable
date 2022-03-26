@@ -10,7 +10,10 @@ import com.github.burgerguy.recordable.shared.Recordable;
 import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import org.lwjgl.system.MemoryStack;
@@ -35,7 +38,7 @@ public class RecordableClient implements ClientModInitializer {
                 // hasn't been previously requested
                 try (MemoryStack memoryStack = MemoryStack.stackPush()) {
                     FriendlyByteBuf newPacketBuffer = new FriendlyByteBuf(Unpooled.wrappedBuffer(memoryStack.malloc(Long.BYTES)));
-                    newPacketBuffer.writeVarLong(scoreId);
+                    newPacketBuffer.writeLong(scoreId);
                     responseSender.sendPacket(Recordable.REQUEST_SCORE_ID, newPacketBuffer);
                 }
             }
@@ -70,6 +73,16 @@ public class RecordableClient implements ClientModInitializer {
             } else {
                 throw new IllegalArgumentException("Requested score of id " + scoreId + ", but score did not exist on the server.");
             }
+        });
+
+        // TODO: should this be end world tick or end client tick?
+        ClientTickEvents.END_WORLD_TICK.register(cl -> {
+            // is this worse or better than making an accessor to ClientLevel?
+
+            // if we got the packet, we have a connection, so it will never be null
+            @SuppressWarnings("ConstantConditions")
+            ScorePlayerRegistry scorePlayerRegistry = ((ScorePlayerRegistryContainer) Minecraft.getInstance().getConnection()).getScorePlayerRegistry();
+            scorePlayerRegistry.tick();
         });
     }
 }

@@ -4,10 +4,16 @@ import com.github.burgerguy.recordable.server.database.TickVolumeCache;
 
 public abstract class VolumeRadiusScoreBroadcaster extends ScoreBroadcaster {
 
-    private final float[] tickVolumes;
+    private final TickVolumeCache tickVolumeCache;
+    private float[] tickVolumes;
 
-    protected VolumeRadiusScoreBroadcaster(long scoreId, TickVolumeCache tickVolumeCache) {
-        super(scoreId);
+    protected VolumeRadiusScoreBroadcaster(TickVolumeCache tickVolumeCache) {
+        super();
+        this.tickVolumeCache = tickVolumeCache;
+    }
+
+    @Override
+    public void play(long scoreId) {
         this.tickVolumes = tickVolumeCache.getTickVolumes(scoreId);
     }
 

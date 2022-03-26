@@ -58,7 +58,8 @@ public abstract class ScoreBroadcaster {
 
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.wrappedBuffer(memoryStack.malloc(Integer.BYTES)));
-            buffer.writeVarInt(playId);
+//            buffer.resetWriterIndex();
+            buffer.writeInt(playId);
             for (ServerPlayer player : sentPlayPlayers) {
                 ServerPlayNetworking.send(player, Recordable.STOP_SCORE_ID, buffer);
             }

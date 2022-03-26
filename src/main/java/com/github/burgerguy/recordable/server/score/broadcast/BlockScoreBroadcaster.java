@@ -10,8 +10,8 @@ public class BlockScoreBroadcaster extends VolumeRadiusScoreBroadcaster {
 
     private final BlockPos blockPos;
 
-    public BlockScoreBroadcaster(long scoreId, TickVolumeCache tickVolumeCache, BlockPos blockPos) {
-        super(scoreId, tickVolumeCache);
+    public BlockScoreBroadcaster(TickVolumeCache tickVolumeCache, BlockPos blockPos) {
+        super(tickVolumeCache);
         this.blockPos = blockPos;
     }
 
@@ -33,9 +33,9 @@ public class BlockScoreBroadcaster extends VolumeRadiusScoreBroadcaster {
 
     @Override
     protected void writePlayPacket(FriendlyByteBuf buffer) {
-        buffer.writeVarLong(scoreId);
+        buffer.writeLong(scoreId);
         buffer.writeShort(currentTick);
-        buffer.writeVarInt(playId);
+        buffer.writeInt(playId);
         buffer.writeBlockPos(blockPos);
     }
 }

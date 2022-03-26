@@ -120,3 +120,5 @@ client never cleanup?
 should clients even have file based dbs? should they instead be per-run maps?
 
 add custom made sample discs to creative menu and dungeons
+
+bring record player closer to recorder and abstract registries

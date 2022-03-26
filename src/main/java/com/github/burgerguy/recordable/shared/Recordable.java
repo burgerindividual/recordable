@@ -10,6 +10,8 @@ import com.github.burgerguy.recordable.shared.block.CopperRecordItem;
 import com.github.burgerguy.recordable.shared.block.RecordPlayerBlock;
 import com.github.burgerguy.recordable.shared.block.RecorderBlock;
 import com.github.burgerguy.recordable.shared.block.RecorderBlockEntity;
+import io.netty.buffer.Unpooled;
+import java.nio.ByteBuffer;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -21,6 +23,7 @@ import net.minecraft.Util;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.core.Registry;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -28,6 +31,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.level.storage.LevelResource;
+import org.lwjgl.system.MemoryStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +43,7 @@ public class Recordable implements ModInitializer {
 
 	public static final ResourceLocation PLAY_SCORE_AT_POS_ID = new ResourceLocation(MOD_ID, "play_score_at_pos");
 	public static final ResourceLocation PLAY_SCORE_AT_ENTITY_ID = new ResourceLocation(MOD_ID, "play_score_at_entity");
+	public static final ResourceLocation STOP_SCORE_ID = new ResourceLocation(MOD_ID, "stop_score");
 	public static final ResourceLocation REQUEST_SCORE_ID = new ResourceLocation(MOD_ID, "request_score");
 	public static final ResourceLocation SEND_SCORE_ID = new ResourceLocation(MOD_ID, "send_score");
 
@@ -74,7 +79,24 @@ public class Recordable implements ModInitializer {
 		ServerTickEvents.END_WORLD_TICK.register(serverLevel -> ((ScoreRecorderRegistryContainer) serverLevel).getScoreRecorderRegistry().endTick());
 
 		ServerPlayNetworking.registerGlobalReceiver(REQUEST_SCORE_ID, (server, player, handler, buffer, responseSender) -> {
-			// TODO: pass error to client, crash theirs
+			long scoreId = buffer.readLong();
+
+			ScoreDatabase scoreDatabase = ((ScoreDatabaseContainer) server).getScoreDatabase();
+
+			try (ScoreDatabase.ScoreRequest scoreRequest = scoreDatabase.requestScore(scoreId);
+				 MemoryStack memoryStack = MemoryStack.stackPush()) {
+				FriendlyByteBuf newPacketBuffer = new FriendlyByteBuf(Unpooled.wrappedBuffer(memoryStack.malloc(Long.BYTES)));
+				newPacketBuffer.writeVarLong(scoreId);
+
+				ByteBuffer scoreData = scoreRequest.getData();
+				if (scoreData != null) {
+					newPacketBuffer.writeBytes(scoreData);
+				} else {
+					LOGGER.info("Player " + player + " requested invalid score id " + scoreId);
+				}
+
+				responseSender.sendPacket(Recordable.REQUEST_SCORE_ID, newPacketBuffer);
+			}
 		});
 	}
 }

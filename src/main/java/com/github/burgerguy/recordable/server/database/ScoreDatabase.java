@@ -11,7 +11,7 @@ public class ScoreDatabase implements Closeable {
 
     private final Env<ByteBuffer> dbEnv;
     private final Dbi<ByteBuffer> internalDb;
-    private long nextId;
+    private long nextScoreId;
 
     public ScoreDatabase(Path dbFile) {
         this.dbEnv = Env.create()
@@ -22,35 +22,40 @@ public class ScoreDatabase implements Closeable {
         this.internalDb = dbEnv.openDbi(DB_NAME, DbiFlags.MDB_CREATE, DbiFlags.MDB_INTEGERKEY);
 
         try (Txn<ByteBuffer> txn = dbEnv.txnRead()) {
-            this.nextId = internalDb.stat(txn).entries;
+            this.nextScoreId = internalDb.stat(txn).entries;
         }
     }
 
     public long storeScore(ByteBuffer value) {
-        long id = nextId;
+        long id = nextScoreId;
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             // LMDB usually expects big endian, but because we're using direct long keys, we can keep it as native
-            ByteBuffer idBuffer = memoryStack.malloc(8, 8).putLong(nextId).flip();
+            ByteBuffer idBuffer = memoryStack.malloc(8, 8).putLong(nextScoreId).flip();
             internalDb.put(idBuffer, value);
         }
-        nextId++;
+        nextScoreId++;
         return id;
     }
 
-    public ScoreRequest requestScore(long id) {
+    /**
+     * If the entry doesn't exist, the data field will be null.
+     */
+    public ScoreRequest requestScore(long scoreId) {
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             // not in try-with-resources because returned value should close it
             Txn<ByteBuffer> readTxn = dbEnv.txnRead();
             // LMDB usually expects big endian, but because we're using direct long keys, we can keep it as native
-            ByteBuffer idBuffer = memoryStack.malloc(8, 8).putLong(nextId);
-            return new ScoreRequest(internalDb.get(readTxn, idBuffer), readTxn);
+            ByteBuffer idBuffer = memoryStack.malloc(8, 8).putLong(scoreId);
+
+            ByteBuffer data = internalDb.get(readTxn, idBuffer);
+            return new ScoreRequest(data, readTxn);
         }
     }
 
-    public boolean deleteScore(long id) {
+    public boolean deleteScore(long scoreId) {
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             // LMDB usually expects big endian, but because we're using direct long keys, we can keep it as native
-            ByteBuffer idBuffer = memoryStack.malloc(8, 8).putLong(nextId);
+            ByteBuffer idBuffer = memoryStack.malloc(8, 8).putLong(scoreId);
             return internalDb.delete(idBuffer);
         }
     }

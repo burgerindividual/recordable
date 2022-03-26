@@ -9,7 +9,6 @@ import net.minecraft.resources.ResourceLocation;
 public class BlockScoreBroadcaster extends VolumeRadiusScoreBroadcaster {
 
     private final BlockPos blockPos;
-    private boolean playing;
 
     public BlockScoreBroadcaster(long scoreId, TickVolumeCache tickVolumeCache, BlockPos blockPos) {
         super(scoreId, tickVolumeCache);
@@ -23,33 +22,20 @@ public class BlockScoreBroadcaster extends VolumeRadiusScoreBroadcaster {
     }
 
     @Override
-    public boolean isPlaying() {
-        return playing;
-    }
-
-    public void setPlaying(boolean playing) {
-        this.playing = playing;
+    protected int getPlayPacketSize() {
+        return 8 + 2 + 4 + 8;
     }
 
     @Override
-    protected int getPacketSize() {
-        // format:
-        // long id
-        // short starting tick
-        // long packed blockpos
-        // long hashed timestamp
-        return 8 + 2 + 8;
-    }
-
-    @Override
-    protected ResourceLocation getPacketChannelId() {
+    protected ResourceLocation getPlayPacketChannelId() {
         return Recordable.PLAY_SCORE_AT_POS_ID;
     }
 
     @Override
-    protected void writePacket(FriendlyByteBuf buffer) {
+    protected void writePlayPacket(FriendlyByteBuf buffer) {
         buffer.writeVarLong(scoreId);
         buffer.writeShort(currentTick);
+        buffer.writeVarInt(playId);
         buffer.writeBlockPos(blockPos);
     }
 }

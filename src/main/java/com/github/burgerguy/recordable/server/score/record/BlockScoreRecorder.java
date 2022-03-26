@@ -1,15 +1,17 @@
 package com.github.burgerguy.recordable.server.score.record;
 
 import com.github.burgerguy.recordable.server.database.ScoreDatabase;
+import java.util.concurrent.atomic.AtomicBoolean;
 import net.minecraft.core.BlockPos;
 
 public class BlockScoreRecorder extends ScoreRecorder {
     private final BlockPos blockPos;
-    private boolean recording;
+    private final AtomicBoolean recording;
 
     public BlockScoreRecorder(BlockPos blockPos, ScoreDatabase database, OnStopCallback onStopCallback) {
         super(database, onStopCallback);
         this.blockPos = blockPos;
+        this.recording = new AtomicBoolean(false);
     }
 
     @Override
@@ -38,11 +40,11 @@ public class BlockScoreRecorder extends ScoreRecorder {
 
     @Override
     public boolean isRecording() {
-        return recording;
+        return recording.getAcquire();
     }
 
     @Override
     protected void setRecording(boolean recording) {
-        this.recording = recording;
+        this.recording.setRelease(recording);
     }
 }

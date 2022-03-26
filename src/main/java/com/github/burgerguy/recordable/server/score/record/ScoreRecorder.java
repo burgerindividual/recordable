@@ -4,6 +4,7 @@ import com.github.burgerguy.recordable.server.database.ScoreDatabase;
 import com.github.burgerguy.recordable.shared.score.ScoreConstants;
 import java.io.Closeable;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import net.minecraft.core.Registry;
 import net.minecraft.sounds.SoundEvent;
 import org.lwjgl.system.MemoryUtil;
@@ -39,6 +40,7 @@ public abstract class ScoreRecorder implements Closeable {
     private ByteBuffer tickHeaderPointer;
     private short currentTick;
     private byte currentTickSoundCount;
+    private boolean hasTicked;
 
     /**
      * The stop callback should be used for saving the disk item, etc and can happen even when stop isn't invoked by the user.
@@ -64,7 +66,9 @@ public abstract class ScoreRecorder implements Closeable {
         if (isRecording()) throw new IllegalStateException("Recorder started while recording");
         setRecording(true);
 
-        rawScoreBuffer = MemoryUtil.memAlloc(ScoreConstants.MAX_RECORD_SIZE_BYTES); // free after storing in DB
+        // free after storing in DB
+        // order is big endian because LMDB likes it
+        rawScoreBuffer = MemoryUtil.memAlloc(ScoreConstants.MAX_RECORD_SIZE_BYTES).order(ByteOrder.BIG_ENDIAN);
     }
 
     /**
@@ -74,10 +78,10 @@ public abstract class ScoreRecorder implements Closeable {
     public void stop() {
         if (!isRecording()) throw new IllegalStateException("Recorder stopped while not recording");
 
-        // add blank final tick directly to the end of the buffer if no sounds were played on it
+        // add blank final tick if no sounds were played on it
         if (currentTickSoundCount == 0) {
-            rawScoreBuffer.putShort(currentTick);
-            rawScoreBuffer.put(currentTickSoundCount);
+            tickHeaderPointer.putShort(currentTick);
+            tickHeaderPointer.put(currentTickSoundCount);
         }
 
         currentTick = 0;
@@ -87,6 +91,7 @@ public abstract class ScoreRecorder implements Closeable {
         long id = database.storeScore(rawScoreBuffer.flip());
         MemoryUtil.memFree(rawScoreBuffer);
         rawScoreBuffer = null;
+        tickHeaderPointer = null;
 
         onStopCallback.onStop(this, id);
     }
@@ -94,22 +99,20 @@ public abstract class ScoreRecorder implements Closeable {
     /**
      * Only mixins will call this. You probably don't want to call it manually.
      */
-    public void beginTick() {
-        currentTickSoundCount = 0;
-        // keep a pointer so when the tick ends we can write the tick header after
-        tickHeaderPointer = MemoryUtil.memSlice(rawScoreBuffer, 0, 3);
-        rawScoreBuffer.position(rawScoreBuffer.position() + 3);
-    }
-
-    /**
-     * Only mixins will call this. You probably don't want to call it manually.
-     */
-    public void endTick() {
+    public void tick() {
         if (currentTickSoundCount > 0) {
             tickHeaderPointer.putShort(currentTick);
             tickHeaderPointer.put(currentTickSoundCount);
         }
-        tickHeaderPointer = null;
+
+        // keep a pointer so we can write to the previous tick
+        if (!hasTicked || currentTickSoundCount > 0) {
+            tickHeaderPointer = MemoryUtil.memSlice(rawScoreBuffer, 0, 3);
+            rawScoreBuffer.position(rawScoreBuffer.position() + 3);
+            hasTicked = true;
+        }
+
+        currentTickSoundCount = 0;
         currentTick++;
     }
 

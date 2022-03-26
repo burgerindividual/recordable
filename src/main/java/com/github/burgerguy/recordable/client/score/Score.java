@@ -6,19 +6,19 @@ import net.minecraft.core.Registry;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.sounds.SoundEvent;
 
-public record Score(ScheduledSoundGroup[] orderedScheduledSoundGroups, short finalTick) {
+public record Score(ScheduledSoundGroup[] orderedScheduledSoundGroups, int finalTick) {
 
     /**
      * See ScoreRecorder docs for buffer format.
      */
     public static Score fromBuffer(FriendlyByteBuf buffer) {
-        short currentTick = 0;
+        int currentTick = 0;
         ScheduledSoundGroup[] soundGroups = new ScheduledSoundGroup[ScoreConstants.MAX_TICKS];
         short currentSoundGroup = 0;
 
         while (buffer.isReadable()) {
-            currentTick = buffer.readShort();
-            byte soundInstancesCount = buffer.readByte();
+            currentTick = Short.toUnsignedInt(buffer.readShort());
+            int soundInstancesCount = Byte.toUnsignedInt(buffer.readByte());
             if (soundInstancesCount == 0) break;
 
             PartialSoundInstance[] soundInstancesArray = new PartialSoundInstance[soundInstancesCount];

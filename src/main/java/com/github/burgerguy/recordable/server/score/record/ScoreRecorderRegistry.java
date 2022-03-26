@@ -42,18 +42,10 @@ public class ScoreRecorderRegistry {
         }
     }
 
-    public void beginTick() {
+    public void tick() {
         for (ScoreRecorder recorder : recorders) {
             if (recorder.isRecording()) {
-                recorder.beginTick();
-            }
-        }
-    }
-
-    public void endTick() {
-        for (ScoreRecorder recorder : recorders) {
-            if (recorder.isRecording()) {
-                recorder.endTick();
+                recorder.tick();
             }
         }
     }

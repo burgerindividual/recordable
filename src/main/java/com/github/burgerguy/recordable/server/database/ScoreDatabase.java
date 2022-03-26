@@ -2,6 +2,7 @@ package com.github.burgerguy.recordable.server.database;
 
 import java.io.Closeable;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.file.Path;
 import org.lmdbjava.*;
 import org.lwjgl.system.MemoryStack;
@@ -26,6 +27,9 @@ public class ScoreDatabase implements Closeable {
         }
     }
 
+    /**
+     * The buffer provided should be in big endian
+     */
     public long storeScore(ByteBuffer value) {
         long id = nextScoreId;
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
@@ -47,7 +51,7 @@ public class ScoreDatabase implements Closeable {
             // LMDB usually expects big endian, but because we're using direct long keys, we can keep it as native
             ByteBuffer idBuffer = memoryStack.malloc(8, 8).putLong(scoreId).flip();
 
-            ByteBuffer data = internalDb.get(readTxn, idBuffer);
+            ByteBuffer data = internalDb.get(readTxn, idBuffer).order(ByteOrder.BIG_ENDIAN);
             return new ScoreRequest(data, readTxn);
         }
     }

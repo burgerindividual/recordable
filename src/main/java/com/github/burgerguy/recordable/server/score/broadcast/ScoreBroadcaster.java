@@ -58,7 +58,7 @@ public abstract class ScoreBroadcaster {
 
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.wrappedBuffer(memoryStack.malloc(Integer.BYTES)));
-//            buffer.resetWriterIndex();
+            buffer.resetWriterIndex();
             buffer.writeInt(playId);
             for (ServerPlayer player : sentPlayPlayers) {
                 ServerPlayNetworking.send(player, Recordable.STOP_SCORE_ID, buffer);
@@ -83,6 +83,7 @@ public abstract class ScoreBroadcaster {
     public void sendPlayToPlayer(ServerPlayer player) {
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.wrappedBuffer(memoryStack.malloc(getPlayPacketSize())));
+            buffer.resetWriterIndex();
             writePlayPacket(buffer);
             // TODO: this will be really bad if the packet is scheduled to be sent for later
             ServerPlayNetworking.send(player, getPlayPacketChannelId(), buffer);

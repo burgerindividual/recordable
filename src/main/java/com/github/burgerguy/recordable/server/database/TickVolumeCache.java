@@ -21,10 +21,10 @@ public class TickVolumeCache {
                 ByteBuffer buffer = rawScoreData.getData();
 
                 float[] volumeArray = new float[ScoreConstants.MAX_TICKS];
-                int tickCount = 0;
+                int tick = 0;
                 while (buffer.hasRemaining()) {
-                    short tick = buffer.getShort();
-                    byte soundCount = buffer.get();
+                    tick = Short.toUnsignedInt(buffer.getShort());
+                    int soundCount = Byte.toUnsignedInt(buffer.get());
                     float loudestVolume = 0.0F;
 
                     // skip if tick has no sounds
@@ -45,10 +45,9 @@ public class TickVolumeCache {
                         buffer.position(buffer.position() + 4);
 
                         volumeArray[tick] = loudestVolume;
-                        tickCount++;
                     }
                 }
-                return Arrays.copyOf(volumeArray, tickCount);
+                return Arrays.copyOf(volumeArray, tick + 1);
             }
         });
     }

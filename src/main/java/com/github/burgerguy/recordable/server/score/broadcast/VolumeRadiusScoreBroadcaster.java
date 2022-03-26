@@ -15,6 +15,7 @@ public abstract class VolumeRadiusScoreBroadcaster extends ScoreBroadcaster {
     @Override
     public void play(long scoreId) {
         this.tickVolumes = tickVolumeCache.getTickVolumes(scoreId);
+        super.play(scoreId);
     }
 
     public double getCurrentRadius() {

@@ -27,6 +27,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.LevelResource;
 import org.lwjgl.system.MemoryStack;
 import org.slf4j.Logger;
@@ -73,8 +74,13 @@ public class Recordable implements ModInitializer {
 			((ScoreRecorderRegistryContainer) serverLevel).getScoreRecorderRegistry().closeAll();
 		});
 
-		ServerTickEvents.START_WORLD_TICK.register(serverLevel -> ((ScoreRecorderRegistryContainer) serverLevel).getScoreRecorderRegistry().beginTick());
-		ServerTickEvents.END_WORLD_TICK.register(serverLevel -> ((ScoreRecorderRegistryContainer) serverLevel).getScoreRecorderRegistry().endTick());
+		// these are in the server tick because some packet handling is done outside the world tick
+		// (irr)
+		ServerTickEvents.START_SERVER_TICK.register(server -> {
+			for (ServerLevel serverLevel : server.getAllLevels()) {
+				((ScoreRecorderRegistryContainer) serverLevel).getScoreRecorderRegistry().tick();
+			}
+		});
 
 		ServerPlayNetworking.registerGlobalReceiver(REQUEST_SCORE_ID, (server, player, handler, buffer, responseSender) -> {
 			long scoreId = buffer.readLong();
@@ -83,17 +89,20 @@ public class Recordable implements ModInitializer {
 
 			try (ScoreDatabase.ScoreRequest scoreRequest = scoreDatabase.requestScore(scoreId);
 				 MemoryStack memoryStack = MemoryStack.stackPush()) {
-				FriendlyByteBuf newPacketBuffer = new FriendlyByteBuf(Unpooled.wrappedBuffer(memoryStack.malloc(Long.BYTES)));
+				ByteBuffer scoreData = scoreRequest.getData();
+				int packetSize = scoreData != null ? Long.BYTES + scoreData.capacity() : Long.BYTES;
+
+				FriendlyByteBuf newPacketBuffer = new FriendlyByteBuf(Unpooled.wrappedBuffer(memoryStack.malloc(packetSize)));
+				newPacketBuffer.resetWriterIndex();
 				newPacketBuffer.writeLong(scoreId);
 
-				ByteBuffer scoreData = scoreRequest.getData();
 				if (scoreData != null) {
 					newPacketBuffer.writeBytes(scoreData);
 				} else {
 					LOGGER.info("Player " + player + " requested invalid score id " + scoreId);
 				}
 
-				responseSender.sendPacket(Recordable.REQUEST_SCORE_ID, newPacketBuffer);
+				responseSender.sendPacket(Recordable.SEND_SCORE_ID, newPacketBuffer);
 			}
 		});
 	}

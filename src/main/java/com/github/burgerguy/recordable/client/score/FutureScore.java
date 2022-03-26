@@ -9,8 +9,8 @@ public class FutureScore {
     private final AtomicReference<Score> scoreReference;
 
     public FutureScore() {
-        requested = new AtomicBoolean();
-        scoreReference = new AtomicReference<>();
+        requested = new AtomicBoolean(false);
+        scoreReference = new AtomicReference<>(null);
     }
 
     /**

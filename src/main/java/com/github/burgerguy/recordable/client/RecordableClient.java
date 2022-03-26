@@ -38,6 +38,7 @@ public class RecordableClient implements ClientModInitializer {
                 // hasn't been previously requested
                 try (MemoryStack memoryStack = MemoryStack.stackPush()) {
                     FriendlyByteBuf newPacketBuffer = new FriendlyByteBuf(Unpooled.wrappedBuffer(memoryStack.malloc(Long.BYTES)));
+                    newPacketBuffer.resetWriterIndex();
                     newPacketBuffer.writeLong(scoreId);
                     responseSender.sendPacket(Recordable.REQUEST_SCORE_ID, newPacketBuffer);
                 }

@@ -41,6 +41,7 @@ public abstract class ScoreRecorder implements Closeable {
     private short currentTick;
     private byte currentTickSoundCount;
     private boolean hasTicked;
+    private boolean closed;
 
     /**
      * The stop callback should be used for saving the disk item, etc and can happen even when stop isn't invoked by the user.
@@ -76,24 +77,28 @@ public abstract class ScoreRecorder implements Closeable {
      * This also stores the recording in the database and frees the allocated memory.
      */
     public void stop() {
-        if (!isRecording()) throw new IllegalStateException("Recorder stopped while not recording");
+        if (!isRecording()) {
+            throw new IllegalStateException("Recorder stopped while not recording");
+        } else { // why tf do i need this else here??? wtf ij???
+            setRecording(false);
 
-        // add blank final tick if no sounds were played on it
-        if (currentTickSoundCount == 0) {
-            tickHeaderPointer.putShort(currentTick);
-            tickHeaderPointer.put(currentTickSoundCount);
+            // add blank final tick if no sounds were played on it
+            if (currentTickSoundCount == 0) {
+                tickHeaderPointer.putShort(currentTick);
+                tickHeaderPointer.put(currentTickSoundCount);
+            }
+
+            currentTick = 0;
+            currentTickSoundCount = 0;
+            hasTicked = false;
+
+            long id = database.storeScore(rawScoreBuffer.flip());
+            MemoryUtil.memFree(rawScoreBuffer);
+            rawScoreBuffer = null;
+            tickHeaderPointer = null;
+
+            onStopCallback.onStop(this, id);
         }
-
-        currentTick = 0;
-        currentTickSoundCount = 0;
-        setRecording(false);
-
-        long id = database.storeScore(rawScoreBuffer.flip());
-        MemoryUtil.memFree(rawScoreBuffer);
-        rawScoreBuffer = null;
-        tickHeaderPointer = null;
-
-        onStopCallback.onStop(this, id);
     }
 
     /**
@@ -146,9 +151,14 @@ public abstract class ScoreRecorder implements Closeable {
     @Override
     public void close() {
         setRecording(false);
-        MemoryUtil.memFree(rawScoreBuffer);
+        if (rawScoreBuffer != null) MemoryUtil.memFree(rawScoreBuffer);
         rawScoreBuffer = null;
         tickHeaderPointer = null;
+        closed = true;
+    }
+
+    public boolean isClosed() {
+        return closed;
     }
 
     public interface OnStopCallback {

@@ -1,6 +1,7 @@
 package com.github.burgerguy.recordable.server.score.record;
 
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import java.util.Iterator;
 import java.util.Set;
 import net.minecraft.sounds.SoundEvent;
 
@@ -19,26 +20,15 @@ public class ScoreRecorderRegistry {
         recorders.remove(recorder);
     }
 
-    public void removeAll() {
-        recorders.clear();
-    }
-
-    public void stopAll() {
-        for (ScoreRecorder recorder : recorders) {
-            if (recorder.isRecording()) {
-                recorder.stop();
-            }
-        }
-    }
-
     /**
-     * Should be called when the server is shutting down, or
+     * Should be called when the server is shutting down or if the world is unloading
      */
-    public void closeAll() {
-        for (ScoreRecorder recorder : recorders) {
-            if (recorder.isRecording()) {
-                recorder.close();
-            }
+    public void removeAndCloseAll() {
+        Iterator<ScoreRecorder> scoreRecorderIterator = recorders.iterator();
+        while (scoreRecorderIterator.hasNext()) {
+            ScoreRecorder scoreRecorder = scoreRecorderIterator.next();
+            scoreRecorderIterator.remove();
+            scoreRecorder.close();
         }
     }
 
@@ -52,7 +42,6 @@ public class ScoreRecorderRegistry {
 
     public void captureSound(SoundEvent sound, double x, double y, double z, float volume, float pitch) {
         for (ScoreRecorder recorder : recorders) {
-            // TODO: maybe check if recorder is in loaded chunk somehow? maybe check last tick? idk
             if (recorder.isRecording() && recorder.isInRange(x, y, z, volume)) {
                 recorder.recordSound(sound, x, y, z, volume, pitch);
             }

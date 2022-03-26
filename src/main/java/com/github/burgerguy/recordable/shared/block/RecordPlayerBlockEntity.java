@@ -86,11 +86,9 @@ public class RecordPlayerBlockEntity extends BlockEntity {
             if (scoreBroadcaster.isPlaying()) scoreBroadcaster.stop();
             scoreBroadcaster = null;
         }
-        if (hasRecord()) dropAndRemoveRecord();
     }
 
-    // FIXME: re-make private
-    public void dropAndRemoveRecord() {
+    public void dropRecord() {
         if (level == null) throw new IllegalStateException("Tried to drop record from record player block entity with no level");
         if (!level.isClientSide) {
             float multiplier = 0.7F;
@@ -104,8 +102,6 @@ public class RecordPlayerBlockEntity extends BlockEntity {
 
             level.addFreshEntity(itemEntity);
         }
-
-        this.recordItem = null;
     }
 
     @Nullable

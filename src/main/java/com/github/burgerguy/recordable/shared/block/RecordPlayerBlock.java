@@ -1,6 +1,7 @@
 package com.github.burgerguy.recordable.shared.block;
 
 import com.github.burgerguy.recordable.server.score.broadcast.BlockScoreBroadcaster;
+import com.github.burgerguy.recordable.server.score.record.BlockScoreRecorder;
 import com.github.burgerguy.recordable.shared.Recordable;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.minecraft.core.BlockPos;
@@ -56,12 +57,32 @@ public class RecordPlayerBlock extends BaseEntityBlock {
             if (scoreBroadcaster == null) return InteractionResult.FAIL;
             if (scoreBroadcaster.isPlaying()) {
                 scoreBroadcaster.stop();
-                recordPlayerBlockEntity.dropAndRemoveRecord();
+                recordPlayerBlockEntity.dropRecord();
+                recordPlayerBlockEntity.setRecordItem(null);
                 return InteractionResult.SUCCESS;
             }
-            return InteractionResult.PASS;
         }
-        return recordPlayerBlockEntity.hasRecord() ? InteractionResult.CONSUME : InteractionResult.PASS;
+
+        boolean hadRecord = recordPlayerBlockEntity.hasRecord();
+        if (hadRecord && !level.isClientSide) {
+            recordPlayerBlockEntity.dropRecord();
+        }
+
+        recordPlayerBlockEntity.setRecordItem(null);
+        return hadRecord ? InteractionResult.CONSUME : InteractionResult.PASS;
     }
 
+    @SuppressWarnings("deprecation")
+    @Override
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        RecordPlayerBlockEntity recordPlayerBlockEntity = (RecordPlayerBlockEntity) level.getBlockEntity(pos);
+        if (recordPlayerBlockEntity == null) {
+            throw new IllegalStateException("Record player block does not have accompanying block entity at " + pos);
+        }
+
+        if (!level.isClientSide && recordPlayerBlockEntity.hasRecord()) {
+            recordPlayerBlockEntity.dropRecord();
+        }
+        recordPlayerBlockEntity.setRecordItem(null);
+    }
 }

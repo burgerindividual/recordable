@@ -59,10 +59,31 @@ public class RecorderBlock extends BaseEntityBlock {
             if (scoreRecorder == null) return InteractionResult.FAIL;
             if (scoreRecorder.isRecording()) {
                 scoreRecorder.stop();
+                recorderBlockEntity.setRecordItem(null);
                 return InteractionResult.SUCCESS;
             }
-            return InteractionResult.PASS;
         }
-        return recorderBlockEntity.hasRecord() ? InteractionResult.CONSUME : InteractionResult.PASS;
+
+        boolean hadRecord = recorderBlockEntity.hasRecord();
+        if (hadRecord && !level.isClientSide) {
+            recorderBlockEntity.dropRecord();
+        }
+
+        recorderBlockEntity.setRecordItem(null);
+        return hadRecord ? InteractionResult.CONSUME : InteractionResult.PASS;
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        RecorderBlockEntity recorderBlockEntity = (RecorderBlockEntity) level.getBlockEntity(pos);
+        if (recorderBlockEntity == null) {
+            throw new IllegalStateException("Recorder block does not have accompanying block entity at " + pos);
+        }
+
+        if (!level.isClientSide && recorderBlockEntity.hasRecord()) {
+            recorderBlockEntity.dropRecord();
+        }
+        recorderBlockEntity.setRecordItem(null);
     }
 }

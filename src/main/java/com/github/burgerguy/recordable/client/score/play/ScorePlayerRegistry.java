@@ -23,7 +23,7 @@ public class ScorePlayerRegistry {
 
     public void stop(int playId) {
         ScorePlayer scorePlayer = playIdToPlayerMap.remove(playId);
-        scorePlayer.stop();
+        if (scorePlayer != null) scorePlayer.stop();
     }
 
     // should probably be called at the end of the tick, so newly added players will be ticked the same tick they're added.

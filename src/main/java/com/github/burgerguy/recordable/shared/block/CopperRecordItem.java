@@ -32,7 +32,7 @@ public class CopperRecordItem extends Item {
         if (blockEntity instanceof RecorderBlockEntity recorderBlockEntity && !recorderBlockEntity.hasRecord()) {
             ItemStack itemStack = context.getItemInHand();
 
-            if (!itemStack.getOrCreateTag().contains("scoreId", Tag.TAG_LONG)) {
+            if (itemStack.is(CopperRecordItem.INSTANCE) && !itemStack.getOrCreateTag().contains("scoreId", Tag.TAG_LONG)) {
                 recorderBlockEntity.setRecordItem(itemStack.split(1));
                 if (!level.isClientSide) {
                     BlockScoreRecorder scoreRecorder = recorderBlockEntity.getScoreRecorder();
@@ -40,15 +40,17 @@ public class CopperRecordItem extends Item {
                     if (!scoreRecorder.isRecording()) {
                         scoreRecorder.start();
                         return InteractionResult.SUCCESS;
+                    } else {
+                        return InteractionResult.PASS;
                     }
-                    return InteractionResult.PASS;
+                } else {
+                    return InteractionResult.CONSUME;
                 }
-                return InteractionResult.CONSUME;
             }
         } else if (blockEntity instanceof RecordPlayerBlockEntity recordPlayerBlockEntity && !recordPlayerBlockEntity.hasRecord()) {
             ItemStack itemStack = context.getItemInHand();
 
-            if (itemStack.getOrCreateTag().contains("scoreId", Tag.TAG_LONG)) {
+            if (itemStack.is(CopperRecordItem.INSTANCE) && itemStack.getOrCreateTag().contains("scoreId", Tag.TAG_LONG)) {
                 recordPlayerBlockEntity.setRecordItem(itemStack.split(1));
                 if (!level.isClientSide) {
                     BlockScoreBroadcaster scoreBroadcaster = recordPlayerBlockEntity.getScoreBroadcaster();
@@ -58,13 +60,15 @@ public class CopperRecordItem extends Item {
                         //noinspection ConstantConditions
                         scoreBroadcaster.play(itemStack.getTag().getLong("scoreId"));
                         return InteractionResult.SUCCESS;
+                    } else {
+                        return InteractionResult.PASS;
                     }
-                    return InteractionResult.PASS;
+                } else {
+                    return InteractionResult.CONSUME;
                 }
-                return InteractionResult.CONSUME;
             }
         }
 
-        return InteractionResult.FAIL;
+        return InteractionResult.PASS;
     }
 }

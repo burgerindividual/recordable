@@ -74,7 +74,7 @@ public class RecorderBlockEntity extends BlockEntity {
             ServerLevel serverLevel = (ServerLevel) level;
             scoreRecorder = new BlockScoreRecorder(getBlockPos(), ((ScoreDatabaseContainer) serverLevel.getServer()).getScoreDatabase(), (r, id) -> {
                 recordItem.addTagElement("scoreId", LongTag.valueOf(id));
-                dropAndRemoveRecord();
+                dropRecord();
             });
             ((ScoreRecorderRegistryContainer) serverLevel).getScoreRecorderRegistry().addRecorder(scoreRecorder);
         }
@@ -90,10 +90,9 @@ public class RecorderBlockEntity extends BlockEntity {
             scoreRecorder.close();
             scoreRecorder = null;
         }
-        if (hasRecord()) dropAndRemoveRecord();
     }
 
-    private void dropAndRemoveRecord() {
+    public void dropRecord() {
         if (level == null) throw new IllegalStateException("Tried to drop record from recorder block entity with no level");
         if (!level.isClientSide) {
             float multiplier = 0.7F;
@@ -107,8 +106,6 @@ public class RecorderBlockEntity extends BlockEntity {
 
             level.addFreshEntity(itemEntity);
         }
-
-        this.recordItem = null;
     }
 
     @Nullable

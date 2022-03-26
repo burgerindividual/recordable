@@ -2,32 +2,22 @@ package com.github.burgerguy.recordable.shared;
 
 import com.github.burgerguy.recordable.server.database.ScoreDatabase;
 import com.github.burgerguy.recordable.server.database.ScoreDatabaseContainer;
-import com.github.burgerguy.recordable.server.score.record.EntityScoreRecorder;
-import com.github.burgerguy.recordable.server.score.record.ScoreRecorderRegistry;
 import com.github.burgerguy.recordable.server.score.record.ScoreRecorderRegistryContainer;
-import com.github.burgerguy.recordable.server.score.record.ScoreRecorder;
 import com.github.burgerguy.recordable.shared.block.*;
 import io.netty.buffer.Unpooled;
 import java.nio.ByteBuffer;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.Util;
-import net.minecraft.commands.Commands;
-import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.core.Registry;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.LevelResource;
 import org.lwjgl.system.MemoryStack;
 import org.slf4j.Logger;
@@ -71,7 +61,7 @@ public class Recordable implements ModInitializer {
 
 		// force stop all recorders, fixing block state
 		ServerWorldEvents.UNLOAD.register((server, serverLevel) -> {
-			((ScoreRecorderRegistryContainer) serverLevel).getScoreRecorderRegistry().closeAll();
+			((ScoreRecorderRegistryContainer) serverLevel).getScoreRecorderRegistry().removeAndCloseAll();
 		});
 
 		// these are in the server tick because some packet handling is done outside the world tick

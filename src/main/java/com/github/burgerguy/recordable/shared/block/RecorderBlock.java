@@ -70,7 +70,7 @@ public class RecorderBlock extends BaseEntityBlock {
             recorderBlockEntity.setRecordItem(null);
             return hadRecord ? InteractionResult.CONSUME : InteractionResult.PASS;
         } else {
-            return InteractionResult.FAIL;
+            return super.use(state, level, pos, player, hand, hit);
         }
     }
 
@@ -83,5 +83,6 @@ public class RecorderBlock extends BaseEntityBlock {
             }
             recorderBlockEntity.setRecordItem(null);
         }
+        super.onRemove(state, level, pos, newState, isMoving);
     }
 }

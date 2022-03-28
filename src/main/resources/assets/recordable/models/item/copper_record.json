@@ -1,0 +1,8 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "recordable:item/copper_record",
+    "layer1": "recordable:item/copper_record_cover",
+    "layer2": "recordable:item/copper_record_engravings"
+  }
+}

@@ -4,10 +4,12 @@ import com.github.burgerguy.recordable.server.database.ScoreDatabaseContainer;
 import com.github.burgerguy.recordable.server.score.record.BlockScoreRecorder;
 import com.github.burgerguy.recordable.server.score.record.ScoreRecorderRegistryContainer;
 import com.github.burgerguy.recordable.shared.Recordable;
+import java.awt.Color;
 import javax.annotation.Nullable;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.LongTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -73,7 +75,8 @@ public class RecorderBlockEntity extends BlockEntity {
         if (!level.isClientSide) {
             ServerLevel serverLevel = (ServerLevel) level;
             scoreRecorder = new BlockScoreRecorder(getBlockPos(), ((ScoreDatabaseContainer) serverLevel.getServer()).getScoreDatabase(), (r, id) -> {
-                recordItem.addTagElement("scoreId", LongTag.valueOf(id));
+                recordItem.addTagElement("ScoreID", LongTag.valueOf(id));
+                recordItem.addTagElement("Color", IntTag.valueOf(Color.HSBtoRGB((float) Math.random(), 1.0f, 0.8f)));
                 dropRecord();
             });
             ((ScoreRecorderRegistryContainer) serverLevel).getScoreRecorderRegistry().addRecorder(scoreRecorder);

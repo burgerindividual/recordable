@@ -4,9 +4,11 @@ import com.github.burgerguy.recordable.server.database.ScoreDatabase;
 import com.github.burgerguy.recordable.server.database.ScoreDatabaseContainer;
 import com.github.burgerguy.recordable.server.score.record.ScoreRecorderRegistryContainer;
 import com.github.burgerguy.recordable.shared.block.*;
+import com.github.burgerguy.recordable.shared.item.CopperRecordItem;
 import io.netty.buffer.Unpooled;
 import java.nio.ByteBuffer;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
@@ -50,6 +52,9 @@ public class Recordable implements ModInitializer {
 		Registry.register(Registry.BLOCK_ENTITY_TYPE, RecorderBlockEntity.IDENTIFIER, RecorderBlockEntity.INSTANCE);
 		Registry.register(Registry.BLOCK_ENTITY_TYPE, RecordPlayerBlockEntity.IDENTIFIER, RecordPlayerBlockEntity.INSTANCE);
 
+		// color provider registry
+		ColorProviderRegistry.ITEM.register(CopperRecordItem::getColor, CopperRecordItem.INSTANCE);
+
 		// event registry
 		ServerLifecycleEvents.SERVER_STARTING.register(server -> {
 			// kinda conc, but should be fine for now
@@ -72,6 +77,7 @@ public class Recordable implements ModInitializer {
 			}
 		});
 
+		// networking registry
 		ServerPlayNetworking.registerGlobalReceiver(REQUEST_SCORE_ID, (server, player, handler, buffer, responseSender) -> {
 			long scoreId = buffer.readLong();
 

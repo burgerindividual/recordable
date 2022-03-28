@@ -1,0 +1,9 @@
+{
+  "item.recordable.copper_record": "Copper Record",
+  "item.recordable.copper_record.blank": "Blank",
+  "item.recordable.copper_record.song_info": "%s - %s",
+  "item.recordable.copper_record.unknown_title": "Unknown Title",
+  "item.recordable.copper_record.unknown_author": "Unknown Author",
+  "block.recordable.recorder": "Recorder",
+  "block.recordable.record_player": "Record Player"
+}

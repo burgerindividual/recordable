@@ -2,39 +2,62 @@ package com.github.burgerguy.recordable.shared.block;
 
 import com.github.burgerguy.recordable.server.score.record.BlockScoreRecorder;
 import com.github.burgerguy.recordable.shared.Recordable;
-import java.util.Random;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
-import net.minecraft.ChatFormatting;
-import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.TextColor;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.Container;
-import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BaseEntityBlock;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.RenderShape;
-import net.minecraft.world.level.block.entity.*;
+import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.gameevent.GameEventListener;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
 public class RecorderBlock extends BaseEntityBlock {
     public static final ResourceLocation IDENTIFIER = new ResourceLocation(Recordable.MOD_ID, "recorder");
     public static final Block INSTANCE = new RecorderBlock(FabricBlockSettings.of(Material.METAL).strength(4.0f));
 
+    private static final VoxelShape AABB_SOUTH = Shapes.or(
+            Shapes.box(0, 0, 0, 1, 0.375, 0.9375),
+            Shapes.box(0, 0.375, 0.0625, 1, 1, 0.4375),
+            Shapes.box(0.125, 0.375, 0.4375, 0.75, 0.75, 0.9375)
+    );
+    private static final VoxelShape AABB_WEST = Shapes.or(
+            Shapes.box(0.0625, 0, 0, 1, 0.375, 1),
+            Shapes.box(0.5625, 0.375, 0, 0.9375, 1, 1),
+            Shapes.box(0.0625, 0.375, 0.125, 0.5625, 0.75, 0.75)
+    );
+    private static final VoxelShape AABB_NORTH = Shapes.or(
+            Shapes.box(0, 0, 0.0625, 1, 0.375, 1),
+            Shapes.box(0, 0.375, 0.5625, 1, 1, 0.9375),
+            Shapes.box(0.25, 0.375, 0.0625, 0.875, 0.75, 0.5625)
+    );
+    private static final VoxelShape AABB_EAST = Shapes.or(
+            Shapes.box(0, 0, 0, 0.9375, 0.375, 1),
+            Shapes.box(0.0625, 0.375, 0, 0.4375, 1, 1),
+            Shapes.box(0.25, 0.375, 0.0625, 0.875, 0.75, 0.5625)
+    );
+
     public RecorderBlock(Properties properties) {
         super(properties);
+        this.registerDefaultState(this.stateDefinition.any().setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.NORTH));
+    }
+
+    @Override
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        return this.defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, context.getHorizontalDirection().getOpposite());
     }
 
     @Nullable
@@ -84,5 +107,41 @@ public class RecorderBlock extends BaseEntityBlock {
             recorderBlockEntity.setRecordItem(null);
         }
         super.onRemove(state, level, pos, newState, isMoving);
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        Direction direction = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
+        return switch (direction) {
+            case NORTH -> AABB_NORTH;
+            case SOUTH -> AABB_SOUTH;
+            case WEST -> AABB_WEST;
+            case EAST -> AABB_EAST;
+            default -> throw new IllegalStateException("Unexpected direction: " + direction);
+        };
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    public BlockState rotate(BlockState state, Rotation rotation) {
+        return state.setValue(BlockStateProperties.HORIZONTAL_FACING, rotation.rotate(state.getValue(BlockStateProperties.HORIZONTAL_FACING)));
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    public BlockState mirror(BlockState state, Mirror mirror) {
+        return state.rotate(mirror.getRotation(state.getValue(BlockStateProperties.HORIZONTAL_FACING)));
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(BlockStateProperties.HORIZONTAL_FACING);
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    public boolean isPathfindable(BlockState state, BlockGetter level, BlockPos pos, PathComputationType type) {
+        return false;
     }
 }

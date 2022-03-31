@@ -132,3 +132,5 @@ add animations to recorder
 move playing to jukebox
 display color in recorder/use color provider
 fix sound, normalize and make more realistic
+add lmdb dynamic resizing
+add lmbd mixins to avoid crash

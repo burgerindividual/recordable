@@ -124,3 +124,11 @@ add custom made sample discs to creative menu and dungeons
 bring record player closer to recorder and abstract registries
 
 account for record player block rotation to impact relative sound positions
+
+TODO:
+add dyeing of discs
+add title and author writing
+add animations to recorder
+move playing to jukebox
+display color in recorder/use color provider
+fix sound, normalize and make more realistic

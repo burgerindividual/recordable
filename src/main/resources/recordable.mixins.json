@@ -4,12 +4,13 @@
   "package": "com.github.burgerguy.recordable.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
+    "server.score.database.AbstractByteBufferProxyMixin",
     "server.score.database.MinecraftServerMixin",
     "server.score.record.ServerLevelMixin"
   ],
   "client": [
-    "client.score.play.ClientPacketListenerMixin",
-    "client.score.cache.ClientPacketListenerMixin"
+    "client.score.cache.ClientPacketListenerMixin",
+    "client.score.play.ClientPacketListenerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

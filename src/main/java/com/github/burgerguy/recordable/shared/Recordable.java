@@ -6,7 +6,12 @@ import com.github.burgerguy.recordable.server.score.record.ScoreRecorderRegistry
 import com.github.burgerguy.recordable.shared.block.*;
 import com.github.burgerguy.recordable.shared.item.CopperRecordItem;
 import io.netty.buffer.Unpooled;
+import java.net.URI;
 import java.nio.ByteBuffer;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.util.Map;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -14,6 +19,7 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.fabricmc.loader.impl.launch.FabricLauncherBase;
 import net.minecraft.core.Registry;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -39,6 +45,19 @@ public class Recordable implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
+		try {
+			// add the entire LMDB code source to the path, so all subsequent classes are loaded by Knot
+			// and all assigned mixins are applied to them
+			URI lmdbJarUri = this.getClass().getClassLoader().getResource("org/lmdbjava").toURI();
+			try (FileSystem fs = FileSystems.newFileSystem(lmdbJarUri, Map.of("create", "true"))) {
+				for (Path jarRootDir : fs.getRootDirectories()) {
+					FabricLauncherBase.getLauncher().addToClassPath(jarRootDir);
+				}
+			}
+		} catch (Throwable t) {
+			LOGGER.error("Unable to force load LMDB into Knot", t);
+		}
+
 		// block registry
 		Registry.register(Registry.BLOCK, RecorderBlock.IDENTIFIER, RecorderBlock.INSTANCE);
 		Registry.register(Registry.BLOCK, RecordPlayerBlock.IDENTIFIER, RecordPlayerBlock.INSTANCE);

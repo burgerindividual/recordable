@@ -43,7 +43,7 @@ public class CopperRecordItem extends Item {
         if (blockEntity instanceof RecorderBlockEntity recorderBlockEntity && !recorderBlockEntity.hasRecord()) {
             ItemStack itemStack = context.getItemInHand();
 
-            if (itemStack.is(CopperRecordItem.INSTANCE) && !itemStack.getOrCreateTag().contains("ScoreID", Tag.TAG_LONG)) {
+            if (!itemStack.getOrCreateTag().contains("ScoreID", Tag.TAG_LONG)) {
                 recorderBlockEntity.setRecordItem(itemStack.split(1));
                 if (!level.isClientSide) {
                     BlockScoreRecorder scoreRecorder = recorderBlockEntity.getScoreRecorder();
@@ -61,7 +61,7 @@ public class CopperRecordItem extends Item {
         } else if (blockEntity instanceof RecordPlayerBlockEntity recordPlayerBlockEntity && !recordPlayerBlockEntity.hasRecord()) {
             ItemStack itemStack = context.getItemInHand();
 
-            if (itemStack.is(CopperRecordItem.INSTANCE) && itemStack.getOrCreateTag().contains("ScoreID", Tag.TAG_LONG)) {
+            if (itemStack.getOrCreateTag().contains("ScoreID", Tag.TAG_LONG)) {
                 recordPlayerBlockEntity.setRecordItem(itemStack.split(1));
                 if (!level.isClientSide) {
                     BlockScoreBroadcaster scoreBroadcaster = recordPlayerBlockEntity.getScoreBroadcaster();

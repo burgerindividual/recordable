@@ -6,7 +6,9 @@
   "mixins": [
     "server.score.database.AbstractByteBufferProxyMixin",
     "server.score.database.MinecraftServerMixin",
-    "server.score.record.ServerLevelMixin"
+    "server.score.record.ServerLevelMixin",
+    "shared.jukebox.JukeboxBlockEntityMixin",
+    "shared.jukebox.JukeboxBlockMixin"
   ],
   "client": [
     "client.score.cache.ClientPacketListenerMixin",

@@ -134,3 +134,12 @@ display color in recorder/use color provider
 fix sound, normalize and make more realistic
 add lmdb dynamic resizing
 add lmbd mixins to avoid crash
+
+Press for vinyls, requires copper master
+
+Label Creator
+paint in label maker with dyes
+
+Allow labels to be applied and removed from copper records via crafting, but vinyl has to have label applied during press process
+
+copy discs with press with vinyls

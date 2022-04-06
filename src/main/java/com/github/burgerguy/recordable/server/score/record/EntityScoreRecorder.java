@@ -5,7 +5,6 @@ import net.minecraft.world.entity.Entity;
 
 public class EntityScoreRecorder extends ScoreRecorder {
     private final Entity entity;
-    private boolean recording;
 
     public EntityScoreRecorder(Entity entity, ScoreDatabase database, OnStopCallback onStopCallback) {
         super(database, onStopCallback);
@@ -36,13 +35,4 @@ public class EntityScoreRecorder extends ScoreRecorder {
         return relX * relX + relY * relY + relZ * relZ < radius * radius;
     }
 
-    @Override
-    public boolean isRecording() {
-        return recording;
-    }
-
-    @Override
-    protected void setRecording(boolean recording) {
-        this.recording = recording;
-    }
 }

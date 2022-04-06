@@ -5,7 +5,6 @@ import net.minecraft.core.BlockPos;
 
 public class BlockScoreRecorder extends ScoreRecorder {
     private final BlockPos blockPos;
-    private boolean recording;
 
     public BlockScoreRecorder(BlockPos blockPos, ScoreDatabase database, OnStopCallback onStopCallback) {
         super(database, onStopCallback);
@@ -36,13 +35,4 @@ public class BlockScoreRecorder extends ScoreRecorder {
         return relX * relX + relY * relY + relZ * relZ < radius * radius;
     }
 
-    @Override
-    public boolean isRecording() {
-        return recording;
-    }
-
-    @Override
-    protected void setRecording(boolean recording) {
-        this.recording = recording;
-    }
 }

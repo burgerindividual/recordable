@@ -12,11 +12,11 @@ public class ScoreRecorderRegistry {
         this.recorders = new ObjectOpenHashSet<>();
     }
 
-    public void addRecorder(ScoreRecorder recorder) {
+    public void add(ScoreRecorder recorder) {
         recorders.add(recorder);
     }
 
-    public void removeRecorder(ScoreRecorder recorder) {
+    public void remove(ScoreRecorder recorder) {
         recorders.remove(recorder);
     }
 

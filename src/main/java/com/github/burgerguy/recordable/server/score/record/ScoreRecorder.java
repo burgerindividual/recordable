@@ -42,6 +42,7 @@ public abstract class ScoreRecorder implements Closeable {
     private byte currentTickSoundCount;
     private boolean hasTicked;
     private boolean closed;
+    private boolean recording;
 
     /**
      * The stop callback should be used for saving the disk item, etc and can happen even when stop isn't invoked by the user.
@@ -57,8 +58,13 @@ public abstract class ScoreRecorder implements Closeable {
 
     public abstract boolean isInRange(double x, double y, double z, float volume);
 
-    public abstract boolean isRecording();
-    protected abstract void setRecording(boolean recording);
+    public boolean isRecording() {
+        return recording;
+    }
+
+    private void setRecording(boolean recording) {
+        this.recording = recording;
+    }
 
     /**
      * Starts the recording process and allocates the needed memory.

@@ -2,7 +2,7 @@ package com.github.burgerguy.recordable.shared;
 
 import com.github.burgerguy.recordable.server.database.ScoreDatabase;
 import com.github.burgerguy.recordable.server.database.ScoreDatabaseContainer;
-import com.github.burgerguy.recordable.server.score.record.ScoreRecorderRegistryContainer;
+import com.github.burgerguy.recordable.server.score.ServerScoreRegistriesContainer;
 import com.github.burgerguy.recordable.shared.block.*;
 import com.github.burgerguy.recordable.shared.item.CopperRecordItem;
 import io.netty.buffer.Unpooled;
@@ -37,9 +37,10 @@ public class Recordable implements ModInitializer {
 
 	public static final String SCORE_DATABASE_FILE_NAME = "scores.db";
 
-	public static final ResourceLocation PLAY_SCORE_AT_POS_ID = new ResourceLocation(MOD_ID, "play_score_at_pos");
-	public static final ResourceLocation PLAY_SCORE_AT_ENTITY_ID = new ResourceLocation(MOD_ID, "play_score_at_entity");
-	public static final ResourceLocation STOP_SCORE_ID = new ResourceLocation(MOD_ID, "stop_score");
+	public static final ResourceLocation PLAY_SCORE_INSTANCE_AT_POS_ID = new ResourceLocation(MOD_ID, "play_score_at_pos");
+	public static final ResourceLocation PLAY_SCORE_INSTANCE_AT_ENTITY_ID = new ResourceLocation(MOD_ID, "play_score_at_entity");
+	public static final ResourceLocation SET_SCORE_INSTANCE_PAUSED_ID = new ResourceLocation(MOD_ID, "set_score_instance_paused");
+	public static final ResourceLocation STOP_SCORE_INSTANCE_ID = new ResourceLocation(MOD_ID, "stop_score_instance");
 	public static final ResourceLocation REQUEST_SCORE_ID = new ResourceLocation(MOD_ID, "request_score");
 	public static final ResourceLocation SEND_SCORE_ID = new ResourceLocation(MOD_ID, "send_score");
 
@@ -60,16 +61,13 @@ public class Recordable implements ModInitializer {
 
 		// block registry
 		Registry.register(Registry.BLOCK, RecorderBlock.IDENTIFIER, RecorderBlock.INSTANCE);
-		Registry.register(Registry.BLOCK, RecordPlayerBlock.IDENTIFIER, RecordPlayerBlock.INSTANCE);
 
 		// item registry
 		Registry.register(Registry.ITEM, RecorderBlock.IDENTIFIER, new BlockItem(RecorderBlock.INSTANCE, new FabricItemSettings().group(CreativeModeTab.TAB_MISC)));
-		Registry.register(Registry.ITEM, RecordPlayerBlock.IDENTIFIER, new BlockItem(RecordPlayerBlock.INSTANCE, new FabricItemSettings().group(CreativeModeTab.TAB_MISC)));
 		Registry.register(Registry.ITEM, CopperRecordItem.IDENTIFIER, CopperRecordItem.INSTANCE);
 
 		// block entity registry
 		Registry.register(Registry.BLOCK_ENTITY_TYPE, RecorderBlockEntity.IDENTIFIER, RecorderBlockEntity.INSTANCE);
-		Registry.register(Registry.BLOCK_ENTITY_TYPE, RecordPlayerBlockEntity.IDENTIFIER, RecordPlayerBlockEntity.INSTANCE);
 
 		// color provider registry
 		ColorProviderRegistry.ITEM.register(CopperRecordItem::getColor, CopperRecordItem.INSTANCE);
@@ -85,14 +83,15 @@ public class Recordable implements ModInitializer {
 
 		// force stop all recorders, fixing block state
 		ServerWorldEvents.UNLOAD.register((server, serverLevel) -> {
-			((ScoreRecorderRegistryContainer) serverLevel).getScoreRecorderRegistry().removeAndCloseAll();
+			((ServerScoreRegistriesContainer) serverLevel).getScoreRecorderRegistry().removeAndCloseAll();
 		});
 
 		// these are in the server tick because some packet handling is done outside the world tick
 		// (irr)
 		ServerTickEvents.START_SERVER_TICK.register(server -> {
 			for (ServerLevel serverLevel : server.getAllLevels()) {
-				((ScoreRecorderRegistryContainer) serverLevel).getScoreRecorderRegistry().tick();
+				((ServerScoreRegistriesContainer) serverLevel).getScoreRecorderRegistry().tick();
+				((ServerScoreRegistriesContainer) serverLevel).getScoreBroadcasterRegistry().tick(serverLevel);
 			}
 		});
 

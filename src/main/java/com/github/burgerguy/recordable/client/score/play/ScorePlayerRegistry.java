@@ -8,17 +8,16 @@ public class ScorePlayerRegistry {
     private final Int2ObjectMap<ScorePlayer> playIdToPlayerMap;
 
     public ScorePlayerRegistry() {
-        playIdToPlayerMap = new Int2ObjectOpenHashMap<>();
+        this.playIdToPlayerMap = new Int2ObjectOpenHashMap<>();
     }
 
     public void play(int playId, ScorePlayer scorePlayer) {
-        scorePlayer.setPlaying(true);
         playIdToPlayerMap.put(playId, scorePlayer);
     }
 
-    public void setPlaying(int playId, boolean playing) {
+    public void setPaused(int playId, boolean paused) {
         ScorePlayer scorePlayer = playIdToPlayerMap.get(playId);
-        scorePlayer.setPlaying(playing);
+        scorePlayer.setPaused(paused);
     }
 
     public void stop(int playId) {

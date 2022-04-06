@@ -1,7 +1,8 @@
 package com.github.burgerguy.recordable.mixin.server.score.record;
 
+import com.github.burgerguy.recordable.server.score.broadcast.ScoreBroadcasterRegistry;
 import com.github.burgerguy.recordable.server.score.record.ScoreRecorderRegistry;
-import com.github.burgerguy.recordable.server.score.record.ScoreRecorderRegistryContainer;
+import com.github.burgerguy.recordable.server.score.ServerScoreRegistriesContainer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
@@ -13,13 +14,19 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ServerLevel.class)
-public abstract class ServerLevelMixin implements ScoreRecorderRegistryContainer {
+public abstract class ServerLevelMixin implements ServerScoreRegistriesContainer {
 
     private final ScoreRecorderRegistry recorderRegistry = new ScoreRecorderRegistry();
+    private final ScoreBroadcasterRegistry broadcasterRegistry = new ScoreBroadcasterRegistry();
 
     @Override
     public ScoreRecorderRegistry getScoreRecorderRegistry() {
         return recorderRegistry;
+    }
+
+    @Override
+    public ScoreBroadcasterRegistry getScoreBroadcasterRegistry() {
+        return broadcasterRegistry;
     }
 
     @Inject(method = "playSound(Lnet/minecraft/world/entity/player/Player;DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V", at = @At("TAIL"))

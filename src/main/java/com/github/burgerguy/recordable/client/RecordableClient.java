@@ -10,7 +10,6 @@ import com.github.burgerguy.recordable.shared.Recordable;
 import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
@@ -23,7 +22,7 @@ public class RecordableClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         // register events
-        ClientPlayNetworking.registerGlobalReceiver(Recordable.PLAY_SCORE_AT_POS_ID, (client, handler, buffer, responseSender) -> {
+        ClientPlayNetworking.registerGlobalReceiver(Recordable.PLAY_SCORE_INSTANCE_AT_POS_ID, (client, handler, buffer, responseSender) -> {
             long scoreId = buffer.readLong();
             short currentTick = buffer.readShort();
             int playId = buffer.readInt();
@@ -50,7 +49,7 @@ public class RecordableClient implements ClientModInitializer {
             });
         });
 
-        ClientPlayNetworking.registerGlobalReceiver(Recordable.STOP_SCORE_ID, (client, handler, buffer, responseSender) -> {
+        ClientPlayNetworking.registerGlobalReceiver(Recordable.STOP_SCORE_INSTANCE_ID, (client, handler, buffer, responseSender) -> {
             int playId = buffer.readInt();
 
             client.execute(() -> {
@@ -58,6 +57,18 @@ public class RecordableClient implements ClientModInitializer {
                 @SuppressWarnings("ConstantConditions")
                 ScorePlayerRegistry scorePlayerRegistry = ((ScorePlayerRegistryContainer) client.getConnection()).getScorePlayerRegistry();
                 scorePlayerRegistry.stop(playId);
+            });
+        });
+
+        ClientPlayNetworking.registerGlobalReceiver(Recordable.SET_SCORE_INSTANCE_PAUSED_ID, (client, handler, buffer, responseSender) -> {
+            int playId = buffer.readInt();
+            boolean paused = buffer.readBoolean();
+
+            client.execute(() -> {
+                // if we got the packet, we have a connection, so it will never be null
+                @SuppressWarnings("ConstantConditions")
+                ScorePlayerRegistry scorePlayerRegistry = ((ScorePlayerRegistryContainer) client.getConnection()).getScorePlayerRegistry();
+                scorePlayerRegistry.setPaused(playId, paused);
             });
         });
 

@@ -1,9 +1,9 @@
 package com.github.burgerguy.recordable.shared.item;
 
-import com.github.burgerguy.recordable.server.score.broadcast.BlockScoreBroadcaster;
+import com.github.burgerguy.recordable.server.score.broadcast.ScoreBroadcaster;
+import com.github.burgerguy.recordable.server.score.broadcast.ScoreBroadcasterContainer;
 import com.github.burgerguy.recordable.server.score.record.BlockScoreRecorder;
 import com.github.burgerguy.recordable.shared.Recordable;
-import com.github.burgerguy.recordable.shared.block.RecordPlayerBlockEntity;
 import com.github.burgerguy.recordable.shared.block.RecorderBlockEntity;
 import java.util.List;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
@@ -15,11 +15,19 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.item.*;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.JukeboxBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 public class CopperRecordItem extends Item {
@@ -38,8 +46,9 @@ public class CopperRecordItem extends Item {
     public InteractionResult useOn(UseOnContext context) {
         Level level = context.getLevel();
         BlockPos blockPos = context.getClickedPos();
-
+        BlockState blockState = level.getBlockState(blockPos);
         BlockEntity blockEntity = level.getBlockEntity(blockPos);
+
         if (blockEntity instanceof RecorderBlockEntity recorderBlockEntity && !recorderBlockEntity.hasRecord()) {
             ItemStack itemStack = context.getItemInHand();
 
@@ -58,25 +67,25 @@ public class CopperRecordItem extends Item {
                     return InteractionResult.CONSUME;
                 }
             }
-        } else if (blockEntity instanceof RecordPlayerBlockEntity recordPlayerBlockEntity && !recordPlayerBlockEntity.hasRecord()) {
+        } else if (blockEntity instanceof ScoreBroadcasterContainer scoreBroadcasterContainer && blockState.is(Blocks.JUKEBOX) && !blockState.getValue(JukeboxBlock.HAS_RECORD)) {
             ItemStack itemStack = context.getItemInHand();
 
             if (itemStack.getOrCreateTag().contains("ScoreID", Tag.TAG_LONG)) {
-                recordPlayerBlockEntity.setRecordItem(itemStack.split(1));
                 if (!level.isClientSide) {
-                    BlockScoreBroadcaster scoreBroadcaster = recordPlayerBlockEntity.getScoreBroadcaster();
+                     ScoreBroadcaster scoreBroadcaster = scoreBroadcasterContainer.getScoreBroadcaster();
                     if (scoreBroadcaster == null) return InteractionResult.FAIL;
-                    if (!scoreBroadcaster.isPlaying()) {
-                        // can't be null because we checked in this branch
-                        //noinspection ConstantConditions
-                        scoreBroadcaster.play(itemStack.getTag().getLong("ScoreID"));
-                        return InteractionResult.SUCCESS;
-                    } else {
-                        return InteractionResult.PASS;
+                    ((JukeboxBlock)Blocks.JUKEBOX).setRecord(level, blockPos, blockState, itemStack);
+                    // calling play will forcibly unpause the broadcaster. do we want this?
+                    // should the play logic be moved to setRecord?
+                    //noinspection ConstantConditions
+                    scoreBroadcaster.play(itemStack.getTag().getLong("ScoreID"));
+                    itemStack.shrink(1);
+                    Player player = context.getPlayer();
+                    if (player != null) {
+                        player.awardStat(Stats.PLAY_RECORD);
                     }
-                } else {
-                    return InteractionResult.CONSUME;
                 }
+                return InteractionResult.sidedSuccess(level.isClientSide);
             }
         }
 

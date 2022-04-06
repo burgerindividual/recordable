@@ -14,7 +14,7 @@ public abstract class ScorePlayer {
     private int currentTick;
     private int arrayIdx;
 
-    private boolean playing;
+    private boolean paused;
     private boolean done;
 
     public ScorePlayer(FutureScore futureScore, short startTick, SoundManager soundManager) {
@@ -33,7 +33,7 @@ public abstract class ScorePlayer {
             return;
         }
 
-        if (!isPlaying()) return; // paused, don't increment tick
+        if (isPaused()) return;
 
         if (score != null && arrayIdx < score.orderedScheduledSoundGroups().length) {
             ScheduledSoundGroup scheduledSoundGroup = score.orderedScheduledSoundGroups()[arrayIdx];
@@ -49,12 +49,12 @@ public abstract class ScorePlayer {
 
     public abstract SoundInstance createSoundInstance(PartialSoundInstance partialSoundInstance);
 
-    public void setPlaying(boolean playing) {
-        this.playing = playing;
+    public void setPaused(boolean paused) {
+        this.paused = paused;
     }
 
-    public boolean isPlaying() {
-        return playing;
+    public boolean isPaused() {
+        return paused;
     }
 
     public void stop() {

@@ -8,21 +8,22 @@ import java.util.concurrent.ThreadLocalRandom;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import org.lwjgl.system.MemoryStack;
 
-// This does not manage sending scores themselves, only play packets
+// This does not manage sending scores themselves, only their instances
 public abstract class ScoreBroadcaster {
 
-    private final Set<ServerPlayer> sentPlayPlayers;
+    private final Set<ServerPlayer> sentTargets;
     protected long scoreId;
     protected short currentTick;
     protected int playId;
-    private boolean playing;
+    private boolean paused;
+    private boolean broadcasting;
 
     protected ScoreBroadcaster() {
-        this.sentPlayPlayers = new ObjectOpenHashSet<>();
+        this.sentTargets = new ObjectOpenHashSet<>();
     }
 
     public abstract boolean isInRange(double x, double y, double z);
@@ -31,64 +32,79 @@ public abstract class ScoreBroadcaster {
     protected abstract ResourceLocation getPlayPacketChannelId();
     protected abstract void writePlayPacket(FriendlyByteBuf buffer);
 
-    public void tick(MinecraftServer server) {
-        if (isPlaying()) {
-            // clean out set so reconnected can hear
-            sentPlayPlayers.removeIf(ServerPlayer::hasDisconnected);
+    public void tick(ServerLevel serverLevel) {
+        if (!isBroadcasting() || isPaused()) return;
 
-            for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-                if (!sentPlayToPlayer(player) && isInRange(player.getX(), player.getY(), player.getZ())) {
-                    sendPlayToPlayer(player);
+        // clean out set so reconnected players can hear
+        sentTargets.removeIf(ServerPlayer::hasDisconnected);
+
+        for (ServerPlayer player : serverLevel.players()) {
+            if (!sentTargets.contains(player) && isInRange(player.getX(), player.getY(), player.getZ())) {
+                try (MemoryStack memoryStack = MemoryStack.stackPush()) {
+                    FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.wrappedBuffer(memoryStack.malloc(getPlayPacketSize())));
+                    buffer.resetWriterIndex();
+                    writePlayPacket(buffer);
+                    // TODO: this will be really bad if the packet is scheduled to be sent for later
+                    ServerPlayNetworking.send(player, getPlayPacketChannelId(), buffer);
+                    sentTargets.add(player);
                 }
             }
-            currentTick++;
         }
+        currentTick++;
     }
 
     public void play(long scoreId) {
         this.scoreId = scoreId;
-        sentPlayPlayers.clear();
+        sentTargets.clear();
         currentTick = 0;
         playId = ThreadLocalRandom.current().nextInt(); // meh...
-        setPlaying(true);
+        setBroadcasting(true);
     }
 
     public void stop() {
-        setPlaying(false);
+        setBroadcasting(false);
 
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.wrappedBuffer(memoryStack.malloc(Integer.BYTES)));
             buffer.resetWriterIndex();
             buffer.writeInt(playId);
-            for (ServerPlayer player : sentPlayPlayers) {
-                ServerPlayNetworking.send(player, Recordable.STOP_SCORE_ID, buffer);
+            for (ServerPlayer player : sentTargets) {
+                ServerPlayNetworking.send(player, Recordable.STOP_SCORE_INSTANCE_ID, buffer);
             }
         }
-        sentPlayPlayers.clear();
+        sentTargets.clear();
     }
 
-    public boolean isPlaying() {
-        return playing;
+    public boolean isPaused() {
+        return paused;
     }
 
-    public void setPlaying(boolean playing) {
-        this.playing = playing;
-    }
+    public void setPaused(boolean paused) {
+        if (this.paused != paused) {
+            this.paused = paused;
 
-    public boolean sentPlayToPlayer(ServerPlayer player) {
-        return sentPlayPlayers.contains(player);
-    }
-
-    // call this when a player goes into the broadcast radius
-    public void sendPlayToPlayer(ServerPlayer player) {
-        try (MemoryStack memoryStack = MemoryStack.stackPush()) {
-            FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.wrappedBuffer(memoryStack.malloc(getPlayPacketSize())));
-            buffer.resetWriterIndex();
-            writePlayPacket(buffer);
-            // TODO: this will be really bad if the packet is scheduled to be sent for later
-            ServerPlayNetworking.send(player, getPlayPacketChannelId(), buffer);
-            sentPlayPlayers.add(player);
+            // All clients that are currently playing it will be sent the pause packet.
+            // From there, the sentTargets set will be frozen, and when unpaused, all
+            // the users that were sent the pause packet will be sent the unpaused packet.
+            for(ServerPlayer player : sentTargets) {
+                try (MemoryStack memoryStack = MemoryStack.stackPush()) {
+                    FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.wrappedBuffer(memoryStack.malloc(Integer.BYTES + Byte.BYTES)));
+                    buffer.resetWriterIndex();
+                    buffer.writeInt(playId);
+                    buffer.writeBoolean(paused); // byte disguised as boolean
+                    // TODO: this will be really bad if the packet is scheduled to be sent for later
+                    ServerPlayNetworking.send(player, getPlayPacketChannelId(), buffer);
+                }
+            }
         }
+    }
+
+    public boolean isBroadcasting() {
+        return broadcasting;
+    }
+
+    public void setBroadcasting(boolean broadcasting) {
+        this.broadcasting = broadcasting;
     }
 
 }

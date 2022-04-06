@@ -2,7 +2,7 @@ package com.github.burgerguy.recordable.shared.block;
 
 import com.github.burgerguy.recordable.server.database.ScoreDatabaseContainer;
 import com.github.burgerguy.recordable.server.score.record.BlockScoreRecorder;
-import com.github.burgerguy.recordable.server.score.record.ScoreRecorderRegistryContainer;
+import com.github.burgerguy.recordable.server.score.ServerScoreRegistriesContainer;
 import com.github.burgerguy.recordable.shared.Recordable;
 import java.awt.Color;
 import javax.annotation.Nullable;
@@ -79,7 +79,7 @@ public class RecorderBlockEntity extends BlockEntity {
                 recordItem.addTagElement("Color", IntTag.valueOf(Color.HSBtoRGB((float) Math.random(), 1.0f, 0.8f)));
                 dropRecord();
             });
-            ((ScoreRecorderRegistryContainer) serverLevel).getScoreRecorderRegistry().addRecorder(scoreRecorder);
+            ((ServerScoreRegistriesContainer) serverLevel).getScoreRecorderRegistry().add(scoreRecorder);
         }
     }
 
@@ -89,7 +89,7 @@ public class RecorderBlockEntity extends BlockEntity {
         if (level == null) throw new IllegalStateException("Removed recorder block entity with no level");
         if (!level.isClientSide) {
             ServerLevel serverLevel = (ServerLevel) level;
-            ((ScoreRecorderRegistryContainer) serverLevel).getScoreRecorderRegistry().removeRecorder(scoreRecorder);
+            ((ServerScoreRegistriesContainer) serverLevel).getScoreRecorderRegistry().remove(scoreRecorder);
             scoreRecorder.close();
             scoreRecorder = null;
         }

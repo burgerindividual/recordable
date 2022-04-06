@@ -129,11 +129,11 @@ TODO:
 add dyeing of discs
 add title and author writing
 add animations to recorder
-move playing to jukebox
+move playing to jukebox (done)
 display color in recorder/use color provider
 fix sound, normalize and make more realistic
 add lmdb dynamic resizing
-add lmbd mixins to avoid crash
+add lmbd mixins to avoid crash (done)
 
 Press for vinyls, requires copper master
 

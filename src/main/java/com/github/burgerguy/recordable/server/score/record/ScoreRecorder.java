@@ -2,6 +2,8 @@ package com.github.burgerguy.recordable.server.score.record;
 
 import com.github.burgerguy.recordable.server.database.ScoreDatabase;
 import com.github.burgerguy.recordable.shared.score.ScoreConstants;
+import com.mojang.math.Quaternion;
+import com.mojang.math.Vector3f;
 import java.io.Closeable;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -36,6 +38,7 @@ public abstract class ScoreRecorder implements Closeable {
     private final ScoreDatabase database;
     private final OnStopCallback onStopCallback;
 
+    private Quaternion currentRotation;
     private ByteBuffer rawScoreBuffer;
     private ByteBuffer tickHeaderPointer;
     private short currentTick;
@@ -43,6 +46,7 @@ public abstract class ScoreRecorder implements Closeable {
     private boolean hasTicked;
     private boolean closed;
     private boolean recording;
+
 
     /**
      * The stop callback should be used for saving the disk item, etc and can happen even when stop isn't invoked by the user.
@@ -55,6 +59,7 @@ public abstract class ScoreRecorder implements Closeable {
     public abstract double getXPos();
     public abstract double getYPos();
     public abstract double getZPos();
+    public abstract Quaternion createRotation();
 
     public abstract boolean isInRange(double x, double y, double z, float volume);
 
@@ -111,6 +116,8 @@ public abstract class ScoreRecorder implements Closeable {
      * Only mixins will call this. You probably don't want to call it manually.
      */
     public void tick() {
+        currentRotation = createRotation();
+
         if (currentTickSoundCount > 0) {
             tickHeaderPointer.putShort(currentTick);
             tickHeaderPointer.put(currentTickSoundCount);
@@ -135,10 +142,14 @@ public abstract class ScoreRecorder implements Closeable {
 
         rawScoreBuffer.putInt(Registry.SOUND_EVENT.getId(sound)); // sound ID, registry needs to be synced with server
 
+        // rotate around recorder to compensate for orientation
+        Vector3f newPos = new Vector3f((float) (x - getXPos()), (float) (y - getYPos()), (float) (z - getZPos()));
+        newPos.transform(currentRotation);
+
         // relative pos to sound source from recording location
-        rawScoreBuffer.putFloat((float) (x - getXPos()));
-        rawScoreBuffer.putFloat((float) (y - getYPos()));
-        rawScoreBuffer.putFloat((float) (z - getZPos()));
+        rawScoreBuffer.putFloat(newPos.x());
+        rawScoreBuffer.putFloat(newPos.y());
+        rawScoreBuffer.putFloat(newPos.z());
 
         rawScoreBuffer.putFloat(volume);
         rawScoreBuffer.putFloat(pitch);

@@ -1,7 +1,7 @@
 package com.github.burgerguy.recordable.shared.block;
 
 import com.github.burgerguy.recordable.server.database.ScoreDatabaseContainer;
-import com.github.burgerguy.recordable.server.score.record.BlockScoreRecorder;
+import com.github.burgerguy.recordable.server.score.record.BlockEntityScoreRecorder;
 import com.github.burgerguy.recordable.server.score.ServerScoreRegistriesContainer;
 import com.github.burgerguy.recordable.shared.Recordable;
 import java.awt.Color;
@@ -24,7 +24,7 @@ public class RecorderBlockEntity extends BlockEntity {
     public static final BlockEntityType<RecorderBlockEntity> INSTANCE = FabricBlockEntityTypeBuilder.create(RecorderBlockEntity::new, RecorderBlock.INSTANCE).build(null);
     public static final ResourceLocation IDENTIFIER = new ResourceLocation(Recordable.MOD_ID, "recorder");
 
-    private BlockScoreRecorder scoreRecorder;
+    private BlockEntityScoreRecorder scoreRecorder;
     private ItemStack recordItem; // the record has to be blank
 
     public RecorderBlockEntity(BlockPos pos, BlockState state) {
@@ -74,7 +74,7 @@ public class RecorderBlockEntity extends BlockEntity {
         super.setLevel(level);
         if (!level.isClientSide) {
             ServerLevel serverLevel = (ServerLevel) level;
-            scoreRecorder = new BlockScoreRecorder(getBlockPos(), ((ScoreDatabaseContainer) serverLevel.getServer()).getScoreDatabase(), (r, id) -> {
+            scoreRecorder = new BlockEntityScoreRecorder(this, ((ScoreDatabaseContainer) serverLevel.getServer()).getScoreDatabase(), (r, id) -> {
                 recordItem.addTagElement("ScoreID", LongTag.valueOf(id));
                 recordItem.addTagElement("Color", IntTag.valueOf(Color.HSBtoRGB((float) Math.random(), 1.0f, 0.8f)));
                 dropRecord();
@@ -112,7 +112,7 @@ public class RecorderBlockEntity extends BlockEntity {
     }
 
     @Nullable
-    public BlockScoreRecorder getScoreRecorder() {
+    public BlockEntityScoreRecorder getScoreRecorder() {
         return scoreRecorder;
     }
 }

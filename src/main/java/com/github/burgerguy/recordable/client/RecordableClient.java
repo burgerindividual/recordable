@@ -4,6 +4,7 @@ import com.github.burgerguy.recordable.client.score.FutureScore;
 import com.github.burgerguy.recordable.client.score.Score;
 import com.github.burgerguy.recordable.client.score.cache.ScoreCacheContainer;
 import com.github.burgerguy.recordable.client.score.play.BlockScorePlayer;
+import com.github.burgerguy.recordable.client.score.play.RelativeScorePlayer;
 import com.github.burgerguy.recordable.client.score.play.ScorePlayerRegistry;
 import com.github.burgerguy.recordable.client.score.play.ScorePlayerRegistryContainer;
 import com.github.burgerguy.recordable.shared.Recordable;
@@ -45,7 +46,7 @@ public class RecordableClient implements ClientModInitializer {
 
             client.execute(() -> {
                 ScorePlayerRegistry scorePlayerRegistry = ((ScorePlayerRegistryContainer) client.getConnection()).getScorePlayerRegistry();
-                scorePlayerRegistry.play(playId, new BlockScorePlayer(score, currentTick, client.getSoundManager(), blockPos));
+                scorePlayerRegistry.play(playId, new RelativeScorePlayer(score, currentTick, client.getSoundManager()));
             });
         });
 

@@ -1,6 +1,6 @@
 package com.github.burgerguy.recordable.shared.block;
 
-import com.github.burgerguy.recordable.server.score.record.BlockScoreRecorder;
+import com.github.burgerguy.recordable.server.score.record.BlockEntityScoreRecorder;
 import com.github.burgerguy.recordable.shared.Recordable;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.minecraft.core.BlockPos;
@@ -76,7 +76,7 @@ public class RecorderBlock extends BaseEntityBlock {
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         if (level.getBlockEntity(pos) instanceof RecorderBlockEntity recorderBlockEntity) {
             if (!level.isClientSide) {
-                BlockScoreRecorder scoreRecorder = recorderBlockEntity.getScoreRecorder();
+                BlockEntityScoreRecorder scoreRecorder = recorderBlockEntity.getScoreRecorder();
                 if (scoreRecorder == null) return InteractionResult.FAIL;
                 if (scoreRecorder.isRecording()) {
                     scoreRecorder.stop();

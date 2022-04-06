@@ -1,6 +1,7 @@
 package com.github.burgerguy.recordable.server.score.record;
 
 import com.github.burgerguy.recordable.server.database.ScoreDatabase;
+import com.mojang.math.Quaternion;
 import net.minecraft.world.entity.Entity;
 
 public class EntityScoreRecorder extends ScoreRecorder {
@@ -24,6 +25,11 @@ public class EntityScoreRecorder extends ScoreRecorder {
     @Override
     public double getZPos() {
         return entity.getZ();
+    }
+
+    @Override
+    public Quaternion createRotation() {
+        return new Quaternion(entity.getXRot(), entity.getYRot(), 0.0f, false);
     }
 
     @Override

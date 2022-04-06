@@ -134,6 +134,8 @@ display color in recorder/use color provider
 fix sound, normalize and make more realistic
 add lmdb dynamic resizing
 add lmbd mixins to avoid crash (done)
+inject into gameevent and levelevent
+fix rotation
 
 Press for vinyls, requires copper master
 

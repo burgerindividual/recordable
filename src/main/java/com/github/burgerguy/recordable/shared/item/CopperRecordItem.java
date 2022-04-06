@@ -2,7 +2,7 @@ package com.github.burgerguy.recordable.shared.item;
 
 import com.github.burgerguy.recordable.server.score.broadcast.ScoreBroadcaster;
 import com.github.burgerguy.recordable.server.score.broadcast.ScoreBroadcasterContainer;
-import com.github.burgerguy.recordable.server.score.record.BlockScoreRecorder;
+import com.github.burgerguy.recordable.server.score.record.BlockEntityScoreRecorder;
 import com.github.burgerguy.recordable.shared.Recordable;
 import com.github.burgerguy.recordable.shared.block.RecorderBlockEntity;
 import java.util.List;
@@ -55,7 +55,7 @@ public class CopperRecordItem extends Item {
             if (!itemStack.getOrCreateTag().contains("ScoreID", Tag.TAG_LONG)) {
                 recorderBlockEntity.setRecordItem(itemStack.split(1));
                 if (!level.isClientSide) {
-                    BlockScoreRecorder scoreRecorder = recorderBlockEntity.getScoreRecorder();
+                    BlockEntityScoreRecorder scoreRecorder = recorderBlockEntity.getScoreRecorder();
                     if (scoreRecorder == null) return InteractionResult.FAIL;
                     if (!scoreRecorder.isRecording()) {
                         scoreRecorder.start();

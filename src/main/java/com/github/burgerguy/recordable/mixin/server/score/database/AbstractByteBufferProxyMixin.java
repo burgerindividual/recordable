@@ -24,7 +24,7 @@ public class AbstractByteBufferProxyMixin {
     }
 
     /**
-     * Don't use the hidden DirectBuffer api.
+     * @reason Don't use the hidden DirectBuffer api.
      * @author burgerdude
      */
     @Overwrite(remap = false)

@@ -69,9 +69,6 @@ public class Recordable implements ModInitializer {
 		// block entity registry
 		Registry.register(Registry.BLOCK_ENTITY_TYPE, RecorderBlockEntity.IDENTIFIER, RecorderBlockEntity.INSTANCE);
 
-		// color provider registry
-		ColorProviderRegistry.ITEM.register(CopperRecordItem::getColor, CopperRecordItem.INSTANCE);
-
 		// event registry
 		ServerLifecycleEvents.SERVER_STARTING.register(server -> {
 			// kinda conc, but should be fine for now

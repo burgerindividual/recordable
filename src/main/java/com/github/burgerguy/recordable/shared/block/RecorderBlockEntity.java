@@ -4,10 +4,13 @@ import com.github.burgerguy.recordable.server.database.ScoreDatabaseContainer;
 import com.github.burgerguy.recordable.server.score.record.BlockEntityScoreRecorder;
 import com.github.burgerguy.recordable.server.score.ServerScoreRegistriesContainer;
 import com.github.burgerguy.recordable.shared.Recordable;
+import com.mojang.math.Quaternion;
+import com.mojang.math.Vector3f;
 import java.awt.Color;
 import javax.annotation.Nullable;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.LongTag;
@@ -19,6 +22,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
 public class RecorderBlockEntity extends BlockEntity {
     public static final BlockEntityType<RecorderBlockEntity> INSTANCE = FabricBlockEntityTypeBuilder.create(RecorderBlockEntity::new, RecorderBlock.INSTANCE).build(null);
@@ -74,11 +78,24 @@ public class RecorderBlockEntity extends BlockEntity {
         super.setLevel(level);
         if (!level.isClientSide) {
             ServerLevel serverLevel = (ServerLevel) level;
-            scoreRecorder = new BlockEntityScoreRecorder(this, ((ScoreDatabaseContainer) serverLevel.getServer()).getScoreDatabase(), (r, id) -> {
-                recordItem.addTagElement("ScoreID", LongTag.valueOf(id));
-                recordItem.addTagElement("Color", IntTag.valueOf(Color.HSBtoRGB((float) Math.random(), 1.0f, 0.8f)));
-                dropRecord();
-            });
+            scoreRecorder = new BlockEntityScoreRecorder(
+                    this,
+                    () -> {
+                        BlockState blockState = RecorderBlockEntity.this.getBlockState();
+                        Direction blockFacing = blockState.getValue(BlockStateProperties.HORIZONTAL_FACING);
+                        Quaternion micFacing = blockFacing.getClockWise().getClockWise().getRotation(); // turn 180 degrees
+                        Quaternion baseMicFacing = Direction.SOUTH.getRotation();
+                        micFacing.mul(baseMicFacing);
+//                        baseMicFacing.mul(micFacing);
+                        return micFacing;
+                    },
+                    ((ScoreDatabaseContainer) serverLevel.getServer()).getScoreDatabase(),
+                    (r, id) -> {
+                        recordItem.addTagElement("ScoreID", LongTag.valueOf(id));
+                        recordItem.addTagElement("Color", IntTag.valueOf(Color.HSBtoRGB((float) Math.random(), 1.0f, 0.8f)));
+                        dropRecord();
+                    }
+            );
             ((ServerScoreRegistriesContainer) serverLevel).getScoreRecorderRegistry().add(scoreRecorder);
         }
     }

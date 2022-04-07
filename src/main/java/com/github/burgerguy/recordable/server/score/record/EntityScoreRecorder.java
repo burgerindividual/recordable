@@ -29,7 +29,7 @@ public class EntityScoreRecorder extends ScoreRecorder {
 
     @Override
     public Quaternion createRotation() {
-        return new Quaternion(entity.getXRot(), entity.getYRot(), 0.0f, false);
+        return new Quaternion(entity.getXRot(), entity.getYRot(), 0.0f, true);
     }
 
     @Override

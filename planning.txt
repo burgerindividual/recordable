@@ -145,3 +145,6 @@ paint in label maker with dyes
 Allow labels to be applied and removed from copper records via crafting, but vinyl has to have label applied during press process
 
 copy discs with press with vinyls
+
+playLocalSound has distance delay calculation, use on client would be easier, but on server would probably be better (do later)
+TickableSoundInstance store in db (later)

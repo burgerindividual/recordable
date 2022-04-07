@@ -83,11 +83,14 @@ public class RecorderBlockEntity extends BlockEntity {
                     () -> {
                         BlockState blockState = RecorderBlockEntity.this.getBlockState();
                         Direction blockFacing = blockState.getValue(BlockStateProperties.HORIZONTAL_FACING);
-                        Quaternion micFacing = blockFacing.getClockWise().getClockWise().getRotation(); // turn 180 degrees
-                        Quaternion baseMicFacing = Direction.SOUTH.getRotation();
-                        micFacing.mul(baseMicFacing);
-//                        baseMicFacing.mul(micFacing);
-                        return micFacing;
+                        Direction micFacing = blockFacing.getOpposite();
+                        return switch(micFacing) {
+                            case NORTH -> Quaternion.ONE;
+                            case EAST -> Vector3f.YP.rotationDegrees(90.0F);
+                            case SOUTH -> Vector3f.YP.rotationDegrees(180.0F);
+                            case WEST -> Vector3f.YP.rotationDegrees(-90.0F);
+                            default -> throw new IllegalStateException("Unexpected rotation value: " + blockFacing);
+                        };
                     },
                     ((ScoreDatabaseContainer) serverLevel.getServer()).getScoreDatabase(),
                     (r, id) -> {

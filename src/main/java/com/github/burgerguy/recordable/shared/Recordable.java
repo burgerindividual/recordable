@@ -59,17 +59,17 @@ public class Recordable implements ModInitializer {
 			LOGGER.error("Unable to force load LMDB into Knot", t);
 		}
 
-		// block registry
+		//// block registry
 		Registry.register(Registry.BLOCK, RecorderBlock.IDENTIFIER, RecorderBlock.INSTANCE);
 
-		// item registry
+		//// item registry
 		Registry.register(Registry.ITEM, RecorderBlock.IDENTIFIER, new BlockItem(RecorderBlock.INSTANCE, new FabricItemSettings().group(CreativeModeTab.TAB_MISC)));
 		Registry.register(Registry.ITEM, CopperRecordItem.IDENTIFIER, CopperRecordItem.INSTANCE);
 
-		// block entity registry
+		//// block entity registry
 		Registry.register(Registry.BLOCK_ENTITY_TYPE, RecorderBlockEntity.IDENTIFIER, RecorderBlockEntity.INSTANCE);
 
-		// event registry
+		//// event registry
 		ServerLifecycleEvents.SERVER_STARTING.register(server -> {
 			// kinda conc, but should be fine for now
 			((ScoreDatabaseContainer) server).setScoreDatabase(new ScoreDatabase(server.getWorldPath(LevelResource.ROOT).resolve(SCORE_DATABASE_FILE_NAME)));
@@ -92,7 +92,7 @@ public class Recordable implements ModInitializer {
 			}
 		});
 
-		// networking registry
+		//// networking registry
 		ServerPlayNetworking.registerGlobalReceiver(REQUEST_SCORE_ID, (server, player, handler, buffer, responseSender) -> {
 			long scoreId = buffer.readLong();
 

@@ -9,7 +9,6 @@ import org.spongepowered.asm.mixin.Mixin;
 @Mixin(MinecraftServer.class)
 public class MinecraftServerMixin implements ScoreDatabaseContainer {
     private ScoreDatabase scoreDatabase;
-    private TickVolumeCache tickVolumeCache;
 
     @Override
     public ScoreDatabase getScoreDatabase() {
@@ -17,13 +16,7 @@ public class MinecraftServerMixin implements ScoreDatabaseContainer {
     }
 
     @Override
-    public TickVolumeCache getTickVolumeCache() {
-        return tickVolumeCache;
-    }
-
-    @Override
     public void setScoreDatabase(ScoreDatabase database) {
         this.scoreDatabase = database;
-        this.tickVolumeCache = new TickVolumeCache(database);
     }
 }

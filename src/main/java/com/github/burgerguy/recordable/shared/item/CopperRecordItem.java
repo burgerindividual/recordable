@@ -123,15 +123,16 @@ public class CopperRecordItem extends Item {
     }
 
     public static int getColor(ItemStack stack, int layerId) {
-        if (layerId == 1) { // middle color layer
-            if (stack.getOrCreateTag().contains("Color", Tag.TAG_INT)) {
-                return stack.getOrCreateTag().getInt("Color");
+        if (layerId == 1) { // engravings layer if written to
+            if (stack.getOrCreateTag().contains("ScoreID", Tag.TAG_LONG)) {
+                return 0xd66d48; // lighter color for engravings
             } else {
                 return 0xbd5e3b; // normal copper color
             }
-        } else if (layerId == 2) { // engravings layer if written to
-            if (stack.getOrCreateTag().contains("ScoreID", Tag.TAG_LONG)) {
-                return 0xd66d48; // lighter color for engravings
+        } else if (layerId >= 2 && layerId <= 11) { // cover colors
+            if (stack.getOrCreateTag().contains("Colors", Tag.TAG_INT_ARRAY)) {
+                int[] colors = stack.getOrCreateTag().getIntArray("Colors");
+                return colors[layerId - 2]; // first 2 layers the main layer and engravings
             } else {
                 return 0xbd5e3b; // normal copper color
             }

@@ -4,6 +4,7 @@ import com.github.burgerguy.recordable.server.database.ScoreDatabaseContainer;
 import com.github.burgerguy.recordable.server.score.ServerScoreRegistriesContainer;
 import com.github.burgerguy.recordable.server.score.broadcast.BlockScoreBroadcaster;
 import com.github.burgerguy.recordable.server.score.broadcast.ScoreBroadcasterContainer;
+import com.github.burgerguy.recordable.shared.score.PlayerConstants;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -30,7 +31,8 @@ public abstract class JukeboxBlockEntityMixin extends BlockEntity implements Sco
         super.setLevel(level);
         if (!level.isClientSide) {
             ServerLevel serverLevel = (ServerLevel) level;
-            scoreBroadcaster = new BlockScoreBroadcaster(((ScoreDatabaseContainer) serverLevel.getServer()).getTickVolumeCache(), getBlockPos());
+            // 64 = 4 volume with records * 16 blocks range factor
+            scoreBroadcaster = new BlockScoreBroadcaster(PlayerConstants.DISTANCE_FACTOR * PlayerConstants.VOLUME, getBlockPos());
             ((ServerScoreRegistriesContainer) serverLevel).getScoreBroadcasterRegistry().add(scoreBroadcaster);
         }
     }

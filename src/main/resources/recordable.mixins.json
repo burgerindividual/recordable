@@ -12,7 +12,8 @@
   ],
   "client": [
     "client.score.cache.ClientPacketListenerMixin",
-    "client.score.play.ClientPacketListenerMixin"
+    "client.score.play.ClientPacketListenerMixin",
+    "client.render.item.ItemModelGeneratorMixin"
   ],
   "injectors": {
     "defaultRequire": 1

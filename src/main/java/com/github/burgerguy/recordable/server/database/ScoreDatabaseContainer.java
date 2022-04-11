@@ -5,6 +5,5 @@ package com.github.burgerguy.recordable.server.database;
  */
 public interface ScoreDatabaseContainer {
     ScoreDatabase getScoreDatabase();
-    TickVolumeCache getTickVolumeCache();
     void setScoreDatabase(ScoreDatabase database);
 }

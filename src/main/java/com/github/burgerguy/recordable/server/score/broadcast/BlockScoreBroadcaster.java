@@ -1,23 +1,22 @@
 package com.github.burgerguy.recordable.server.score.broadcast;
 
-import com.github.burgerguy.recordable.server.database.TickVolumeCache;
 import com.github.burgerguy.recordable.shared.Recordable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 
-public class BlockScoreBroadcaster extends VolumeRadiusScoreBroadcaster {
+public class BlockScoreBroadcaster extends ScoreBroadcaster {
 
+    private final float radius;
     private final BlockPos blockPos;
 
-    public BlockScoreBroadcaster(TickVolumeCache tickVolumeCache, BlockPos blockPos) {
-        super(tickVolumeCache);
+    public BlockScoreBroadcaster(float radius, BlockPos blockPos) {
+        this.radius = radius;
         this.blockPos = blockPos;
     }
 
     @Override
     public boolean isInRange(double x, double y, double z) {
-        double radius = getCurrentRadius();
         return blockPos.distToCenterSqr(x, y, z) < radius * radius;
     }
 

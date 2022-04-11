@@ -148,3 +148,7 @@ copy discs with press with vinyls
 
 playLocalSound has distance delay calculation, use on client would be easier, but on server would probably be better (do later)
 TickableSoundInstance store in db (later)
+handle recording other records playing, my own and default
+
+fix relative audio with hrtf
+make audio quieter when further away from jukebox

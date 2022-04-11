@@ -4,6 +4,7 @@ import com.github.burgerguy.recordable.client.score.FutureScore;
 import com.github.burgerguy.recordable.client.score.PartialSoundInstance;
 import com.github.burgerguy.recordable.client.score.ScheduledSoundGroup;
 import com.github.burgerguy.recordable.client.score.Score;
+import javax.annotation.Nullable;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.SoundManager;
 
@@ -39,7 +40,10 @@ public abstract class ScorePlayer {
             ScheduledSoundGroup scheduledSoundGroup = score.orderedScheduledSoundGroups()[arrayIdx];
             if (currentTick == scheduledSoundGroup.tick()) {
                 for (PartialSoundInstance partialSoundInstance : scheduledSoundGroup.sounds()) {
-                    soundManager.play(createSoundInstance(partialSoundInstance));
+                    SoundInstance soundInstance = createSoundInstance(partialSoundInstance);
+                    if (soundInstance != null) {
+                        soundManager.play(soundInstance);
+                    }
                 }
                 arrayIdx++;
             }
@@ -47,6 +51,7 @@ public abstract class ScorePlayer {
         currentTick++;
     }
 
+    @Nullable
     public abstract SoundInstance createSoundInstance(PartialSoundInstance partialSoundInstance);
 
     public void setPaused(boolean paused) {

@@ -1,6 +1,7 @@
 import net.fabricmc.loom.api.mappings.layered.MappingContext
 import net.fabricmc.loom.api.mappings.layered.MappingLayer
 import net.fabricmc.loom.api.mappings.layered.MappingsNamespace
+import net.fabricmc.loom.api.mappings.layered.spec.MappingsSpec
 import net.fabricmc.loom.configuration.providers.mappings.LayeredMappingSpec
 import net.fabricmc.loom.configuration.providers.mappings.LayeredMappingSpecBuilderImpl
 import net.fabricmc.loom.configuration.providers.mappings.LayeredMappingsProcessor
@@ -30,50 +31,61 @@ repositories {
 		name = 'GeckoLib'
 		url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
 	}
+	maven {
+		name = 'Fabric'
+		url = 'https://maven.fabricmc.net/'
+	}
 }
 
 dependencies {
+	runtimeOnly "net.fabricmc:fabric-loom:0.11-SNAPSHOT"
+
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 
-	// massive hack to allow geckolib to work with mojmap
+	// auto-generate mappings to stop mojmap conflicts with geckolib
 	mappings loom.layered() {
-		var builder = new LayeredMappingSpecBuilderImpl()
-		builder.officialMojangMappings()
-		builder.parchment("org.parchmentmc.data:${project.parchment_mappings}@zip")
-		LayeredMappingSpec firstPassMappingSpec = builder.build()
+		officialMojangMappings()
+		parchment("org.parchmentmc.data:${project.parchment_mappings}@zip")
+		// don't convert this to a dynamic instantiation, otherwise java won't see the overridden hashCode
+		addLayer(new MappingsSpec<MappingLayer>() {
+			final Map<String, String> METHOD_NAME_MAP = Map.of(
+					"getTextureLocation", "_getTextureLocation"
+			)
 
-		it.addLayer({ MappingContext mappingContext ->
-			return new MappingLayer() {
-
-				@SuppressWarnings('GroovyAssignabilityCheck')
-				@Override
-				void visit(MappingVisitor mappingVisitor) throws IOException {
-					// process and read current mappings state
-					LayeredMappingsProcessor layeredMappingsProcessor = new LayeredMappingsProcessor(firstPassMappingSpec)
-					MemoryMappingTree memoryMappingTree = layeredMappingsProcessor.getMappings(layeredMappingsProcessor.resolveLayers(mappingContext))
-
-					memoryMappingTree.getClasses().forEach({classEntry ->
-						classEntry.methods.forEach(methodEntry -> {
-							if (methodEntry.getName(MappingsNamespace.NAMED.toString()) == "getTextureLocation") { //  && methodEntry.comment == "Returns the location of an entity's texture."
-								//noinspection GroovyAccessibility
-								methodEntry.srcName = "_getTextureLocation"
-							}
+			@Override
+			MappingLayer createLayer(MappingContext mappingContext) {
+				return new MappingLayer() {
+					@Override
+					void visit(MappingVisitor mappingVisitor) throws IOException {
+						MemoryMappingTree memoryMappingTree = mappingVisitor as MemoryMappingTree
+						memoryMappingTree.getClasses().forEach({ classEntry ->
+							classEntry.methods.forEach(methodEntry -> {
+								String newMethodName = METHOD_NAME_MAP.get(methodEntry.getName(MappingsNamespace.NAMED.toString()))
+								if (newMethodName != null) {
+									//noinspection GroovyAccessibility
+									methodEntry.srcName = newMethodName
+								}
+							})
 						})
-					})
+					}
 
-					memoryMappingTree.accept(mappingVisitor)
-				}
+					@Override
+					MappingsNamespace getSourceNamespace() {
+						return MappingsNamespace.NAMED
+					}
 
-				@Override
-				MappingsNamespace getSourceNamespace() {
-					return MappingsNamespace.NAMED
+					@Override
+					List<Class<? extends MappingLayer>> dependsOn() {
+						return List.of(IntermediaryMappingLayer.class)
+					}
 				}
+			}
 
-				@Override
-				List<Class<? extends MappingLayer>> dependsOn() {
-					return List.of(IntermediaryMappingLayer.class) // MojangMappingLayer.class
-				}
+			@Override
+			int hashCode() {
+				// used to make sure caches stay consistent. if this file changes, change this hash code.
+				return METHOD_NAME_MAP.hashCode()
 			}
 		})
 	}

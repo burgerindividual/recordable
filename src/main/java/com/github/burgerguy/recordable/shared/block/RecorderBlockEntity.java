@@ -23,10 +23,15 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import software.bernie.geckolib3.core.IAnimatable;
+import software.bernie.geckolib3.core.manager.AnimationData;
+import software.bernie.geckolib3.core.manager.AnimationFactory;
 
-public class RecorderBlockEntity extends BlockEntity {
+public class RecorderBlockEntity extends BlockEntity implements IAnimatable {
     public static final BlockEntityType<RecorderBlockEntity> INSTANCE = FabricBlockEntityTypeBuilder.create(RecorderBlockEntity::new, RecorderBlock.INSTANCE).build(null);
     public static final ResourceLocation IDENTIFIER = new ResourceLocation(Recordable.MOD_ID, "recorder");
+
+    private final AnimationFactory factory = new AnimationFactory(this);
 
     private BlockEntityScoreRecorder scoreRecorder;
     private ItemStack recordItem; // the record has to be blank
@@ -134,5 +139,15 @@ public class RecorderBlockEntity extends BlockEntity {
     @Nullable
     public BlockEntityScoreRecorder getScoreRecorder() {
         return scoreRecorder;
+    }
+
+    @Override
+    public void registerControllers(AnimationData animationData) {
+
+    }
+
+    @Override
+    public AnimationFactory getFactory() {
+        return factory;
     }
 }

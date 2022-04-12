@@ -84,7 +84,7 @@ dependencies {
 
 			@Override
 			int hashCode() {
-				// used to make sure caches stay consistent. if this file changes, change this hash code.
+				// used to make sure caches stay consistent
 				return METHOD_NAME_MAP.hashCode()
 			}
 		})

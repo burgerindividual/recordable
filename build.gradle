@@ -1,3 +1,13 @@
+import net.fabricmc.loom.api.mappings.layered.MappingContext
+import net.fabricmc.loom.api.mappings.layered.MappingLayer
+import net.fabricmc.loom.api.mappings.layered.MappingsNamespace
+import net.fabricmc.loom.configuration.providers.mappings.LayeredMappingSpec
+import net.fabricmc.loom.configuration.providers.mappings.LayeredMappingSpecBuilderImpl
+import net.fabricmc.loom.configuration.providers.mappings.LayeredMappingsProcessor
+import net.fabricmc.loom.configuration.providers.mappings.intermediary.IntermediaryMappingLayer
+import net.fabricmc.mappingio.MappingVisitor
+import net.fabricmc.mappingio.tree.MemoryMappingTree
+
 plugins {
 	id 'fabric-loom' version '0.11-SNAPSHOT'
 	id 'maven-publish'
@@ -25,10 +35,49 @@ repositories {
 dependencies {
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+
+	// massive hack to allow geckolib to work with mojmap
 	mappings loom.layered() {
-		officialMojangMappings()
-		parchment("org.parchmentmc.data:${project.parchment_mappings}@zip")
+		var builder = new LayeredMappingSpecBuilderImpl()
+		builder.officialMojangMappings()
+		builder.parchment("org.parchmentmc.data:${project.parchment_mappings}@zip")
+		LayeredMappingSpec firstPassMappingSpec = builder.build()
+
+		it.addLayer({ MappingContext mappingContext ->
+			return new MappingLayer() {
+
+				@SuppressWarnings('GroovyAssignabilityCheck')
+				@Override
+				void visit(MappingVisitor mappingVisitor) throws IOException {
+					// process and read current mappings state
+					LayeredMappingsProcessor layeredMappingsProcessor = new LayeredMappingsProcessor(firstPassMappingSpec)
+					MemoryMappingTree memoryMappingTree = layeredMappingsProcessor.getMappings(layeredMappingsProcessor.resolveLayers(mappingContext))
+
+					memoryMappingTree.getClasses().forEach({classEntry ->
+						classEntry.methods.forEach(methodEntry -> {
+							if (methodEntry.getName(MappingsNamespace.NAMED.toString()) == "getTextureLocation") { //  && methodEntry.comment == "Returns the location of an entity's texture."
+								//noinspection GroovyAccessibility
+								methodEntry.srcName = "_getTextureLocation"
+							}
+						})
+					})
+
+					memoryMappingTree.accept(mappingVisitor)
+				}
+
+				@Override
+				MappingsNamespace getSourceNamespace() {
+					return MappingsNamespace.NAMED
+				}
+
+				@Override
+				List<Class<? extends MappingLayer>> dependsOn() {
+					return List.of(IntermediaryMappingLayer.class) // MojangMappingLayer.class
+				}
+			}
+		})
 	}
+
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
 	// for some reason the native and normal jffi clash, so we have to just use the native for some stupid reason
@@ -39,7 +88,7 @@ dependencies {
 	runtimeOnly "com.github.jnr:jffi:1.3.9:native"
 	include "org.lmdbjava:lmdbjava:0.8.2"
 
-	implementation ('software.bernie.geckolib:geckolib-fabric-1.18:3.0.36')
+	modImplementation "software.bernie.geckolib:geckolib-fabric-1.18:3.0.36"
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"

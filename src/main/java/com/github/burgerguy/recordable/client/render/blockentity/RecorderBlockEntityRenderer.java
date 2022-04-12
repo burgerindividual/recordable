@@ -1,6 +1,5 @@
 package com.github.burgerguy.recordable.client.render.blockentity;
 
-import com.github.burgerguy.recordable.shared.Recordable;
 import com.github.burgerguy.recordable.shared.block.RecorderBlock;
 import com.github.burgerguy.recordable.shared.block.RecorderBlockEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -11,7 +10,6 @@ import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.resources.ResourceLocation;
 
 public class RecorderBlockEntityRenderer implements BlockEntityRenderer<RecorderBlockEntity> {
     private static final float TICKS_PER_REVOLUTION = 20.0f / ((100.0f/3.0f) / 60.0f); // 33 1/3 rpm to ticks per revolution

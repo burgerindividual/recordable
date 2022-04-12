@@ -1,6 +1,7 @@
 package com.github.burgerguy.recordable.client;
 
 import com.github.burgerguy.recordable.client.network.ClientPacketHandler;
+import com.github.burgerguy.recordable.client.render.blockentity.RecorderBlockRenderer;
 import com.github.burgerguy.recordable.client.score.play.ScorePlayerRegistry;
 import com.github.burgerguy.recordable.client.score.play.ScorePlayerRegistryContainer;
 import com.github.burgerguy.recordable.shared.Recordable;
@@ -12,6 +13,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.BlockEntityRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import software.bernie.geckolib3.GeckoLib;
 
 public class RecordableClient implements ClientModInitializer {
@@ -39,6 +41,6 @@ public class RecordableClient implements ClientModInitializer {
         ColorProviderRegistry.ITEM.register(CopperRecordItem::getColor, CopperRecordItem.INSTANCE);
 
         //// BER registry
-//        BlockEntityRendererRegistry.register(RecorderBlockEntity.INSTANCE, RecorderBlockEntityRenderer::new);
+        BlockEntityRendererRegistry.register(RecorderBlockEntity.INSTANCE, (BlockEntityRendererProvider.Context context) -> new RecorderBlockRenderer());
     }
 }

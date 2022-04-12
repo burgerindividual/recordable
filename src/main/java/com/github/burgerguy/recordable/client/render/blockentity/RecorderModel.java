@@ -2,22 +2,29 @@ package com.github.burgerguy.recordable.client.render.blockentity;
 
 import com.github.burgerguy.recordable.shared.Recordable;
 import com.github.burgerguy.recordable.shared.block.RecorderBlockEntity;
+import com.github.burgerguy.recordable.shared.item.CopperRecordItem;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
 import software.bernie.geckolib3.model.AnimatedGeoModel;
 
 public class RecorderModel extends AnimatedGeoModel<RecorderBlockEntity> {
     @Override
-    public ResourceLocation getModelLocation(RecorderBlockEntity object) {
-        return new ResourceLocation(Recordable.MOD_ID, "geo/jack.geo.json");
+    public ResourceLocation getModelLocation(RecorderBlockEntity recorderBlockEntity) {
+        return new ResourceLocation(Recordable.MOD_ID, "geo/recorder.geo.json");
     }
 
     @Override
-    public ResourceLocation getTextureLocation(RecorderBlockEntity object) {
-        return new ResourceLocation(Recordable.MOD_ID, "textures/item/jack.png");
+    public ResourceLocation getTextureLocation(RecorderBlockEntity recorderBlockEntity) {
+        ItemStack record = recorderBlockEntity.getRecordItem();
+        if (record != null && CopperRecordItem.isWritten(record)) {
+            return new ResourceLocation(Recordable.MOD_ID, "textures/block/recorder_model_written.png");
+        } else {
+            return new ResourceLocation(Recordable.MOD_ID, "textures/block/recorder_model_unwritten.png");
+        }
     }
 
-    @Override
-    public ResourceLocation getAnimationFileLocation(RecorderBlockEntity object) {
-        return new ResourceLocation(Recordable.MOD_ID, "animations/jackinthebox.animation.json");
+        @Override
+    public ResourceLocation getAnimationFileLocation(RecorderBlockEntity recorderBlockEntity) {
+        return new ResourceLocation(Recordable.MOD_ID, "animations/recorder.animation.json");
     }
 }

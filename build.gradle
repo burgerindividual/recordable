@@ -31,15 +31,9 @@ repositories {
 		name = 'GeckoLib'
 		url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
 	}
-	maven {
-		name = 'Fabric'
-		url = 'https://maven.fabricmc.net/'
-	}
 }
 
 dependencies {
-	runtimeOnly "net.fabricmc:fabric-loom:0.11-SNAPSHOT"
-
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 
@@ -59,7 +53,7 @@ dependencies {
 					@Override
 					void visit(MappingVisitor mappingVisitor) throws IOException {
 						MemoryMappingTree memoryMappingTree = mappingVisitor as MemoryMappingTree
-						memoryMappingTree.getClasses().forEach({ classEntry ->
+						memoryMappingTree.getClasses().forEach(classEntry -> {
 							classEntry.methods.forEach(methodEntry -> {
 								String newMethodName = METHOD_NAME_MAP.get(methodEntry.getName(MappingsNamespace.NAMED.toString()))
 								if (newMethodName != null) {

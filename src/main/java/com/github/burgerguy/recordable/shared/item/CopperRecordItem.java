@@ -122,22 +122,27 @@ public class CopperRecordItem extends Item {
         }
     }
 
-    public static int getColor(ItemStack stack, int layerId) {
+    public static int getColor(ItemStack itemStack, int layerId) {
         if (layerId == 1) { // engravings layer if written to
-            if (stack.getOrCreateTag().contains("ScoreID", Tag.TAG_LONG)) {
+            if (CopperRecordItem.isWritten(itemStack)) {
                 return 0xd66d48; // lighter color for engravings
             } else {
                 return 0xbd5e3b; // normal copper color
             }
         } else if (layerId >= 2 && layerId <= 11) { // cover colors
-            if (stack.getOrCreateTag().contains("Colors", Tag.TAG_INT_ARRAY)) {
-                int[] colors = stack.getOrCreateTag().getIntArray("Colors");
+            if (itemStack.getOrCreateTag().contains("Colors", Tag.TAG_INT_ARRAY)) {
+                int[] colors = itemStack.getOrCreateTag().getIntArray("Colors");
                 return colors[layerId - 2]; // first 2 layers the main layer and engravings
             } else {
                 return 0xbd5e3b; // normal copper color
             }
         }
         return -1;
+    }
+
+    public static boolean isWritten(ItemStack itemStack) {
+        if (!itemStack.is(CopperRecordItem.INSTANCE)) return false;
+        return itemStack.getOrCreateTag().contains("ScoreID", Tag.TAG_LONG);
     }
 
 }

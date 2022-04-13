@@ -2,9 +2,6 @@ import net.fabricmc.loom.api.mappings.layered.MappingContext
 import net.fabricmc.loom.api.mappings.layered.MappingLayer
 import net.fabricmc.loom.api.mappings.layered.MappingsNamespace
 import net.fabricmc.loom.api.mappings.layered.spec.MappingsSpec
-import net.fabricmc.loom.configuration.providers.mappings.LayeredMappingSpec
-import net.fabricmc.loom.configuration.providers.mappings.LayeredMappingSpecBuilderImpl
-import net.fabricmc.loom.configuration.providers.mappings.LayeredMappingsProcessor
 import net.fabricmc.loom.configuration.providers.mappings.intermediary.IntermediaryMappingLayer
 import net.fabricmc.mappingio.MappingVisitor
 import net.fabricmc.mappingio.tree.MemoryMappingTree

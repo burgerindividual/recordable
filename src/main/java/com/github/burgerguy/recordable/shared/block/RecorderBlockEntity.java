@@ -1,13 +1,15 @@
 package com.github.burgerguy.recordable.shared.block;
 
 import com.github.burgerguy.recordable.server.database.ScoreDatabaseContainer;
-import com.github.burgerguy.recordable.server.score.record.BlockEntityScoreRecorder;
 import com.github.burgerguy.recordable.server.score.ServerScoreRegistriesContainer;
+import com.github.burgerguy.recordable.server.score.record.BlockEntityScoreRecorder;
 import com.github.burgerguy.recordable.shared.Recordable;
 import com.mojang.math.Quaternion;
 import com.mojang.math.Vector3f;
 import java.awt.Color;
 import javax.annotation.Nullable;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -37,8 +39,13 @@ public class RecorderBlockEntity extends BlockEntity implements IAnimatable {
 
     private final AnimationFactory factory = new AnimationFactory(this);
 
-    private BlockEntityScoreRecorder scoreRecorder;
     private ItemStack recordItem; // the record has to be blank
+
+    @Environment(EnvType.SERVER)
+    private BlockEntityScoreRecorder scoreRecorder;
+
+//    @Environment(EnvType.CLIENT)
+//    private boolean isRecording;
 
     public RecorderBlockEntity(BlockPos pos, BlockState state) {
         super(INSTANCE, pos, state);
@@ -151,8 +158,11 @@ public class RecorderBlockEntity extends BlockEntity implements IAnimatable {
     }
 
     private <E extends IAnimatable> PlayState predicate(AnimationEvent<E> event) {
-        event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.recorder.recording", true));
-        return PlayState.CONTINUE;
+        if (this.hasRecord()) {
+            event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.recorder.recording", true));
+            return PlayState.CONTINUE;
+        }
+        return PlayState.STOP;
     }
 
     @Override

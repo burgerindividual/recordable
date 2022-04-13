@@ -24,6 +24,51 @@
 							"vector": [0, 360, 0]
 						}
 					}
+				},
+				"scope": {
+					"position": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"stabilizer": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"arm_right": {
+					"position": {
+						"vector": [-1.5, 0, 0]
+					}
+				},
+				"writer": {
+					"position": {
+						"vector": [-1.5, 0, 0]
+					}
+				}
+			}
+		},
+		"animation.recorder.idle": {
+			"loop": "hold_on_last_frame",
+			"bones": {
+				"scope": {
+					"position": {
+						"vector": [-2, 0, 0]
+					}
+				},
+				"stabilizer": {
+					"rotation": {
+						"vector": [-145, 0, 0]
+					}
+				},
+				"arm_right": {
+					"position": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"writer": {
+					"position": {
+						"vector": [0, 0, 0]
+					}
 				}
 			}
 		}

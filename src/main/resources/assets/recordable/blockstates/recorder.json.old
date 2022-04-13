@@ -1,8 +1,0 @@
-{
-  "variants": {
-    "facing=north": { "model": "recordable:block/recorder" },
-    "facing=east":  { "model": "recordable:block/recorder", "y":  90 },
-    "facing=south": { "model": "recordable:block/recorder", "y": 180 },
-    "facing=west":  { "model": "recordable:block/recorder", "y": 270 }
-  }
-}

@@ -2,6 +2,7 @@ package com.github.burgerguy.recordable.shared.block;
 
 import com.github.burgerguy.recordable.server.score.record.BlockEntityScoreRecorder;
 import com.github.burgerguy.recordable.shared.Recordable;
+import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -9,6 +10,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -28,26 +32,27 @@ import org.jetbrains.annotations.Nullable;
 public class RecorderBlock extends BaseEntityBlock {
     public static final ResourceLocation IDENTIFIER = new ResourceLocation(Recordable.MOD_ID, "recorder");
     public static final Block INSTANCE = new RecorderBlock(FabricBlockSettings.of(Material.METAL).strength(4.0f));
+    public static final Item ITEM_INSTANCE = new BlockItem(INSTANCE, new FabricItemSettings().group(CreativeModeTab.TAB_MISC));
 
     private static final VoxelShape AABB_SOUTH = Shapes.or(
             Shapes.box(0, 0, 0, 1, 0.375, 0.9375),
-            Shapes.box(0, 0.375, 0.0625, 1, 1, 0.4375),
-            Shapes.box(0.125, 0.375, 0.4375, 0.75, 0.75, 0.9375)
+            Shapes.box(0, 0.375, 0.0625, 1, 1, 0.5),
+            Shapes.box(0.125, 0.375, 0.5, 0.75, 0.75, 0.9375)
     );
     private static final VoxelShape AABB_WEST = Shapes.or(
             Shapes.box(0.0625, 0, 0, 1, 0.375, 1),
-            Shapes.box(0.5625, 0.375, 0, 0.9375, 1, 1),
-            Shapes.box(0.0625, 0.375, 0.125, 0.5625, 0.75, 0.75)
+            Shapes.box(0.5, 0.375, 0, 0.9375, 1, 1),
+            Shapes.box(0.0625, 0.375, 0.125, 0.5, 0.75, 0.75)
     );
     private static final VoxelShape AABB_NORTH = Shapes.or(
             Shapes.box(0, 0, 0.0625, 1, 0.375, 1),
-            Shapes.box(0, 0.375, 0.5625, 1, 1, 0.9375),
-            Shapes.box(0.25, 0.375, 0.0625, 0.875, 0.75, 0.5625)
+            Shapes.box(0, 0.375, 0.5, 1, 1, 0.9375),
+            Shapes.box(0.25, 0.375, 0.0625, 0.875, 0.75, 0.5)
     );
     private static final VoxelShape AABB_EAST = Shapes.or(
             Shapes.box(0, 0, 0, 0.9375, 0.375, 1),
-            Shapes.box(0.0625, 0.375, 0, 0.4375, 1, 1),
-            Shapes.box(0.25, 0.375, 0.0625, 0.875, 0.75, 0.5625)
+            Shapes.box(0.0625, 0.375, 0, 0.5, 1, 1),
+            Shapes.box(0.25, 0.375, 0.0625, 0.875, 0.75, 0.5)
     );
 
     public RecorderBlock(Properties properties) {

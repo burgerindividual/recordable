@@ -2,26 +2,26 @@ package com.github.burgerguy.recordable.client;
 
 import com.github.burgerguy.recordable.client.network.ClientPacketHandler;
 import com.github.burgerguy.recordable.client.render.blockentity.RecorderBlockRenderer;
+import com.github.burgerguy.recordable.client.render.blockentity.RecorderItemRenderer;
 import com.github.burgerguy.recordable.client.score.play.ScorePlayerRegistry;
 import com.github.burgerguy.recordable.client.score.play.ScorePlayerRegistryContainer;
 import com.github.burgerguy.recordable.shared.Recordable;
+import com.github.burgerguy.recordable.shared.block.RecorderBlock;
 import com.github.burgerguy.recordable.shared.block.RecorderBlockEntity;
 import com.github.burgerguy.recordable.shared.item.CopperRecordItem;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.BlockEntityRendererRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import software.bernie.geckolib3.GeckoLib;
 
 public class RecordableClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        GeckoLib.initialize();
-
         //// networking registry
         ClientPlayNetworking.registerGlobalReceiver(Recordable.PLAY_SCORE_INSTANCE_AT_POS_ID, ClientPacketHandler::receivePlayScoreInstancePosPacket);
         ClientPlayNetworking.registerGlobalReceiver(Recordable.STOP_SCORE_INSTANCE_ID, ClientPacketHandler::recieveStopScoreInstancePacket);
@@ -42,5 +42,6 @@ public class RecordableClient implements ClientModInitializer {
 
         //// BER registry
         BlockEntityRendererRegistry.register(RecorderBlockEntity.INSTANCE, (BlockEntityRendererProvider.Context context) -> new RecorderBlockRenderer());
+        BuiltinItemRendererRegistry.INSTANCE.register(RecorderBlock.ITEM_INSTANCE, new RecorderItemRenderer());
     }
 }

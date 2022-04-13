@@ -30,6 +30,7 @@ import net.minecraft.world.level.storage.LevelResource;
 import org.lwjgl.system.MemoryStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.bernie.geckolib3.GeckoLib;
 
 public class Recordable implements ModInitializer {
 	public static final String MOD_ID = "recordable";
@@ -59,11 +60,13 @@ public class Recordable implements ModInitializer {
 			LOGGER.error("Unable to force load LMDB into Knot", t);
 		}
 
+		GeckoLib.initialize();
+
 		//// block registry
 		Registry.register(Registry.BLOCK, RecorderBlock.IDENTIFIER, RecorderBlock.INSTANCE);
 
 		//// item registry
-		Registry.register(Registry.ITEM, RecorderBlock.IDENTIFIER, new BlockItem(RecorderBlock.INSTANCE, new FabricItemSettings().group(CreativeModeTab.TAB_MISC)));
+		Registry.register(Registry.ITEM, RecorderBlock.IDENTIFIER, RecorderBlock.ITEM_INSTANCE);
 		Registry.register(Registry.ITEM, CopperRecordItem.IDENTIFIER, CopperRecordItem.INSTANCE);
 
 		//// block entity registry

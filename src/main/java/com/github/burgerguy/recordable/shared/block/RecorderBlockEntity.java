@@ -161,8 +161,10 @@ public class RecorderBlockEntity extends BlockEntity implements IAnimatable {
         if (this.hasRecord()) {
             event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.recorder.recording", true));
             return PlayState.CONTINUE;
+        } else {
+            event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.recorder.idle", false));
+            return PlayState.CONTINUE;
         }
-        return PlayState.STOP;
     }
 
     @Override

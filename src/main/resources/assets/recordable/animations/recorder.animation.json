@@ -57,7 +57,7 @@
 				},
 				"stabilizer": {
 					"rotation": {
-						"vector": [-112.5, 0, 0]
+						"vector": [-110, 0, 0]
 					}
 				},
 				"arm_right": {

@@ -3,10 +3,12 @@ package com.github.burgerguy.recordable.client.network;
 import com.github.burgerguy.recordable.client.score.FutureScore;
 import com.github.burgerguy.recordable.client.score.Score;
 import com.github.burgerguy.recordable.client.score.cache.ScoreCacheContainer;
+import com.github.burgerguy.recordable.client.score.play.BlockRelativeScorePlayer;
 import com.github.burgerguy.recordable.client.score.play.RelativeScorePlayer;
 import com.github.burgerguy.recordable.client.score.play.ScorePlayerRegistry;
 import com.github.burgerguy.recordable.client.score.play.ScorePlayerRegistryContainer;
 import com.github.burgerguy.recordable.shared.Recordable;
+import com.github.burgerguy.recordable.shared.score.PlayerConstants;
 import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
@@ -41,7 +43,8 @@ public class ClientPacketHandler {
 
         client.execute(() -> {
             ScorePlayerRegistry scorePlayerRegistry = ((ScorePlayerRegistryContainer) client.getConnection()).getScorePlayerRegistry();
-            scorePlayerRegistry.play(playId, new RelativeScorePlayer(score, currentTick, client.getSoundManager())); // FIXME: fix relative sound with block
+            // FIXME: fix relative sound with block
+            scorePlayerRegistry.play(playId, new BlockRelativeScorePlayer(score, currentTick, client.getSoundManager(), blockPos, PlayerConstants.DISTANCE_FACTOR * PlayerConstants.VOLUME, 1.0f));
         });
     }
 

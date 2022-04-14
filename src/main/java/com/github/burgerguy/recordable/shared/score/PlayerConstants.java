@@ -8,6 +8,7 @@ public class PlayerConstants {
 
     /**
      * The vanilla sound factor before it doesn't broadcast to players.
+     * This is also the default sound attenuation, which all records use (sound jsons in assets)
      * @see net.minecraft.server.level.ServerLevel#playSound(Player, double, double, double, SoundEvent, SoundSource, float, float) ServerLevel.playSound
      */
     public static final float DISTANCE_FACTOR = 16.0f;

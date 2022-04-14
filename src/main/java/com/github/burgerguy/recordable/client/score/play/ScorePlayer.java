@@ -10,13 +10,13 @@ import net.minecraft.client.sounds.SoundManager;
 
 public abstract class ScorePlayer {
     private final FutureScore futureScore;
-    private final SoundManager soundManager;
+    protected final SoundManager soundManager;
 
     private int currentTick;
     private int arrayIdx;
 
-    private boolean paused;
-    private boolean done;
+    protected boolean paused;
+    protected boolean done;
 
     public ScorePlayer(FutureScore futureScore, short startTick, SoundManager soundManager) {
         this.futureScore = futureScore;

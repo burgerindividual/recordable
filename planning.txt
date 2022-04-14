@@ -152,3 +152,5 @@ handle recording other records playing, my own and default
 
 fix relative audio with hrtf
 make audio quieter when further away from jukebox
+
+looping?

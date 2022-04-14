@@ -130,9 +130,14 @@ public class CopperRecordItem extends Item {
                 return 0xbd5e3b; // normal copper color
             }
         } else if (layerId >= 2 && layerId <= 11) { // cover colors
-            if (itemStack.getOrCreateTag().contains("Colors", Tag.TAG_INT_ARRAY)) {
-                int[] colors = itemStack.getOrCreateTag().getIntArray("Colors");
-                return colors[layerId - 2]; // first 2 layers the main layer and engravings
+            if (itemStack.getOrCreateTag().contains("Colors", Tag.TAG_BYTE_ARRAY)) {
+                byte[] colorComponents = itemStack.getOrCreateTag().getByteArray("Colors");
+
+                int idx = (layerId - 2) * 3; // first 2 layers the main layer and engravings
+                int r = colorComponents[idx];
+                int g = colorComponents[idx + 1];
+                int b = colorComponents[idx + 2];
+                return (r << 16) | (g << 8) | b;
             } else {
                 return 0xbd5e3b; // normal copper color
             }

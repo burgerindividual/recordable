@@ -8,6 +8,7 @@ import com.github.burgerguy.recordable.shared.block.RecorderBlockEntity;
 import java.util.List;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -69,7 +70,6 @@ public class CopperRecordItem extends Item {
             }
         } else if (blockEntity instanceof ScoreBroadcasterContainer scoreBroadcasterContainer && blockState.is(Blocks.JUKEBOX) && !blockState.getValue(JukeboxBlock.HAS_RECORD)) {
             ItemStack itemStack = context.getItemInHand();
-
             if (itemStack.getOrCreateTag().contains("ScoreID", Tag.TAG_LONG)) {
                 if (!level.isClientSide) {
                      ScoreBroadcaster scoreBroadcaster = scoreBroadcasterContainer.getScoreBroadcaster();
@@ -84,6 +84,8 @@ public class CopperRecordItem extends Item {
                     if (player != null) {
                         player.awardStat(Stats.PLAY_RECORD);
                     }
+                } else {
+                    Minecraft.getInstance().gui.setNowPlaying(getSongText(itemStack));
                 }
                 return InteractionResult.sidedSuccess(level.isClientSide);
             }
@@ -93,16 +95,20 @@ public class CopperRecordItem extends Item {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltipComponents, TooltipFlag isAdvanced) {
-        super.appendHoverText(stack, level, tooltipComponents, isAdvanced);
+    public void appendHoverText(ItemStack itemStack, @Nullable Level level, List<Component> tooltipComponents, TooltipFlag isAdvanced) {
+        super.appendHoverText(itemStack, level, tooltipComponents, isAdvanced);
 
-        boolean isWritten = stack.getOrCreateTag().contains("ScoreID", Tag.TAG_LONG);
-        if (!isWritten) {
+        boolean isWritten = itemStack.getOrCreateTag().contains("ScoreID", Tag.TAG_LONG);
+        if (isWritten) {
+            tooltipComponents.add(getSongText(itemStack).withStyle(ChatFormatting.GRAY));
+        } else {
             tooltipComponents.add(new TranslatableComponent("item.recordable.copper_record.blank").withStyle(ChatFormatting.GRAY));
         }
+    }
 
-        if (stack.getOrCreateTag().contains("SongInfo", Tag.TAG_COMPOUND)) {
-            CompoundTag songInfo = stack.getOrCreateTag().getCompound("SongInfo");
+    public static TranslatableComponent getSongText(ItemStack itemStack) {
+        if (itemStack.getOrCreateTag().contains("SongInfo", Tag.TAG_COMPOUND)) {
+            CompoundTag songInfo = itemStack.getOrCreateTag().getCompound("SongInfo");
             Component author = songInfo.contains("Author") ?
                     new TextComponent(songInfo.getString("Author")) :
                     new TranslatableComponent("item.recordable.copper_record.unknown_author");
@@ -111,13 +117,11 @@ public class CopperRecordItem extends Item {
                     new TextComponent(songInfo.getString("Title")) :
                     new TranslatableComponent("item.recordable.copper_record.unknown_title");
 
-            tooltipComponents.add(new TranslatableComponent("item.recordable.copper_record.song_info", author, title).withStyle(ChatFormatting.GRAY));
-        } else if (isWritten) {
-            tooltipComponents.add(
-                    new TranslatableComponent("item.recordable.copper_record.song_info",
-                            new TranslatableComponent("item.recordable.copper_record.unknown_author"),
-                            new TranslatableComponent("item.recordable.copper_record.unknown_title")
-                    ).withStyle(ChatFormatting.GRAY)
+            return new TranslatableComponent("item.recordable.copper_record.song_info", author, title);
+        } else {
+            return new TranslatableComponent("item.recordable.copper_record.song_info",
+                new TranslatableComponent("item.recordable.copper_record.unknown_author"),
+                new TranslatableComponent("item.recordable.copper_record.unknown_title")
             );
         }
     }
@@ -133,14 +137,15 @@ public class CopperRecordItem extends Item {
             if (itemStack.getOrCreateTag().contains("Colors", Tag.TAG_BYTE_ARRAY)) {
                 byte[] colorComponents = itemStack.getOrCreateTag().getByteArray("Colors");
 
-                int idx = (layerId - 2) * 3; // first 2 layers the main layer and engravings
-                int r = colorComponents[idx];
-                int g = colorComponents[idx + 1];
-                int b = colorComponents[idx + 2];
-                return (r << 16) | (g << 8) | b;
-            } else {
-                return 0xbd5e3b; // normal copper color
+                int idx = (layerId - 2) * 3;
+                if (idx + 2 < colorComponents.length) {
+                    byte r = colorComponents[idx];
+                    byte g = colorComponents[idx + 1];
+                    byte b = colorComponents[idx + 2];
+                    return ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | (b & 0xFF);
+                }
             }
+            return 0xbd5e3b; // normal copper color
         }
         return -1;
     }

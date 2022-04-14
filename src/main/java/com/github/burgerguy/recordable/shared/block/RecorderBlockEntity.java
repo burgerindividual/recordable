@@ -7,14 +7,15 @@ import com.github.burgerguy.recordable.shared.Recordable;
 import com.mojang.math.Quaternion;
 import com.mojang.math.Vector3f;
 import java.awt.Color;
+import java.util.concurrent.ThreadLocalRandom;
 import javax.annotation.Nullable;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.ByteArrayTag;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.LongTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -116,7 +117,46 @@ public class RecorderBlockEntity extends BlockEntity implements IAnimatable {
                     ((ScoreDatabaseContainer) serverLevel.getServer()).getScoreDatabase(),
                     (r, id) -> {
                         recordItem.addTagElement("ScoreID", LongTag.valueOf(id));
-                        recordItem.addTagElement("Color", IntTag.valueOf(Color.HSBtoRGB((float) Math.random(), 1.0f, 0.8f)));
+                        byte[] colorArray = new byte[30];
+
+                        // striped pattern
+                        int color = Color.HSBtoRGB(ThreadLocalRandom.current().nextFloat(), 0.7f, 0.7f);
+                        colorArray[9] = (byte) ((color >> 16) & 0xFF);
+                        colorArray[10] = (byte) ((color >> 8) & 0xFF);
+                        colorArray[11] = (byte) (color & 0xFF);
+                        colorArray[21] = (byte) ((color >> 16) & 0xFF);
+                        colorArray[22] = (byte) ((color >> 8) & 0xFF);
+                        colorArray[23] = (byte) (color & 0xFF);
+                        color = Color.HSBtoRGB(ThreadLocalRandom.current().nextFloat(), 0.7f, 0.7f);
+                        colorArray[12] = (byte) ((color >> 16) & 0xFF);
+                        colorArray[13] = (byte) ((color >> 8) & 0xFF);
+                        colorArray[14] = (byte) (color & 0xFF);
+                        colorArray[24] = (byte) ((color >> 16) & 0xFF);
+                        colorArray[25] = (byte) ((color >> 8) & 0xFF);
+                        colorArray[26] = (byte) (color & 0xFF);
+                        color = Color.HSBtoRGB(ThreadLocalRandom.current().nextFloat(), 0.7f, 0.7f);
+                        colorArray[0] = (byte) ((color >> 16) & 0xFF);
+                        colorArray[1] = (byte) ((color >> 8) & 0xFF);
+                        colorArray[2] = (byte) (color & 0xFF);
+                        colorArray[27] = (byte) ((color >> 16) & 0xFF);
+                        colorArray[28] = (byte) ((color >> 8) & 0xFF);
+                        colorArray[29] = (byte) (color & 0xFF);
+                        color = Color.HSBtoRGB(ThreadLocalRandom.current().nextFloat(), 0.7f, 0.7f);
+                        colorArray[3] = (byte) ((color >> 16) & 0xFF);
+                        colorArray[4] = (byte) ((color >> 8) & 0xFF);
+                        colorArray[5] = (byte) (color & 0xFF);
+                        colorArray[15] = (byte) ((color >> 16) & 0xFF);
+                        colorArray[16] = (byte) ((color >> 8) & 0xFF);
+                        colorArray[17] = (byte) (color & 0xFF);
+                        color = Color.HSBtoRGB(ThreadLocalRandom.current().nextFloat(), 0.7f, 0.7f);
+                        colorArray[6] = (byte) ((color >> 16) & 0xFF);
+                        colorArray[7] = (byte) ((color >> 8) & 0xFF);
+                        colorArray[8] = (byte) (color & 0xFF);
+                        colorArray[18] = (byte) ((color >> 16) & 0xFF);
+                        colorArray[19] = (byte) ((color >> 8) & 0xFF);
+                        colorArray[20] = (byte) (color & 0xFF);
+
+                        recordItem.addTagElement("Colors", new ByteArrayTag(colorArray));
                         dropRecord();
                     }
             );

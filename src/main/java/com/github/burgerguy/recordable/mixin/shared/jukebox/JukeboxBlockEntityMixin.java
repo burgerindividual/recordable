@@ -1,6 +1,5 @@
 package com.github.burgerguy.recordable.mixin.shared.jukebox;
 
-import com.github.burgerguy.recordable.server.database.ScoreDatabaseContainer;
 import com.github.burgerguy.recordable.server.score.ServerScoreRegistriesContainer;
 import com.github.burgerguy.recordable.server.score.broadcast.BlockScoreBroadcaster;
 import com.github.burgerguy.recordable.server.score.broadcast.ScoreBroadcasterContainer;

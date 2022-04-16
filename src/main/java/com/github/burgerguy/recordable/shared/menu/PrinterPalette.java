@@ -24,7 +24,9 @@ public class PrinterPalette {
 
     // handle rendering and pixel-color interactions in here, but actual gui events should be handled by the root screen.
     public void addToScreen(LabelPrinterScreen screen) {
-        screen.a
+        for (PrinterColor printerColor : printerColors) {
+            screen.addRenderableWidget(printerColor);
+        }
     }
 
     public void addToMenu(LabelPrinterMenu menu) {

@@ -43,6 +43,7 @@ public class Recordable implements ModInitializer {
 	public static final ResourceLocation STOP_SCORE_INSTANCE_ID = new ResourceLocation(MOD_ID, "stop_score_instance");
 	public static final ResourceLocation REQUEST_SCORE_ID = new ResourceLocation(MOD_ID, "request_score");
 	public static final ResourceLocation SEND_SCORE_ID = new ResourceLocation(MOD_ID, "send_score");
+	public static final ResourceLocation CONFIRM_PRINT_ID = new ResourceLocation(MOD_ID, "confirm_print");
 
 	@Override
 	public void onInitialize() {
@@ -120,6 +121,10 @@ public class Recordable implements ModInitializer {
 
 				responseSender.sendPacket(Recordable.SEND_SCORE_ID, newPacketBuffer);
 			}
+		});
+
+		ServerPlayNetworking.registerGlobalReceiver(CONFIRM_PRINT_ID, (server, player, handler, buffer, responseSender) -> {
+
 		});
 	}
 }

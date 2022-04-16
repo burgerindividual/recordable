@@ -5,13 +5,14 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Matrix4f;
 import net.minecraft.client.gui.GuiComponent;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Widget;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
-public class PrinterColor extends GuiComponent implements Widget {
+public class PrinterColor extends Button {
     private static final int DEFAULT_BORDER_COLOR = 0xFF000000;
     private static final int SELECTED_BORDER_COLOR = 0xFFFF0000;
 
@@ -28,21 +29,16 @@ public class PrinterColor extends GuiComponent implements Widget {
     private boolean selected;
     private int capacity;
 
-    public PrinterColor(int color, Item dyeItem) {
+    public PrinterColor(int x, int y, int width, int height, int color, Item dyeItem) {
+        super(x, y, width, height, );
         this.color = color;
         this.dyeItem = dyeItem;
     }
 
-    public PrinterColor(DyeItem dyeItem) {
+    public PrinterColor(int x, int y, int width, int height, DyeItem dyeItem) {
+        super(x, y, width, height);
         this.color = dyeItem.getDyeColor().getMaterialColor().col; // TODO: should this use text color?
         this.dyeItem = dyeItem;
-    }
-
-    public void setBounds(int x, int y, int width, int height) {
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
     }
 
     void setSelected(boolean selected) {

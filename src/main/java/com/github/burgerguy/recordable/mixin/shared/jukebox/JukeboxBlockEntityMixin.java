@@ -30,7 +30,6 @@ public abstract class JukeboxBlockEntityMixin extends BlockEntity implements Sco
         super.setLevel(level);
         if (!level.isClientSide) {
             ServerLevel serverLevel = (ServerLevel) level;
-            // 64 = 4 volume with records * 16 blocks range factor
             scoreBroadcaster = new BlockScoreBroadcaster(PlayerConstants.DISTANCE_FACTOR * PlayerConstants.VOLUME, getBlockPos());
             ((ServerScoreRegistriesContainer) serverLevel).getScoreBroadcasterRegistry().add(scoreBroadcaster);
         }

@@ -24,9 +24,9 @@ public class RecordableClient implements ClientModInitializer {
     public void onInitializeClient() {
         //// networking registry
         ClientPlayNetworking.registerGlobalReceiver(Recordable.PLAY_SCORE_INSTANCE_AT_POS_ID, ClientPacketHandler::receivePlayScoreInstancePosPacket);
-        ClientPlayNetworking.registerGlobalReceiver(Recordable.STOP_SCORE_INSTANCE_ID, ClientPacketHandler::recieveStopScoreInstancePacket);
-        ClientPlayNetworking.registerGlobalReceiver(Recordable.SET_SCORE_INSTANCE_PAUSED_ID, ClientPacketHandler::recieveSetScoreInstancePausedPacket);
-        ClientPlayNetworking.registerGlobalReceiver(Recordable.SEND_SCORE_ID, ClientPacketHandler::recieveSentScorePacket);
+        ClientPlayNetworking.registerGlobalReceiver(Recordable.STOP_SCORE_INSTANCE_ID, ClientPacketHandler::receiveStopScoreInstancePacket);
+        ClientPlayNetworking.registerGlobalReceiver(Recordable.SET_SCORE_INSTANCE_PAUSED_ID, ClientPacketHandler::receiveSetScoreInstancePausedPacket);
+        ClientPlayNetworking.registerGlobalReceiver(Recordable.SEND_SCORE_ID, ClientPacketHandler::receiveSentScorePacket);
 
         //// event registry
         // TODO: should this be end world tick or end client tick?

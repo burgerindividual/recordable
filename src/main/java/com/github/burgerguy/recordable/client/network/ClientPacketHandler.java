@@ -4,7 +4,6 @@ import com.github.burgerguy.recordable.client.score.FutureScore;
 import com.github.burgerguy.recordable.client.score.Score;
 import com.github.burgerguy.recordable.client.score.cache.ScoreCacheContainer;
 import com.github.burgerguy.recordable.client.score.play.BlockMonoScorePlayer;
-import com.github.burgerguy.recordable.client.score.play.BlockStereoScorePlayer;
 import com.github.burgerguy.recordable.client.score.play.ScorePlayerRegistry;
 import com.github.burgerguy.recordable.client.score.play.ScorePlayerRegistryContainer;
 import com.github.burgerguy.recordable.shared.Recordable;
@@ -43,12 +42,11 @@ public class ClientPacketHandler {
 
         client.execute(() -> {
             ScorePlayerRegistry scorePlayerRegistry = ((ScorePlayerRegistryContainer) client.getConnection()).getScorePlayerRegistry();
-            // FIXME: fix relative sound with block
             scorePlayerRegistry.play(playId, new BlockMonoScorePlayer(score, currentTick, client.getSoundManager(), blockPos, PlayerConstants.DISTANCE_FACTOR * PlayerConstants.VOLUME));
         });
     }
 
-    public static void recieveStopScoreInstancePacket(Minecraft client, ClientPacketListener handler, FriendlyByteBuf buffer, PacketSender responseSender) {
+    public static void receiveStopScoreInstancePacket(Minecraft client, ClientPacketListener handler, FriendlyByteBuf buffer, PacketSender responseSender) {
         int playId = buffer.readInt();
 
         client.execute(() -> {
@@ -59,7 +57,7 @@ public class ClientPacketHandler {
         });
     }
 
-    public static void recieveSetScoreInstancePausedPacket(Minecraft client, ClientPacketListener handler, FriendlyByteBuf buffer, PacketSender responseSender) {
+    public static void receiveSetScoreInstancePausedPacket(Minecraft client, ClientPacketListener handler, FriendlyByteBuf buffer, PacketSender responseSender) {
         int playId = buffer.readInt();
         boolean paused = buffer.readBoolean();
 
@@ -71,7 +69,7 @@ public class ClientPacketHandler {
         });
     }
 
-    public static void recieveSentScorePacket(Minecraft client, ClientPacketListener handler, FriendlyByteBuf buffer, PacketSender responseSender) {
+    public static void receiveSentScorePacket(Minecraft client, ClientPacketListener handler, FriendlyByteBuf buffer, PacketSender responseSender) {
         long scoreId = buffer.readLong();
 
         if (buffer.isReadable()) {

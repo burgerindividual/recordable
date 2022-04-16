@@ -26,7 +26,7 @@ public class BlockMonoScorePlayer extends ScorePlayer {
 
     @Override
     public SoundInstance createSoundInstance(PartialSoundInstance partialSoundInstance) {
-        // actually figure out what sound we're gonna play.
+        // actually figure out what sound we're going to play.
         // this can vary depending on randomness because it's not based on a seed.
         // this is fixed in the latest snapshots.
         ResourceLocation resourceLocation = partialSoundInstance.soundEvent().getLocation();
@@ -50,6 +50,8 @@ public class BlockMonoScorePlayer extends ScorePlayer {
 
         float outputVolume = attenuatedInputVolume / sound.getVolume();
 
+        // this is irritating and makes it a bit less accurate, but whatever
+        // TODO: make a sound class that allows for float attenuation, then mixin to SoundEngine and check for the instance
         int compensatedAttenuation = Math.round(this.attenuationDistance / Math.max(outputVolume, 1.0f));
 
         Sound newSound =  new Sound(

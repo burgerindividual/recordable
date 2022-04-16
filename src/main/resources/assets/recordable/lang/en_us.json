@@ -5,5 +5,6 @@
   "item.recordable.copper_record.unknown_title": "Unknown Title",
   "item.recordable.copper_record.unknown_author": "Unknown Author",
   "block.recordable.recorder": "Recorder",
-  "block.recordable.record_player": "Record Player"
+  "block.recordable.record_player": "Record Player",
+  "menu.recordable.label_printer": "Label Printer"
 }

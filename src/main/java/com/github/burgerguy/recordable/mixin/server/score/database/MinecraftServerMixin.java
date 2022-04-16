@@ -2,7 +2,6 @@ package com.github.burgerguy.recordable.mixin.server.score.database;
 
 import com.github.burgerguy.recordable.server.database.ScoreDatabase;
 import com.github.burgerguy.recordable.server.database.ScoreDatabaseContainer;
-import com.github.burgerguy.recordable.server.database.TickVolumeCache;
 import net.minecraft.server.MinecraftServer;
 import org.spongepowered.asm.mixin.Mixin;
 

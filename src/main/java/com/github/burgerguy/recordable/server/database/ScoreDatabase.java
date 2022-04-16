@@ -17,7 +17,7 @@ public class ScoreDatabase implements Closeable {
     public ScoreDatabase(Path dbFile) {
         this.dbEnv = Env.create()
                     .setMaxDbs(1)
-                    .setMapSize(134217728) // 2^27, 134mb ish
+                    .setMapSize(67108864) // 2^26, 64MiB
                     .open(dbFile.toFile(), EnvFlags.MDB_WRITEMAP, EnvFlags.MDB_NOSUBDIR);
         // use long keys for performance
         this.internalDb = dbEnv.openDbi(DB_NAME, DbiFlags.MDB_CREATE, DbiFlags.MDB_INTEGERKEY);

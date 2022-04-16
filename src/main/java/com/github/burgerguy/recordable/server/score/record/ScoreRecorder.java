@@ -93,8 +93,8 @@ public abstract class ScoreRecorder implements Closeable {
         } else { // why tf do i need this else here??? wtf ij???
             setRecording(false);
 
-            // add blank final tick if no sounds were played on it
-            if (currentTickSoundCount == 0) {
+            // add blank final tick if no sounds were played on it, and we have enough room
+            if (currentTickSoundCount == 0 && rawScoreBuffer.remaining() >= ScoreConstants.TICK_HEADER_SIZE_BYTES) {
                 tickHeaderPointer.putShort(currentTick);
                 tickHeaderPointer.put(currentTickSoundCount);
             }
@@ -125,7 +125,8 @@ public abstract class ScoreRecorder implements Closeable {
 
         // keep a pointer so we can write to the previous tick
         if (!hasTicked || currentTickSoundCount > 0) {
-            tickHeaderPointer = MemoryUtil.memSlice(rawScoreBuffer, 0, 3);
+            if (rawScoreBuffer.remaining() < ScoreConstants.TICK_HEADER_SIZE_BYTES) stop();
+            tickHeaderPointer = MemoryUtil.memSlice(rawScoreBuffer, 0, ScoreConstants.TICK_HEADER_SIZE_BYTES);
             rawScoreBuffer.position(rawScoreBuffer.position() + 3);
             hasTicked = true;
         }
@@ -139,6 +140,8 @@ public abstract class ScoreRecorder implements Closeable {
      */
     public void recordSound(SoundEvent sound, double x, double y, double z, float volume, float pitch) {
         if (!isRecording()) throw new IllegalStateException("Tried to record sound while not recording");
+
+        if (rawScoreBuffer.remaining() < ScoreConstants.SOUND_SIZE_BYTES) stop();
 
         rawScoreBuffer.putInt(Registry.SOUND_EVENT.getId(sound)); // sound ID, registry needs to be synced with server
 
@@ -154,8 +157,9 @@ public abstract class ScoreRecorder implements Closeable {
         rawScoreBuffer.putFloat(volume);
         rawScoreBuffer.putFloat(pitch);
 
-        // sound count = unsigned byte max or if tick count = unsigned short max
-        if (currentTickSoundCount == -1 || currentTick == -1) {
+        if (currentTickSoundCount == (byte) ScoreConstants.MAX_SOUNDS_PER_TICK
+                || currentTick == (byte) ScoreConstants.MAX_TICKS
+                || rawScoreBuffer.remaining() <= 0) {
             stop();
         } else {
             currentTickSoundCount++;

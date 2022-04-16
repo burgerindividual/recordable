@@ -6,15 +6,13 @@ import com.github.burgerguy.recordable.server.score.record.BlockEntityScoreRecor
 import com.github.burgerguy.recordable.shared.Recordable;
 import com.mojang.math.Quaternion;
 import com.mojang.math.Vector3f;
-import java.awt.Color;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.ByteArrayTag;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.LongTag;
 import net.minecraft.resources.ResourceLocation;
@@ -38,7 +36,8 @@ public class RecorderBlockEntity extends BlockEntity implements IAnimatable {
     public static final BlockEntityType<RecorderBlockEntity> INSTANCE = FabricBlockEntityTypeBuilder.create(RecorderBlockEntity::new, RecorderBlock.INSTANCE).build(null);
     public static final ResourceLocation IDENTIFIER = new ResourceLocation(Recordable.MOD_ID, "recorder");
 
-    private final AnimationFactory factory = new AnimationFactory(this);
+    private final AnimationFactory animationFactory;
+    private final Supplier<Quaternion> rotationSupplier;
 
     private ItemStack recordItem; // the record has to be blank
 
@@ -50,6 +49,19 @@ public class RecorderBlockEntity extends BlockEntity implements IAnimatable {
 
     public RecorderBlockEntity(BlockPos pos, BlockState state) {
         super(INSTANCE, pos, state);
+        this.animationFactory = new AnimationFactory(this);
+        this.rotationSupplier = () -> {
+            BlockState blockState = RecorderBlockEntity.this.getBlockState();
+            Direction blockFacing = blockState.getValue(BlockStateProperties.HORIZONTAL_FACING);
+            Direction micFacing = blockFacing.getOpposite();
+            return switch (micFacing) {
+                case NORTH -> Quaternion.ONE;
+                case EAST -> Vector3f.YP.rotationDegrees(90.0F);
+                case SOUTH -> Vector3f.YP.rotationDegrees(180.0F);
+                case WEST -> Vector3f.YP.rotationDegrees(-90.0F);
+                default -> throw new IllegalStateException("Unexpected rotation value: " + blockFacing);
+            };
+        };
     }
 
     @Override
@@ -102,61 +114,10 @@ public class RecorderBlockEntity extends BlockEntity implements IAnimatable {
             ServerLevel serverLevel = (ServerLevel) level;
             scoreRecorder = new BlockEntityScoreRecorder(
                     this,
-                    () -> {
-                        BlockState blockState = RecorderBlockEntity.this.getBlockState();
-                        Direction blockFacing = blockState.getValue(BlockStateProperties.HORIZONTAL_FACING);
-                        Direction micFacing = blockFacing.getOpposite();
-                        return switch(micFacing) {
-                            case NORTH -> Quaternion.ONE;
-                            case EAST -> Vector3f.YP.rotationDegrees(90.0F);
-                            case SOUTH -> Vector3f.YP.rotationDegrees(180.0F);
-                            case WEST -> Vector3f.YP.rotationDegrees(-90.0F);
-                            default -> throw new IllegalStateException("Unexpected rotation value: " + blockFacing);
-                        };
-                    },
+                    this.rotationSupplier,
                     ((ScoreDatabaseContainer) serverLevel.getServer()).getScoreDatabase(),
                     (r, id) -> {
                         recordItem.addTagElement("ScoreID", LongTag.valueOf(id));
-                        byte[] colorArray = new byte[30];
-
-                        // striped pattern
-                        int color = Color.HSBtoRGB(ThreadLocalRandom.current().nextFloat(), 0.7f, 0.7f);
-                        colorArray[9] = (byte) ((color >> 16) & 0xFF);
-                        colorArray[10] = (byte) ((color >> 8) & 0xFF);
-                        colorArray[11] = (byte) (color & 0xFF);
-                        colorArray[21] = (byte) ((color >> 16) & 0xFF);
-                        colorArray[22] = (byte) ((color >> 8) & 0xFF);
-                        colorArray[23] = (byte) (color & 0xFF);
-                        color = Color.HSBtoRGB(ThreadLocalRandom.current().nextFloat(), 0.7f, 0.7f);
-                        colorArray[12] = (byte) ((color >> 16) & 0xFF);
-                        colorArray[13] = (byte) ((color >> 8) & 0xFF);
-                        colorArray[14] = (byte) (color & 0xFF);
-                        colorArray[24] = (byte) ((color >> 16) & 0xFF);
-                        colorArray[25] = (byte) ((color >> 8) & 0xFF);
-                        colorArray[26] = (byte) (color & 0xFF);
-                        color = Color.HSBtoRGB(ThreadLocalRandom.current().nextFloat(), 0.7f, 0.7f);
-                        colorArray[0] = (byte) ((color >> 16) & 0xFF);
-                        colorArray[1] = (byte) ((color >> 8) & 0xFF);
-                        colorArray[2] = (byte) (color & 0xFF);
-                        colorArray[27] = (byte) ((color >> 16) & 0xFF);
-                        colorArray[28] = (byte) ((color >> 8) & 0xFF);
-                        colorArray[29] = (byte) (color & 0xFF);
-                        color = Color.HSBtoRGB(ThreadLocalRandom.current().nextFloat(), 0.7f, 0.7f);
-                        colorArray[3] = (byte) ((color >> 16) & 0xFF);
-                        colorArray[4] = (byte) ((color >> 8) & 0xFF);
-                        colorArray[5] = (byte) (color & 0xFF);
-                        colorArray[15] = (byte) ((color >> 16) & 0xFF);
-                        colorArray[16] = (byte) ((color >> 8) & 0xFF);
-                        colorArray[17] = (byte) (color & 0xFF);
-                        color = Color.HSBtoRGB(ThreadLocalRandom.current().nextFloat(), 0.7f, 0.7f);
-                        colorArray[6] = (byte) ((color >> 16) & 0xFF);
-                        colorArray[7] = (byte) ((color >> 8) & 0xFF);
-                        colorArray[8] = (byte) (color & 0xFF);
-                        colorArray[18] = (byte) ((color >> 16) & 0xFF);
-                        colorArray[19] = (byte) ((color >> 8) & 0xFF);
-                        colorArray[20] = (byte) (color & 0xFF);
-
-                        recordItem.addTagElement("Colors", new ByteArrayTag(colorArray));
                         dropRecord();
                     }
             );
@@ -214,6 +175,6 @@ public class RecorderBlockEntity extends BlockEntity implements IAnimatable {
 
     @Override
     public AnimationFactory getFactory() {
-        return factory;
+        return animationFactory;
     }
 }

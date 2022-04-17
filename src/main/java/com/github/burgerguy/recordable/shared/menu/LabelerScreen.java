@@ -12,8 +12,27 @@ import net.minecraft.world.entity.player.Inventory;
 public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
     private static final ResourceLocation COLOR_ICON_LOCATION = new ResourceLocation("textures/gui/container/loom.png");
 
-    public LabelerScreen(LabelerMenu abstractContainerMenu, Inventory inventory, Component component) {
-        super(abstractContainerMenu, inventory, component);
+    public LabelerScreen(LabelerMenu labelerMenu, Inventory inventory, Component component) {
+        super(labelerMenu, inventory, component);
+    }
+
+    @Override
+    protected void init() {
+        super.init();
+
+        PrinterColor[] printerColors = this.getMenu().printerColors;
+        for (int i = 0; i < printerColors.length; i++) {
+            int xIdx = i / LabelerConstants.PALETTE_COLUMNS_WRAP;
+            int yIdx = i % LabelerConstants.PALETTE_COLUMNS_WRAP;
+            PrinterColor printerColor = printerColors[i];
+            printerColor.setBounds(
+                LabelerConstants.PALETTE_X + xIdx * LabelerConstants.COLOR_WIDTH,
+                LabelerConstants.PALETTE_Y + yIdx * LabelerConstants.COLOR_HEIGHT,
+                LabelerConstants.COLOR_WIDTH,
+                LabelerConstants.COLOR_HEIGHT
+            );
+            this.addRenderableWidget(printerColor);
+        }
     }
 
     @Override

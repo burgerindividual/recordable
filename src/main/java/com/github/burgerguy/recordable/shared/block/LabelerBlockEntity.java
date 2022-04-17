@@ -1,6 +1,7 @@
 package com.github.burgerguy.recordable.shared.block;
 
 import com.github.burgerguy.recordable.shared.Recordable;
+import com.github.burgerguy.recordable.shared.menu.LabelerConstants;
 import com.github.burgerguy.recordable.shared.menu.LabelerMenu;
 import com.github.burgerguy.recordable.shared.util.ImplementedContainer;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
@@ -21,13 +22,12 @@ import net.minecraft.world.level.block.state.BlockState;
 public class LabelerBlockEntity extends BaseContainerBlockEntity implements ImplementedContainer {
     public static final BlockEntityType<LabelerBlockEntity> INSTANCE = FabricBlockEntityTypeBuilder.create(LabelerBlockEntity::new, LabelerBlock.INSTANCE).build(null);
     public static final ResourceLocation IDENTIFIER = new ResourceLocation(Recordable.MOD_ID, "labeler");
-    public static final int CONTAINER_SIZE = 4;
 
     private final NonNullList<ItemStack> items;
 
     public LabelerBlockEntity(BlockPos blockPos, BlockState blockState) {
         super(INSTANCE, blockPos, blockState);
-        this.items = NonNullList.withSize(CONTAINER_SIZE, ItemStack.EMPTY);
+        this.items = NonNullList.withSize(LabelerConstants.CONTAINER_SIZE, ItemStack.EMPTY);
     }
 
     @Override

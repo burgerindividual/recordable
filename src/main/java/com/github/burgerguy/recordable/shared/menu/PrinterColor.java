@@ -5,54 +5,67 @@ import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Matrix4f;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.world.inventory.DataSlot;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 public class PrinterColor extends Button {
-    private static final int DEFAULT_BORDER_COLOR = 0xFF000000;
-    private static final int SELECTED_BORDER_COLOR = 0xFFFF0000;
-
-    private static final int MAX_CAPACITY = 16;
-    private static final int CAPACITY_PER_ITEM = 4;
 
     private final int color;
     private final Item dyeItem;
-    private int x;
-    private int y;
-    private int width;
-    private int height;
+    private final DataSlot capacity;
 
     private boolean selected;
-    private int capacity;
 
-    public PrinterColor(int x, int y, int width, int height, DyeItem dyeItem) {
-        super(x, y, width, height);
-        this.color = dyeItem.getDyeColor().getMaterialColor().col; // TODO: should this use text color?
-        this.dyeItem = dyeItem;
+    public PrinterColor(DyeColor dyeColor) {
+        super(0, 0, 0, 0, new TextComponent(dyeColor.getName()), PrinterColor::onPressedAction);
+        this.color = dyeColor.getTextColor(); // TODO: should this use material color?
+        this.dyeItem = DyeItem.byColor(dyeColor);
+        this.capacity = DataSlot.standalone();
     }
 
-    void setSelected(boolean selected) {
-        this.selected = selected;
+    public void setBounds(int x, int y, int width, int height) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+    }
+
+    private static void onPressedAction(Button button) {
+        PrinterColor printerColor = (PrinterColor) button;
+        printerColor.selected = !printerColor.selected;
     }
 
     /**
-     * This accepts whatever's in the dye slot to check if it should add to this, and if so, adds to this and removes
+     * This accepts whatever is in the dye slot to check if it should add to this, and if so, adds to this and removes
      * part of the dye.
      * @return if the itemStack was altered
      */
     public boolean addCapacity(ItemStack itemStack) {
         if (itemStack.is(this.dyeItem)) {
-
+            // integer division truncates, which is what we want
+            int currentCapacity = this.capacity.get();
+            int consumed = (LabelerConstants.COLOR_MAX_CAPACITY - currentCapacity) / LabelerConstants.COLOR_CAPACITY_PER_ITEM;
+            itemStack.shrink(consumed);
+            this.capacity.set(currentCapacity + (consumed * LabelerConstants.COLOR_CAPACITY_PER_ITEM));
+            return true;
         }
+        return false;
+    }
+
+    public DataSlot getCapacitySlot() {
+        return capacity;
     }
 
     @Override
     public void render(PoseStack matrixStack, int mouseX, int mouseY, float partialTick) {
-        float x1 = x;
-        float x2 = x + width;
-        float y1 = y;
-        float y2 = y + height;
+        float x1 = this.x;
+        float x2 = this.x + this.width;
+        float y1 = this.y;
+        float y2 = this.y + this.height;
 
         int borderColor = getBorderColor();
 
@@ -100,7 +113,7 @@ public class PrinterColor extends Button {
                 borderColor
         );
 
-        float filledPixels = ((y2 - 1) - (y1 + 1) * (float) capacity) / MAX_CAPACITY;
+        float filledPixels = ((y2 - 1) - (y1 + 1) * (float) this.capacity.get()) / LabelerConstants.COLOR_MAX_CAPACITY;
         // middle
         ScreenRenderUtil.fill(
                 bufferBuilder,
@@ -116,11 +129,14 @@ public class PrinterColor extends Button {
     }
 
     private int getBorderColor() {
-        return selected ? SELECTED_BORDER_COLOR : DEFAULT_BORDER_COLOR;
+        return this.selected ? LabelerConstants.SELECTED_BORDER_COLOR : LabelerConstants.DEFAULT_BORDER_COLOR;
     }
 
+    /**
+     * Mix color if selected, otherwise don't affect the color.
+     */
     public int mixColor(int otherColor) {
-        return mixColors(this.color, otherColor);
+        return this.selected ? mixColors(this.color, otherColor) : otherColor;
     }
 
     /**

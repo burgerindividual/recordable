@@ -1,13 +1,10 @@
 package com.github.burgerguy.recordable.shared.menu;
 
 import com.github.burgerguy.recordable.client.render.util.ScreenRenderUtil;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.*;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Matrix4f;
-import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.Widget;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -28,12 +25,6 @@ public class PrinterColor extends Button {
 
     private boolean selected;
     private int capacity;
-
-    public PrinterColor(int x, int y, int width, int height, int color, Item dyeItem) {
-        super(x, y, width, height, );
-        this.color = color;
-        this.dyeItem = dyeItem;
-    }
 
     public PrinterColor(int x, int y, int width, int height, DyeItem dyeItem) {
         super(x, y, width, height);

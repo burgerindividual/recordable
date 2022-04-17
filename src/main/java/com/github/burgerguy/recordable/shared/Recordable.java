@@ -3,8 +3,8 @@ package com.github.burgerguy.recordable.shared;
 import com.github.burgerguy.recordable.server.database.ScoreDatabase;
 import com.github.burgerguy.recordable.server.database.ScoreDatabaseContainer;
 import com.github.burgerguy.recordable.server.score.ServerScoreRegistriesContainer;
-import com.github.burgerguy.recordable.shared.block.LabelPrinterBlock;
-import com.github.burgerguy.recordable.shared.block.LabelPrinterBlockEntity;
+import com.github.burgerguy.recordable.shared.block.LabelerBlock;
+import com.github.burgerguy.recordable.shared.block.LabelerBlockEntity;
 import com.github.burgerguy.recordable.shared.block.RecorderBlock;
 import com.github.burgerguy.recordable.shared.block.RecorderBlockEntity;
 import com.github.burgerguy.recordable.shared.item.CopperRecordItem;
@@ -64,16 +64,16 @@ public class Recordable implements ModInitializer {
 
 		//// block registry
 		Registry.register(Registry.BLOCK, RecorderBlock.IDENTIFIER, RecorderBlock.INSTANCE);
-		Registry.register(Registry.BLOCK, LabelPrinterBlock.IDENTIFIER, LabelPrinterBlock.INSTANCE);
+		Registry.register(Registry.BLOCK, LabelerBlock.IDENTIFIER, LabelerBlock.INSTANCE);
 
 		//// item registry
 		Registry.register(Registry.ITEM, RecorderBlock.IDENTIFIER, RecorderBlock.ITEM_INSTANCE);
-		Registry.register(Registry.ITEM, LabelPrinterBlock.IDENTIFIER, LabelPrinterBlock.ITEM_INSTANCE);
+		Registry.register(Registry.ITEM, LabelerBlock.IDENTIFIER, LabelerBlock.ITEM_INSTANCE);
 		Registry.register(Registry.ITEM, CopperRecordItem.IDENTIFIER, CopperRecordItem.INSTANCE);
 
 		//// block entity registry
 		Registry.register(Registry.BLOCK_ENTITY_TYPE, RecorderBlockEntity.IDENTIFIER, RecorderBlockEntity.INSTANCE);
-		Registry.register(Registry.BLOCK_ENTITY_TYPE, LabelPrinterBlockEntity.IDENTIFIER, LabelPrinterBlockEntity.INSTANCE);
+		Registry.register(Registry.BLOCK_ENTITY_TYPE, LabelerBlockEntity.IDENTIFIER, LabelerBlockEntity.INSTANCE);
 
 		//// event registry
 		ServerLifecycleEvents.SERVER_STARTING.register(server -> {

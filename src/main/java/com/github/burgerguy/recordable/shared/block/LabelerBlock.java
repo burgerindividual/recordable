@@ -21,19 +21,19 @@ import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
-public class LabelPrinterBlock extends BaseEntityBlock {
-    public static final ResourceLocation IDENTIFIER = new ResourceLocation(Recordable.MOD_ID, "label_printer");
-    public static final Block INSTANCE = new LabelPrinterBlock(FabricBlockSettings.of(Material.METAL).strength(4.0f));
+public class LabelerBlock extends BaseEntityBlock {
+    public static final ResourceLocation IDENTIFIER = new ResourceLocation(Recordable.MOD_ID, "labeler");
+    public static final Block INSTANCE = new LabelerBlock(FabricBlockSettings.of(Material.METAL).strength(4.0f));
     public static final Item ITEM_INSTANCE = new BlockItem(INSTANCE, new FabricItemSettings().group(CreativeModeTab.TAB_MISC));
 
-    protected LabelPrinterBlock(Properties properties) {
+    protected LabelerBlock(Properties properties) {
         super(properties);
     }
 
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new LabelPrinterBlockEntity(pos, state);
+        return new LabelerBlockEntity(pos, state);
     }
 
     @Override

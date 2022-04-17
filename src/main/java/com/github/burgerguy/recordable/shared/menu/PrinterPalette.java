@@ -1,10 +1,6 @@
 package com.github.burgerguy.recordable.shared.menu;
 
 import javax.annotation.Nullable;
-import net.minecraft.client.gui.components.Widget;
-import net.minecraft.client.gui.components.events.GuiEventListener;
-import net.minecraft.client.gui.narration.NarratableEntry;
-import net.minecraft.client.gui.screens.Screen;
 
 // handle pixel-color interactions in here, but actual gui events and rendering should be handled by the root screen.
 // it's just too irritating to do in a wrapper class.
@@ -23,13 +19,13 @@ public class PrinterPalette {
     }
 
     // handle rendering and pixel-color interactions in here, but actual gui events should be handled by the root screen.
-    public void addToScreen(LabelPrinterScreen screen) {
+    public void addToScreen(LabelerScreen screen) {
         for (PrinterColor printerColor : printerColors) {
             screen.addRenderableWidget(printerColor);
         }
     }
 
-    public void addToMenu(LabelPrinterMenu menu) {
+    public void addToMenu(LabelerMenu menu) {
         menu.addSlotListener();
     }
 

@@ -1,38 +1,36 @@
 package com.github.burgerguy.recordable.shared.menu;
 
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
 
 public class PrinterPixel extends Button {
 
-    private final PrinterPalette palette;
+    private final LabelerMenu labelerMenu;
     private int color;
 
-    public PrinterPixel(int x, int y, int size, Component component, PrinterPalette palette) {
+    public PrinterPixel(int x, int y, int size, int idx, LabelerMenu labelerMenu) {
         super(
                 x,
                 y,
                 size,
                 size,
-                component,
+                new TextComponent("Pixel #" + idx),
                 (button) -> {
 
                 }
         );
-        this.palette = palette;
-        this.color = 0xFF000000;
+        this.labelerMenu = labelerMenu;
+        this.color = 0xFFFFFFFF;
     }
 
     private static void onPressedAction(Button button) {
         PrinterPixel pixel = (PrinterPixel) button;
-        pixel.color = palette.get
+        for (PrinterColor printerColor : pixel.labelerMenu.printerColors) {
+            pixel.color = printerColor.mixColor(pixel.color);
+        }
     }
 
-    private void setColor(int color) {
-        this.color = color;
-    }
-
-    private int getColor() {
+    public int getColor() {
         return color;
     }
 }

@@ -1,8 +1,8 @@
 package com.github.burgerguy.recordable.shared.menu;
 
 import com.github.burgerguy.recordable.shared.Recordable;
-import net.fabricmc.fabric.api.screenhandler.v1.ScreenHandlerRegistry;
-import net.minecraft.client.Minecraft;
+import net.fabricmc.fabric.impl.screenhandler.ExtendedScreenHandlerType;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
@@ -15,23 +15,23 @@ import net.minecraft.world.item.DyeColor;
 
 public class LabelerMenu extends AbstractContainerMenu {
     public static final ResourceLocation IDENTIFIER = new ResourceLocation(Recordable.MOD_ID, "labeler");
-    public static final MenuType<LabelerMenu> INSTANCE = ScreenHandlerRegistry.registerSimple(IDENTIFIER, LabelerMenu::new);
+    public static final MenuType<LabelerMenu> INSTANCE = new ExtendedScreenHandlerType<>(LabelerMenu::new);
 
     private final Container container;
     protected final PrinterColor[] printerColors;
 
-    public LabelerMenu(int containerId, Inventory playerInventory) {
-        this(containerId, playerInventory, new SimpleContainer(LabelerConstants.CONTAINER_SIZE));
+    public LabelerMenu(int containerId, Inventory playerInventory, FriendlyByteBuf buf) {
+        this(containerId, playerInventory, new SimpleContainer(LabelerConstants.CONTAINER_SIZE), buf.readVarIntArray(LabelerConstants.COLOR_COUNT));
     }
 
-    public LabelerMenu(int containerId, Inventory playerInventory, Container container) {
+    public LabelerMenu(int containerId, Inventory playerInventory, Container container, int[] colorLevels) {
         super(INSTANCE, containerId);
 
         DyeColor[] dyeColors = DyeColor.values();
         this.printerColors = new PrinterColor[dyeColors.length];
         for (int i = 0; i < dyeColors.length; i++) {
-            PrinterColor printerColor = new PrinterColor(dyeColors[i]);
-            this.addDataSlot(printerColor.getCapacitySlot());
+            PrinterColor printerColor = new PrinterColor(dyeColors[i], colorLevels[i]);
+            this.addDataSlot(printerColor.getLevelSlot());
             this.printerColors[i] = printerColor;
         }
 

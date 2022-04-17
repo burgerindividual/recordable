@@ -1,6 +1,8 @@
 package com.github.burgerguy.recordable.shared.menu;
 
+import com.github.burgerguy.recordable.shared.Recordable;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Widget;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
@@ -10,6 +12,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 
 public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
+    public static final ResourceLocation IDENTIFIER = new ResourceLocation(Recordable.MOD_ID, "labeler");
     private static final ResourceLocation COLOR_ICON_LOCATION = new ResourceLocation("textures/gui/container/loom.png");
 
     public LabelerScreen(LabelerMenu labelerMenu, Inventory inventory, Component component) {
@@ -20,14 +23,16 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
     protected void init() {
         super.init();
 
+        this.titleLabelX = (this.imageWidth - this.font.width(this.title)) / 2;
+
         PrinterColor[] printerColors = this.getMenu().printerColors;
         for (int i = 0; i < printerColors.length; i++) {
             int xIdx = i / LabelerConstants.PALETTE_COLUMNS_WRAP;
             int yIdx = i % LabelerConstants.PALETTE_COLUMNS_WRAP;
             PrinterColor printerColor = printerColors[i];
             printerColor.setBounds(
-                LabelerConstants.PALETTE_X + xIdx * LabelerConstants.COLOR_WIDTH,
-                LabelerConstants.PALETTE_Y + yIdx * LabelerConstants.COLOR_HEIGHT,
+                this.leftPos + LabelerConstants.PALETTE_X + xIdx * (LabelerConstants.COLOR_WIDTH + LabelerConstants.COLOR_MARGIN_X),
+                this.topPos + LabelerConstants.PALETTE_Y + yIdx * (LabelerConstants.COLOR_HEIGHT + LabelerConstants.COLOR_MARGIN_Y),
                 LabelerConstants.COLOR_WIDTH,
                 LabelerConstants.COLOR_HEIGHT
             );

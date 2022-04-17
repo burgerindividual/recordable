@@ -16,15 +16,16 @@ public class PrinterColor extends Button {
 
     private final int color;
     private final Item dyeItem;
-    private final DataSlot capacity;
+    private final DataSlot level;
 
     private boolean selected;
 
-    public PrinterColor(DyeColor dyeColor) {
+    public PrinterColor(DyeColor dyeColor, int initialLevel) {
         super(0, 0, 0, 0, new TextComponent(dyeColor.getName()), PrinterColor::onPressedAction);
         this.color = dyeColor.getTextColor(); // TODO: should this use material color?
         this.dyeItem = DyeItem.byColor(dyeColor);
-        this.capacity = DataSlot.standalone();
+        this.level = DataSlot.standalone();
+        this.level.set(initialLevel);
     }
 
     public void setBounds(int x, int y, int width, int height) {
@@ -47,17 +48,17 @@ public class PrinterColor extends Button {
     public boolean addCapacity(ItemStack itemStack) {
         if (itemStack.is(this.dyeItem)) {
             // integer division truncates, which is what we want
-            int currentCapacity = this.capacity.get();
+            int currentCapacity = this.level.get();
             int consumed = (LabelerConstants.COLOR_MAX_CAPACITY - currentCapacity) / LabelerConstants.COLOR_CAPACITY_PER_ITEM;
             itemStack.shrink(consumed);
-            this.capacity.set(currentCapacity + (consumed * LabelerConstants.COLOR_CAPACITY_PER_ITEM));
+            this.level.set(currentCapacity + (consumed * LabelerConstants.COLOR_CAPACITY_PER_ITEM));
             return true;
         }
         return false;
     }
 
-    public DataSlot getCapacitySlot() {
-        return capacity;
+    public DataSlot getLevelSlot() {
+        return level;
     }
 
     @Override
@@ -113,7 +114,7 @@ public class PrinterColor extends Button {
                 borderColor
         );
 
-        float filledPixels = ((y2 - 1) - (y1 + 1) * (float) this.capacity.get()) / LabelerConstants.COLOR_MAX_CAPACITY;
+        float filledPixels = (((y2 - 1) - (y1 + 1)) * this.level.get()) / LabelerConstants.COLOR_MAX_CAPACITY;
         // middle
         ScreenRenderUtil.fill(
                 bufferBuilder,
@@ -122,7 +123,7 @@ public class PrinterColor extends Button {
                 y2 - 1 - filledPixels,
                 x2 - 1,
                 y2 - 1,
-                this.color
+                this.color | 0xFF000000 // get rid of transparency
         );
 
         ScreenRenderUtil.endFills(bufferBuilder);
@@ -133,10 +134,19 @@ public class PrinterColor extends Button {
     }
 
     /**
-     * Mix color if selected, otherwise don't affect the color.
+     * Mix color if selected and has a high enough level, otherwise don't affect the color.
+     * This also decrements the level.
      */
     public int mixColor(int otherColor) {
-        return this.selected ? mixColors(this.color, otherColor) : otherColor;
+        int currentLevel = this.level.get();
+        if(this.selected && currentLevel > 0) {
+            this.level.set(currentLevel - 1);
+            if (this.level.get() == 0) {
+                this.selected = false;
+            }
+            return mixColors(this.color, otherColor);
+        }
+        return otherColor;
     }
 
     /**

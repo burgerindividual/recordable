@@ -9,12 +9,15 @@ import com.github.burgerguy.recordable.shared.Recordable;
 import com.github.burgerguy.recordable.shared.block.RecorderBlock;
 import com.github.burgerguy.recordable.shared.block.RecorderBlockEntity;
 import com.github.burgerguy.recordable.shared.item.CopperRecordItem;
+import com.github.burgerguy.recordable.shared.menu.LabelerMenu;
+import com.github.burgerguy.recordable.shared.menu.LabelerScreen;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.BlockEntityRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
+import net.fabricmc.fabric.api.client.screenhandler.v1.ScreenRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 
@@ -43,5 +46,8 @@ public class RecordableClient implements ClientModInitializer {
         //// BER registry
         BlockEntityRendererRegistry.register(RecorderBlockEntity.INSTANCE, (BlockEntityRendererProvider.Context context) -> new RecorderBlockRenderer());
         BuiltinItemRendererRegistry.INSTANCE.register(RecorderBlock.ITEM_INSTANCE, new RecorderItemRenderer());
+
+        //// screen registry
+        ScreenRegistry.register(LabelerMenu.INSTANCE, LabelerScreen::new);
     }
 }

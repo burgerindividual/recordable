@@ -8,6 +8,7 @@ import com.github.burgerguy.recordable.shared.block.LabelerBlockEntity;
 import com.github.burgerguy.recordable.shared.block.RecorderBlock;
 import com.github.burgerguy.recordable.shared.block.RecorderBlockEntity;
 import com.github.burgerguy.recordable.shared.item.CopperRecordItem;
+import com.github.burgerguy.recordable.shared.menu.LabelerMenu;
 import io.netty.buffer.Unpooled;
 import java.net.URI;
 import java.nio.ByteBuffer;
@@ -74,6 +75,9 @@ public class Recordable implements ModInitializer {
 		//// block entity registry
 		Registry.register(Registry.BLOCK_ENTITY_TYPE, RecorderBlockEntity.IDENTIFIER, RecorderBlockEntity.INSTANCE);
 		Registry.register(Registry.BLOCK_ENTITY_TYPE, LabelerBlockEntity.IDENTIFIER, LabelerBlockEntity.INSTANCE);
+
+		//// menu/screen handler registry
+		Registry.register(Registry.MENU, LabelerMenu.IDENTIFIER, LabelerMenu.INSTANCE);
 
 		//// event registry
 		ServerLifecycleEvents.SERVER_STARTING.register(server -> {

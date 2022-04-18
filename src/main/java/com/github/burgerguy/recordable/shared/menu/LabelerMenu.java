@@ -18,7 +18,7 @@ public class LabelerMenu extends AbstractContainerMenu {
     public static final MenuType<LabelerMenu> INSTANCE = new ExtendedScreenHandlerType<>(LabelerMenu::new);
 
     private final Container container;
-    protected final PrinterColor[] printerColors;
+    private final int[] colorLevels;
 
     public LabelerMenu(int containerId, Inventory playerInventory, FriendlyByteBuf buf) {
         this(containerId, playerInventory, new SimpleContainer(LabelerConstants.CONTAINER_SIZE), buf.readVarIntArray(LabelerConstants.COLOR_COUNT));
@@ -26,15 +26,7 @@ public class LabelerMenu extends AbstractContainerMenu {
 
     public LabelerMenu(int containerId, Inventory playerInventory, Container container, int[] colorLevels) {
         super(INSTANCE, containerId);
-
-        DyeColor[] dyeColors = DyeColor.values();
-        this.printerColors = new PrinterColor[dyeColors.length];
-        for (int i = 0; i < dyeColors.length; i++) {
-            PrinterColor printerColor = new PrinterColor(dyeColors[i], colorLevels[i]);
-            this.addDataSlot(printerColor.getLevelSlot());
-            this.printerColors[i] = printerColor;
-        }
-
+        this.colorLevels = colorLevels;
         checkContainerSize(container, LabelerConstants.CONTAINER_SIZE);
         this.container = container;
         container.startOpen(playerInventory.player);
@@ -50,6 +42,14 @@ public class LabelerMenu extends AbstractContainerMenu {
         for (int x = 0; x < 9; ++x) {
             this.addSlot(new Slot(playerInventory, x, 8 + x * 18, 142));
         }
+    }
+
+    public int[] getColorLevels() {
+        return this.colorLevels;
+    }
+
+    public void handleFinish(FriendlyByteBuf buf) {
+        // FIXME: implement
     }
 
     @Override

@@ -10,7 +10,7 @@ import com.github.burgerguy.recordable.shared.block.RecorderBlock;
 import com.github.burgerguy.recordable.shared.block.RecorderBlockEntity;
 import com.github.burgerguy.recordable.shared.item.CopperRecordItem;
 import com.github.burgerguy.recordable.shared.menu.LabelerMenu;
-import com.github.burgerguy.recordable.shared.menu.LabelerScreen;
+import com.github.burgerguy.recordable.client.screen.LabelerScreen;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;

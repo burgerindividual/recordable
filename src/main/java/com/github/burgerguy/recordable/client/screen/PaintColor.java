@@ -1,31 +1,33 @@
-package com.github.burgerguy.recordable.shared.menu;
+package com.github.burgerguy.recordable.client.screen;
 
 import com.github.burgerguy.recordable.client.render.util.ScreenRenderUtil;
-import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.github.burgerguy.recordable.shared.menu.LabelerConstants;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Matrix4f;
+import java.awt.Color;
+import java.util.OptionalInt;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.TextComponent;
-import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
-public class PrinterColor extends Button {
+public class PaintColor extends Button {
 
     private final int color;
+    private final int colorGrad;
     private final Item dyeItem;
-    private final DataSlot level;
 
+    private int level;
     private boolean selected;
 
-    public PrinterColor(DyeColor dyeColor, int initialLevel) {
-        super(0, 0, 0, 0, new TextComponent(dyeColor.getName()), PrinterColor::onPressedAction);
-        this.color = dyeColor.getTextColor(); // TODO: should this use material color?
+    public PaintColor(DyeColor dyeColor, int initialLevel) {
+        super(0, 0, 0, 0, new TextComponent(dyeColor.getName()), PaintColor::onPressedAction);
+        this.color = dyeColor.getTextColor() | 0xFF000000; // make opaque
+        this.colorGrad = new Color(color).darker().getRGB();
         this.dyeItem = DyeItem.byColor(dyeColor);
-        this.level = DataSlot.standalone();
-        this.level.set(initialLevel);
+        this.level = initialLevel;
     }
 
     public void setBounds(int x, int y, int width, int height) {
@@ -36,8 +38,8 @@ public class PrinterColor extends Button {
     }
 
     private static void onPressedAction(Button button) {
-        PrinterColor printerColor = (PrinterColor) button;
-        printerColor.selected = !printerColor.selected;
+        PaintColor paintColor = (PaintColor) button;
+        paintColor.selected = !paintColor.selected;
     }
 
     /**
@@ -48,21 +50,16 @@ public class PrinterColor extends Button {
     public boolean addCapacity(ItemStack itemStack) {
         if (itemStack.is(this.dyeItem)) {
             // integer division truncates, which is what we want
-            int currentCapacity = this.level.get();
-            int consumed = (LabelerConstants.COLOR_MAX_CAPACITY - currentCapacity) / LabelerConstants.COLOR_CAPACITY_PER_ITEM;
+            int consumed = (LabelerConstants.COLOR_MAX_CAPACITY - this.level) / LabelerConstants.COLOR_CAPACITY_PER_ITEM;
             itemStack.shrink(consumed);
-            this.level.set(currentCapacity + (consumed * LabelerConstants.COLOR_CAPACITY_PER_ITEM));
+            this.level += (consumed * LabelerConstants.COLOR_CAPACITY_PER_ITEM);
             return true;
         }
         return false;
     }
 
-    public DataSlot getLevelSlot() {
-        return level;
-    }
-
     @Override
-    public void render(PoseStack matrixStack, int mouseX, int mouseY, float partialTick) {
+    public void renderButton(PoseStack matrixStack, int mouseX, int mouseY, float partialTick) {
         float x1 = this.x;
         float x2 = this.x + this.width;
         float y1 = this.y;
@@ -71,11 +68,9 @@ public class PrinterColor extends Button {
         int borderColor = getBorderColor();
 
         Matrix4f matrix = matrixStack.last().pose();
-        BufferBuilder bufferBuilder = ScreenRenderUtil.startFills();
 
         // top border
         ScreenRenderUtil.fill(
-                bufferBuilder,
                 matrix,
                 x1,
                 y1,
@@ -85,7 +80,6 @@ public class PrinterColor extends Button {
         );
         // left border
         ScreenRenderUtil.fill(
-                bufferBuilder,
                 matrix,
                 x1,
                 y1,
@@ -95,7 +89,6 @@ public class PrinterColor extends Button {
         );
         // bottom border
         ScreenRenderUtil.fill(
-                bufferBuilder,
                 matrix,
                 x1,
                 y2 - 1,
@@ -105,7 +98,6 @@ public class PrinterColor extends Button {
         );
         // right border
         ScreenRenderUtil.fill(
-                bufferBuilder,
                 matrix,
                 x2 - 1,
                 y1,
@@ -114,19 +106,17 @@ public class PrinterColor extends Button {
                 borderColor
         );
 
-        float filledPixels = (((y2 - 1) - (y1 + 1)) * this.level.get()) / LabelerConstants.COLOR_MAX_CAPACITY;
+        float filledPixels = (((y2 - 1) - (y1 + 1)) * this.level) / LabelerConstants.COLOR_MAX_CAPACITY;
         // middle
-        ScreenRenderUtil.fill(
-                bufferBuilder,
+        ScreenRenderUtil.fillGradient(
                 matrix,
                 x1 + 1,
                 y2 - 1 - filledPixels,
                 x2 - 1,
                 y2 - 1,
-                this.color | 0xFF000000 // get rid of transparency
-        );
-
-        ScreenRenderUtil.endFills(bufferBuilder);
+                this.color,
+                this.colorGrad
+        );;
     }
 
     private int getBorderColor() {
@@ -134,19 +124,23 @@ public class PrinterColor extends Button {
     }
 
     /**
-     * Mix color if selected and has a high enough level, otherwise don't affect the color.
+     * Mix or get color if selected and has a high enough level, otherwise don't affect the color.
+     * If not mixing, and the color can't be used, return an empty.
      * This also decrements the level.
      */
-    public int mixColor(int otherColor) {
-        int currentLevel = this.level.get();
-        if(this.selected && currentLevel > 0) {
-            this.level.set(currentLevel - 1);
-            if (this.level.get() == 0) {
+    public OptionalInt applyColor(boolean mix, int otherColor) {
+        if(this.selected && this.level > 0) {
+            this.level -= 1;
+            if (this.level == 0) {
                 this.selected = false;
             }
-            return mixColors(this.color, otherColor);
+            if (mix) {
+                return OptionalInt.of(mixColors(this.color, otherColor));
+            } else {
+                return OptionalInt.of(this.color);
+            }
         }
-        return otherColor;
+        return mix ? OptionalInt.of(otherColor) : OptionalInt.empty();
     }
 
     /**

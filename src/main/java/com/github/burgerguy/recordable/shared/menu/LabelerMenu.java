@@ -11,7 +11,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.ItemStack;
 
 public class LabelerMenu extends AbstractContainerMenu {
     public static final ResourceLocation IDENTIFIER = new ResourceLocation(Recordable.MOD_ID, "labeler");
@@ -20,13 +20,18 @@ public class LabelerMenu extends AbstractContainerMenu {
     private final Container container;
     private final int[] colorLevels;
 
-    public LabelerMenu(int containerId, Inventory playerInventory, FriendlyByteBuf buf) {
-        this(containerId, playerInventory, new SimpleContainer(LabelerConstants.CONTAINER_SIZE), buf.readVarIntArray(LabelerConstants.COLOR_COUNT));
+    private final int[] pixelIndexModel;
+    private final int pixelModelWidth;
+
+    public LabelerMenu(int containerId, Inventory playerInventory, FriendlyByteBuf buffer) {
+        this(containerId, playerInventory, new SimpleContainer(LabelerConstants.CONTAINER_SIZE), buffer.readVarIntArray(), buffer.readVarIntArray(), buffer.readVarInt());
     }
 
-    public LabelerMenu(int containerId, Inventory playerInventory, Container container, int[] colorLevels) {
+    public LabelerMenu(int containerId, Inventory playerInventory, Container container, int[] colorLevels, int[] pixelIndexModel, int pixelModelWidth) {
         super(INSTANCE, containerId);
         this.colorLevels = colorLevels;
+        this.pixelIndexModel = pixelIndexModel;
+        this.pixelModelWidth = pixelModelWidth;
         checkContainerSize(container, LabelerConstants.CONTAINER_SIZE);
         this.container = container;
         container.startOpen(playerInventory.player);
@@ -48,8 +53,19 @@ public class LabelerMenu extends AbstractContainerMenu {
         return this.colorLevels;
     }
 
-    public void handleFinish(FriendlyByteBuf buf) {
-        // FIXME: implement
+    public void handleFinish(FriendlyByteBuf buffer) {
+        ItemStack record = null; // TODO: get item in slot
+        PaintArray recreatedPaintArray = PaintArray.fromBuffer(this.pixelIndexModel, this.pixelModelWidth, this.colorLevels, buffer);
+        recreatedPaintArray.applyToItemNoAlpha(record);
+        // keep track of all players using blockentity in parent container, then send packets to each to update (other than the one that sent this)
+    }
+
+    public int[] getPixelIndexModel() {
+        return pixelIndexModel;
+    }
+
+    public int getPixelModelWidth() {
+        return pixelModelWidth;
     }
 
     @Override

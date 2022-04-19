@@ -128,7 +128,9 @@ public class Recordable implements ModInitializer {
 		});
 
 		ServerPlayNetworking.registerGlobalReceiver(CONFIRM_PRINT_ID, (server, player, handler, buffer, responseSender) -> {
-
+			if (player.containerMenu instanceof LabelerMenu labelerMenu) {
+				labelerMenu.handleFinish(buffer);
+			}
 		});
 	}
 }

@@ -2,18 +2,18 @@ package com.github.burgerguy.recordable.client.screen;
 
 import com.github.burgerguy.recordable.client.render.util.ScreenRenderUtil;
 import com.github.burgerguy.recordable.shared.menu.LabelerConstants;
+import com.github.burgerguy.recordable.shared.menu.PaintColor;
+import com.github.burgerguy.recordable.shared.util.ColorUtil;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Matrix4f;
 import java.awt.Color;
-import java.util.OptionalInt;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.TextComponent;
-import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
-public class PaintColor extends Button {
+public class PaintColorWidget extends Button {
 
     private final int color;
     private final int colorGrad;
@@ -22,11 +22,11 @@ public class PaintColor extends Button {
     private int level;
     private boolean selected;
 
-    public PaintColor(DyeColor dyeColor, int initialLevel) {
-        super(0, 0, 0, 0, new TextComponent(dyeColor.getName()), PaintColor::onPressedAction);
-        this.color = dyeColor.getTextColor() | 0xFF000000; // make opaque
+    public PaintColorWidget(PaintColor paintColor, int initialLevel) {
+        super(0, 0, 0, 0, paintColor.name(), PaintColorWidget::onPressedAction);
+        this.color = paintColor.color(); // make opaque
         this.colorGrad = new Color(color).darker().getRGB();
-        this.dyeItem = DyeItem.byColor(dyeColor);
+        this.dyeItem = paintColor.dyeItem();
         this.level = initialLevel;
     }
 
@@ -38,8 +38,8 @@ public class PaintColor extends Button {
     }
 
     private static void onPressedAction(Button button) {
-        PaintColor paintColor = (PaintColor) button;
-        paintColor.selected = !paintColor.selected;
+        PaintColorWidget paintColorWidget = (PaintColorWidget) button;
+        paintColorWidget.selected = !paintColorWidget.selected;
     }
 
     /**
@@ -114,8 +114,8 @@ public class PaintColor extends Button {
                 y2 - 1 - filledPixels,
                 x2 - 1,
                 y2 - 1,
-                this.color,
-                this.colorGrad
+                this.color | 0xFF000000,
+                this.colorGrad | 0xFF000000
         );;
     }
 
@@ -125,28 +125,21 @@ public class PaintColor extends Button {
 
     /**
      * Mix or get color if selected and has a high enough level, otherwise don't affect the color.
-     * If not mixing, and the color can't be used, return an empty.
-     * This also decrements the level.
+     * This also decrements the level if possible.
      */
-    public OptionalInt applyColor(boolean mix, int otherColor) {
+    public int applyColor(boolean mix, int otherColor) {
         if(this.selected && this.level > 0) {
             this.level -= 1;
             if (this.level == 0) {
                 this.selected = false;
             }
             if (mix) {
-                return OptionalInt.of(mixColors(this.color, otherColor));
+                return ColorUtil.mixColors(this.color, otherColor);
             } else {
-                return OptionalInt.of(this.color);
+                return this.color;
             }
         }
-        return mix ? OptionalInt.of(otherColor) : OptionalInt.empty();
+        return otherColor;
     }
 
-    /**
-     * Fast color blending algorithm found here: https://stackoverflow.com/a/8440673/4563900
-     */
-    private static int mixColors(int c1, int c2) {
-        return (int) ((((c1 ^ c2) & 0xfefefefeL) >> 1) + (c1 & c2));
-    }
 }

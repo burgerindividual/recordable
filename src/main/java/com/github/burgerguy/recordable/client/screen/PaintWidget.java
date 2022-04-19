@@ -9,13 +9,14 @@ import net.minecraft.network.chat.TranslatableComponent;
 import org.lwjgl.glfw.GLFW;
 
 public class PaintWidget extends AbstractWidget {
-    private final PaintColor[] paintColors;
+    private final PaintColorWidget[] paintColorWidgets;
     private final ClientPaintArray paintArray;
     private final int pixelSize;
 
     private boolean mouseEventEdited;
+    private boolean mix;
 
-    public PaintWidget(int x, int y, int pixelSize, ClientPaintArray paintArray, PaintColor[] paintColors) {
+    public PaintWidget(int x, int y, int pixelSize, ClientPaintArray paintArray, PaintColorWidget[] paintColorWidgets) {
         super(
                 x,
                 y,
@@ -24,15 +25,19 @@ public class PaintWidget extends AbstractWidget {
                 new TranslatableComponent("widget.recordable.paint_area")
         );
         this.paintArray = paintArray;
-        this.paintColors = paintColors;
+        this.paintColorWidgets = paintColorWidgets;
         this.pixelSize = pixelSize;
+    }
+
+    public void setMix(boolean mix) {
+        this.mix = mix;
     }
 
     private void tryPaint(double mouseX, double mouseY) {
         int x = ((int) Math.round(mouseX)) / this.pixelSize;
         int y = ((int) Math.round(mouseY) - this.x) / this.pixelSize;
         if (!this.mouseEventEdited) {
-            this.paintArray.paint(x, y, this.paintColors);
+            this.paintArray.paint(x, y, this.paintColorWidgets, this.mix);
             this.mouseEventEdited = true;
         }
     }
@@ -41,10 +46,14 @@ public class PaintWidget extends AbstractWidget {
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         boolean superResult = super.keyPressed(keyCode, scanCode, modifiers);
         if (!superResult && Screen.hasControlDown() && keyCode == GLFW.GLFW_KEY_Z) {
-            // FIXME: undo (boolean)
-            return true;
+            return this.paintArray.undo();
         }
         return false;
+    }
+
+    @Override
+    public void onRelease(double mouseX, double mouseY) {
+        this.mouseEventEdited = false;
     }
 
     @Override
@@ -59,6 +68,7 @@ public class PaintWidget extends AbstractWidget {
 
     @Override
     public void renderButton(PoseStack poseStack, int mouseX, int mouseY, float partialTick) {
+        // TODO: implement
         super.renderButton(poseStack, mouseX, mouseY, partialTick);
         if (!this.isHovered) {
             this.mouseEventEdited = false;

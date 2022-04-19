@@ -41,7 +41,14 @@ public class LabelerBlockEntity extends BlockEntity implements ImplementedContai
     @Nullable
     @Override
     public AbstractContainerMenu createMenu(int containerId, Inventory playerInventory, Player player) {
-        return new LabelerMenu(containerId, playerInventory, this, this.colorLevels);
+        return new LabelerMenu(
+                containerId,
+                playerInventory,
+                this,
+                this.colorLevels,
+                LabelerConstants.RECORD_PIXEL_INDEX_MODEL,
+                LabelerConstants.RECORD_PIXEL_MODEL_WIDTH
+        );
     }
 
     @Override
@@ -52,6 +59,14 @@ public class LabelerBlockEntity extends BlockEntity implements ImplementedContai
     @Override
     public NonNullList<ItemStack> getItems() {
         return this.items;
+    }
+
+    @Override
+    public boolean stillValid(Player player) {
+        if (this.level.getBlockEntity(this.worldPosition) != this) {
+            return false;
+        }
+        return player.distanceToSqr((double)this.worldPosition.getX() + 0.5, (double)this.worldPosition.getY() + 0.5, (double)this.worldPosition.getZ() + 0.5) <= 64.0;
     }
 
     @Override
@@ -71,7 +86,9 @@ public class LabelerBlockEntity extends BlockEntity implements ImplementedContai
     }
 
     @Override
-    public void writeScreenOpeningData(ServerPlayer player, FriendlyByteBuf buf) {
-        buf.writeVarIntArray(this.colorLevels);
+    public void writeScreenOpeningData(ServerPlayer player, FriendlyByteBuf buffer) {
+        buffer.writeVarIntArray(this.colorLevels);
+        buffer.writeVarIntArray(LabelerConstants.RECORD_PIXEL_INDEX_MODEL);
+        buffer.writeVarInt(LabelerConstants.RECORD_PIXEL_MODEL_WIDTH);
     }
 }

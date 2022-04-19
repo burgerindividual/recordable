@@ -1,5 +1,6 @@
 package com.github.burgerguy.recordable.shared.menu;
 
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.world.item.DyeColor;
 
 public class LabelerConstants {
@@ -19,5 +20,33 @@ public class LabelerConstants {
     public static final int COLOR_MAX_CAPACITY = 16;
     public static final int COLOR_CAPACITY_PER_ITEM = 4;
 
-    public static final int COLOR_COUNT = DyeColor.values().length;
+    // sorted by hue because it looks nice
+    public static final PaintColor[] DEFINED_COLORS = {
+            PaintColor.fromDyeColor(DyeColor.WHITE),
+            PaintColor.fromDyeColor(DyeColor.LIGHT_GRAY),
+            PaintColor.fromDyeColor(DyeColor.GRAY),
+            PaintColor.fromDyeColor(DyeColor.BLACK),
+            PaintColor.fromDyeColor(DyeColor.RED),
+            PaintColor.fromDyeColor(DyeColor.PINK),
+            PaintColor.fromDyeColor(DyeColor.MAGENTA),
+            PaintColor.fromDyeColor(DyeColor.PURPLE),
+            PaintColor.fromDyeColor(DyeColor.BLUE),
+            PaintColor.fromDyeColor(DyeColor.LIGHT_BLUE),
+            PaintColor.fromDyeColor(DyeColor.CYAN),
+            PaintColor.fromDyeColor(DyeColor.GREEN),
+            PaintColor.fromDyeColor(DyeColor.LIME),
+            PaintColor.fromDyeColor(DyeColor.YELLOW),
+            PaintColor.fromDyeColor(DyeColor.BROWN),
+            PaintColor.fromDyeColor(DyeColor.ORANGE)
+    };
+    public static final int COLOR_COUNT = DEFINED_COLORS.length;
+
+    public static final int[] RECORD_PIXEL_INDEX_MODEL = {
+            -1,  0,  1,  2, -1,
+             3,  4, -1,  5,  6,
+            -1,  7,  8,  9, -1
+    };
+    public static final int RECORD_PIXEL_MODEL_WIDTH = 5;
+
+
 }

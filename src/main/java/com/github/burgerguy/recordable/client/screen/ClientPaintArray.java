@@ -7,6 +7,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import java.util.Arrays;
 import java.util.List;
+import net.minecraft.network.FriendlyByteBuf;
 
 public class ClientPaintArray extends PaintArray {
 
@@ -31,6 +32,8 @@ public class ClientPaintArray extends PaintArray {
             if (oldColor != newColor) {
                 this.setColor(pixelIdx, newColor);
                 events.add(new PixelPaintEvent(colorIdx, mix));
+                // the input mix variable should only apply to the first applied color, after it should always be true
+                mix = true;
             }
         }
         this.paintSteps.add(new PaintStep(this.getColor(pixelIdx), pixelIdx, events));
@@ -66,6 +69,16 @@ public class ClientPaintArray extends PaintArray {
         }
     }
 
+    public void writeToPacket(FriendlyByteBuf buffer) {
+        for (PaintStep step : this.paintSteps) {
+            for (PixelPaintEvent event : step.events) {
+                buffer.writeInt(event.colorIndex);
+                buffer.writeInt(step.pixelIndex);
+                buffer.writeBoolean(event.isMixed);
+            }
+        }
+    }
+
     private record PixelPaintEvent(int colorIndex, boolean isMixed) {}
-    private record PaintStep(int color, int pixelIndex, List<PixelPaintEvent> events) {}
+    private record PaintStep(int colorState, int pixelIndex, List<PixelPaintEvent> events) {}
 }

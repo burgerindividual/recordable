@@ -5,10 +5,16 @@ import com.github.burgerguy.recordable.shared.Recordable;
 import com.github.burgerguy.recordable.shared.menu.LabelerConstants;
 import com.github.burgerguy.recordable.shared.menu.LabelerMenu;
 import com.mojang.blaze3d.vertex.PoseStack;
+import io.netty.buffer.Unpooled;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
+import org.lwjgl.system.MemoryStack;
 
 public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
     public static final ResourceLocation IDENTIFIER = new ResourceLocation(Recordable.MOD_ID, "labeler");
@@ -27,7 +33,7 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
         }
 
         this.clientPaintArray = new ClientPaintArray(labelerMenu.getPixelIndexModel(), labelerMenu.getPixelModelWidth());
-        this.paintWidget = new PaintWidget()
+        this.paintWidget = new PaintWidget();
     }
 
     @Override
@@ -57,6 +63,17 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
     @Override
     protected void renderBg(PoseStack matrixStack, float partialTick, int mouseX, int mouseY) {
         // TODO: noop for now
+    }
+
+    public void sendFinish() {
+        try (MemoryStack memoryStack = MemoryStack.stackPush()) {
+            FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.wrappedBuffer(memoryStack.malloc(Integer.BYTES)));
+            buffer.resetWriterIndex();
+            buffer.writeUtf(null); // artist
+            buffer.writeUtf(null); // title
+            this.clientPaintArray.writeToPacket(buffer);
+            ClientPlayNetworking.send(Recordable.FINALIZE_LABEL_ID, buffer);
+        }
     }
 
 }

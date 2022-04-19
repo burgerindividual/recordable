@@ -3,6 +3,7 @@ package com.github.burgerguy.recordable.shared.menu;
 import com.github.burgerguy.recordable.shared.Recordable;
 import com.github.burgerguy.recordable.shared.util.ColorUtil;
 import java.util.Arrays;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
@@ -60,7 +61,7 @@ public class PaintArray {
         return paintArray;
     }
 
-    public void applyToItemNoAlpha(ItemStack itemStack) {
+    public void applyToTagNoAlpha(CompoundTag tag) {
         byte[] byteColors = new byte[colors.length * 3];
         for (int i = 0; i < colors.length; i++) {
             int color = colors[i];
@@ -69,7 +70,7 @@ public class PaintArray {
             byteColors[firstIdx + 1] = (byte) ((color >> 8) & 0xFF);
             byteColors[firstIdx + 2] = (byte) (color & 0xFF);
         }
-        itemStack.getOrCreateTag().putByteArray("Colors", byteColors);
+        tag.putByteArray("Colors", byteColors);
     }
 
     public void setColor(int index, int color) {

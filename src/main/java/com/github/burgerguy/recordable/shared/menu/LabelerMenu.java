@@ -1,7 +1,10 @@
 package com.github.burgerguy.recordable.shared.menu;
 
 import com.github.burgerguy.recordable.shared.Recordable;
+import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
+import net.fabricmc.fabric.api.screenhandler.v1.ScreenHandlerRegistry;
 import net.fabricmc.fabric.impl.screenhandler.ExtendedScreenHandlerType;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.Container;
@@ -12,10 +15,11 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
 public class LabelerMenu extends AbstractContainerMenu {
     public static final ResourceLocation IDENTIFIER = new ResourceLocation(Recordable.MOD_ID, "labeler");
-    public static final MenuType<LabelerMenu> INSTANCE = new ExtendedScreenHandlerType<>(LabelerMenu::new);
+    public static final MenuType<LabelerMenu> INSTANCE = new MenuType<>(LabelerMenu::new);
 
     private final Container container;
     private final int[] colorLevels;
@@ -54,10 +58,17 @@ public class LabelerMenu extends AbstractContainerMenu {
     }
 
     public void handleFinish(FriendlyByteBuf buffer) {
-        ItemStack record = null; // TODO: get item in slot
+        ItemStack record = ItemStack.EMPTY; // TODO: get item in slot
+        String artist = buffer.readUtf();
+        String title = buffer.readUtf();
         PaintArray recreatedPaintArray = PaintArray.fromBuffer(this.pixelIndexModel, this.pixelModelWidth, this.colorLevels, buffer);
-        recreatedPaintArray.applyToItemNoAlpha(record);
-        // keep track of all players using blockentity in parent container, then send packets to each to update (other than the one that sent this)
+
+        CompoundTag itemTag = record.getOrCreateTag();
+        recreatedPaintArray.applyToTagNoAlpha(itemTag);
+        CompoundTag songInfoTag = new CompoundTag();
+
+
+        PlayerLookup.tracking((BlockEntity) container);
     }
 
     public int[] getPixelIndexModel() {

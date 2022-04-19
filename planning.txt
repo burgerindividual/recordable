@@ -128,14 +128,14 @@ account for record player block rotation to impact relative sound positions
 TODO:
 add dyeing of discs
 add title and author writing
-add animations to recorder
+add animations to recorder (done)
 move playing to jukebox (done)
-display color in recorder/use color provider
-fix sound, normalize and make more realistic
-add lmdb dynamic resizing
+display color in recorder/use color provider (nah)
+fix sound, normalize and make more realistic (done, not for stereo tho)
+add lmdb dynamic resizing (nah)
 add lmbd mixins to avoid crash (done)
-inject into gameevent and levelevent
-fix rotation
+inject into gameevent and levelevent (mostly done)
+fix rotation (done)
 
 Press for vinyls, requires copper master
 
@@ -154,3 +154,5 @@ fix relative audio with hrtf
 make audio quieter when further away from jukebox
 
 looping?
+
+try to get access to blockstate on client and server in screen, no need to sync thru screenhandler

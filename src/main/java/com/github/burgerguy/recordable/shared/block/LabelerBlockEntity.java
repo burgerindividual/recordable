@@ -45,9 +45,7 @@ public class LabelerBlockEntity extends BlockEntity implements ImplementedContai
                 containerId,
                 playerInventory,
                 this,
-                this.colorLevels,
-                LabelerConstants.RECORD_PIXEL_INDEX_MODEL,
-                LabelerConstants.RECORD_PIXEL_MODEL_WIDTH
+                this
         );
     }
 
@@ -59,6 +57,10 @@ public class LabelerBlockEntity extends BlockEntity implements ImplementedContai
     @Override
     public NonNullList<ItemStack> getItems() {
         return this.items;
+    }
+
+    public int[] getColorLevels() {
+        return colorLevels;
     }
 
     @Override
@@ -87,8 +89,6 @@ public class LabelerBlockEntity extends BlockEntity implements ImplementedContai
 
     @Override
     public void writeScreenOpeningData(ServerPlayer player, FriendlyByteBuf buffer) {
-        buffer.writeVarIntArray(this.colorLevels);
-        buffer.writeVarIntArray(LabelerConstants.RECORD_PIXEL_INDEX_MODEL);
-        buffer.writeVarInt(LabelerConstants.RECORD_PIXEL_MODEL_WIDTH);
+        buffer.writeBlockPos(this.getBlockPos());
     }
 }

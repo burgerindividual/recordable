@@ -29,7 +29,7 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
 
         this.paintColorWidgets = new PaintColorWidget[LabelerConstants.COLOR_COUNT];
         for (int i = 0; i < LabelerConstants.COLOR_COUNT; i++) {
-            this.paintColorWidgets[i] = new PaintColorWidget(LabelerConstants.DEFINED_COLORS[i], labelerMenu.getColorLevels()[i]);
+            this.paintColorWidgets[i] = new PaintColorWidget(LabelerConstants.DEFINED_COLORS[i], labelerMenu.getLabelerBlockEntity().getColorLevels()[i]);
         }
 
         this.clientPaintArray = new ClientPaintArray(labelerMenu.getPixelIndexModel(), labelerMenu.getPixelModelWidth());

@@ -1,9 +1,10 @@
 package com.github.burgerguy.recordable.shared.menu;
 
 import com.github.burgerguy.recordable.shared.Recordable;
+import com.github.burgerguy.recordable.shared.block.LabelerBlockEntity;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
-import net.fabricmc.fabric.api.screenhandler.v1.ScreenHandlerRegistry;
 import net.fabricmc.fabric.impl.screenhandler.ExtendedScreenHandlerType;
+import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -19,21 +20,24 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 
 public class LabelerMenu extends AbstractContainerMenu {
     public static final ResourceLocation IDENTIFIER = new ResourceLocation(Recordable.MOD_ID, "labeler");
-    public static final MenuType<LabelerMenu> INSTANCE = new MenuType<>(LabelerMenu::new);
+    public static final MenuType<LabelerMenu> INSTANCE = new ExtendedScreenHandlerType<>(LabelerMenu::new);
 
     private final Container container;
-    private final int[] colorLevels;
+    private final LabelerBlockEntity labelerBlockEntity;
 
     private final int[] pixelIndexModel;
     private final int pixelModelWidth;
 
     public LabelerMenu(int containerId, Inventory playerInventory, FriendlyByteBuf buffer) {
-        this(containerId, playerInventory, new SimpleContainer(LabelerConstants.CONTAINER_SIZE), buffer.readVarIntArray(), buffer.readVarIntArray(), buffer.readVarInt());
+        // I'M FUCKING DONE.
+        // TODO: does this work with multiple dimensions? i'd hope that the user is accessing the block from the same dimension they're in, but what if?
+        this(containerId, playerInventory, new SimpleContainer(LabelerConstants.CONTAINER_SIZE), (LabelerBlockEntity) Minecraft.getInstance().getConnection().getLevel().getBlockEntity(buffer.readBlockPos()));
     }
 
-    public LabelerMenu(int containerId, Inventory playerInventory, Container container, int[] colorLevels, int[] pixelIndexModel, int pixelModelWidth) {
+    public LabelerMenu(int containerId, Inventory playerInventory, Container container, LabelerBlockEntity labelerBlockEntity) {
         super(INSTANCE, containerId);
-        this.colorLevels = colorLevels;
+        // get from BE
+        this.labelerBlockEntity = labelerBlockEntity;
         this.pixelIndexModel = pixelIndexModel;
         this.pixelModelWidth = pixelModelWidth;
         checkContainerSize(container, LabelerConstants.CONTAINER_SIZE);
@@ -53,15 +57,11 @@ public class LabelerMenu extends AbstractContainerMenu {
         }
     }
 
-    public int[] getColorLevels() {
-        return this.colorLevels;
-    }
-
     public void handleFinish(FriendlyByteBuf buffer) {
         ItemStack record = ItemStack.EMPTY; // TODO: get item in slot
         String artist = buffer.readUtf();
         String title = buffer.readUtf();
-        PaintArray recreatedPaintArray = PaintArray.fromBuffer(this.pixelIndexModel, this.pixelModelWidth, this.colorLevels, buffer);
+        PaintArray recreatedPaintArray = PaintArray.fromBuffer(this.pixelIndexModel, this.pixelModelWidth, this.labelerBlockEntity.getColorLevels(), buffer);
 
         CompoundTag itemTag = record.getOrCreateTag();
         recreatedPaintArray.applyToTagNoAlpha(itemTag);
@@ -77,6 +77,10 @@ public class LabelerMenu extends AbstractContainerMenu {
 
     public int getPixelModelWidth() {
         return pixelModelWidth;
+    }
+
+    public LabelerBlockEntity getLabelerBlockEntity() {
+        return labelerBlockEntity;
     }
 
     @Override

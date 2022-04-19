@@ -156,3 +156,4 @@ make audio quieter when further away from jukebox
 looping?
 
 try to get access to blockstate on client and server in screen, no need to sync thru screenhandler
+figure out how to update when record is removed from result slot (maybe just stick with button?)

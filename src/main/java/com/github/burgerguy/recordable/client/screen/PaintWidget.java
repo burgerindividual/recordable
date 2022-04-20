@@ -82,13 +82,14 @@ public class PaintWidget extends AbstractWidget {
         // pixels
         for (int pxY = 0; pxY < this.paintArray.getHeight(); pxY++) {
             for (int pxX = 0; pxX < this.paintArray.getWidth(); pxX++) {
+                int pxIndex = this.paintArray.coordsToIndex(x, y);
                 ScreenRenderUtil.fill(
                         matrix,
                         x1 + (pxX * this.pixelSize),
                         y1 + (pxY * this.pixelSize),
                         x1 + (pxX * this.pixelSize) + this.pixelSize,
                         y1 + (pxY * this.pixelSize) + this.pixelSize,
-                        paintArray.getColor(pxX, pxY)
+                        pxIndex == -1 ? 0 : this.paintArray.getColor(pxIndex)
                 );
             }
         }

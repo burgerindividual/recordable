@@ -81,10 +81,6 @@ public class PaintArray {
         return this.colors[index];
     }
 
-    public int getColor(int x, int y) {
-        return this.colors[coordsToIndex(x, y)];
-    }
-
     public boolean isIndexValid(int index) {
         return 0 < index && index < colors.length;
     }

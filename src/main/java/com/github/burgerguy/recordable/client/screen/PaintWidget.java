@@ -1,6 +1,8 @@
 package com.github.burgerguy.recordable.client.screen;
 
+import com.github.burgerguy.recordable.client.render.util.ScreenRenderUtil;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Matrix4f;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
@@ -9,6 +11,9 @@ import net.minecraft.network.chat.TranslatableComponent;
 import org.lwjgl.glfw.GLFW;
 
 public class PaintWidget extends AbstractWidget {
+    private static final int GRID_COLOR = 0xFFFFFFFF;
+    private static final float GRID_HALF_LINE_WIDTH = 0.5f;
+
     private final PaintColorWidget[] paintColorWidgets;
     private final ClientPaintArray paintArray;
     private final int pixelSize;
@@ -22,7 +27,7 @@ public class PaintWidget extends AbstractWidget {
                 y,
                 paintArray.getWidth() * pixelSize,
                 paintArray.getHeight() * pixelSize,
-                new TranslatableComponent("widget.recordable.paint_area")
+                new TranslatableComponent("screen.recordable.labeler.paint_area")
         );
         this.paintArray = paintArray;
         this.paintColorWidgets = paintColorWidgets;
@@ -68,7 +73,52 @@ public class PaintWidget extends AbstractWidget {
 
     @Override
     public void renderButton(PoseStack poseStack, int mouseX, int mouseY, float partialTick) {
-        // TODO: implement
+        Matrix4f matrix = poseStack.last().pose();
+        float x1 = this.x;
+        float x2 = this.x + this.width;
+        float y1 = this.y;
+        float y2 = this.y + this.height;
+
+        // pixels
+        for (int pxY = 0; pxY < this.paintArray.getHeight(); pxY++) {
+            for (int pxX = 0; pxX < this.paintArray.getWidth(); pxX++) {
+                ScreenRenderUtil.fill(
+                        matrix,
+                        x1 + (pxX * this.pixelSize),
+                        y1 + (pxY * this.pixelSize),
+                        x1 + (pxX * this.pixelSize) + this.pixelSize,
+                        y1 + (pxY * this.pixelSize) + this.pixelSize,
+                        paintArray.getColor(pxX, pxY)
+                );
+            }
+        }
+
+        // horizontal lines
+        for (int i = 0; i <= this.paintArray.getHeight(); i++) {
+            float lineY = i * this.pixelSize;
+            ScreenRenderUtil.fill(
+                    matrix,
+                    x1,
+                    y1 + lineY - GRID_HALF_LINE_WIDTH,
+                    x2,
+                    y1 + lineY + GRID_HALF_LINE_WIDTH,
+                    GRID_COLOR
+            );
+        }
+
+        // vertical lines
+        for (int i = 0; i <= this.paintArray.getWidth(); i++) {
+            float lineX = i * this.pixelSize;
+            ScreenRenderUtil.fill(
+                    matrix,
+                    x1 + lineX - GRID_HALF_LINE_WIDTH,
+                    y1,
+                    x1 + lineX + GRID_HALF_LINE_WIDTH,
+                    y2,
+                    GRID_COLOR
+            );
+        }
+
         super.renderButton(poseStack, mouseX, mouseY, partialTick);
         if (!this.isHovered) {
             this.mouseEventEdited = false;

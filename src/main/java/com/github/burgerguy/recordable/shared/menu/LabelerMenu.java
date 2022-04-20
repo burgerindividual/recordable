@@ -3,12 +3,10 @@ package com.github.burgerguy.recordable.shared.menu;
 import com.github.burgerguy.recordable.shared.Recordable;
 import com.github.burgerguy.recordable.shared.block.LabelerBlockEntity;
 import java.util.Objects;
-import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.impl.screenhandler.ExtendedScreenHandlerType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
@@ -26,16 +24,12 @@ public class LabelerMenu extends AbstractContainerMenu {
     private final Container container;
     private final LabelerBlockEntity labelerBlockEntity;
 
-    private final int[] pixelIndexModel;
-    private final int pixelModelWidth;
-
     public LabelerMenu(int containerId, Inventory playerInventory, FriendlyByteBuf buffer) {
-        // TODO: does this work with multiple dimensions? i'd hope that the user is accessing the block from the same dimension they're in, but what if not?
         this(
                 containerId,
                 playerInventory,
                 new SimpleContainer(LabelerConstants.CONTAINER_SIZE),
-                (LabelerBlockEntity) Objects.requireNonNull(playerInventory.player.getLevel().getBlockEntity(buffer.readBlockPos()))
+                (LabelerBlockEntity) Objects.requireNonNull(playerInventory.player.getLevel().getBlockEntity(buffer.readBlockPos())) // any means necessary
         );
     }
 
@@ -43,8 +37,6 @@ public class LabelerMenu extends AbstractContainerMenu {
         super(INSTANCE, containerId);
         // get from BE
         this.labelerBlockEntity = labelerBlockEntity;
-        this.pixelIndexModel = labelerBlockEntity.getPixelIndexModel();
-        this.pixelModelWidth = labelerBlockEntity.getPixelModelWidth();
         checkContainerSize(container, LabelerConstants.CONTAINER_SIZE);
         this.container = container;
         container.startOpen(playerInventory.player);
@@ -60,13 +52,25 @@ public class LabelerMenu extends AbstractContainerMenu {
         for (int x = 0; x < 9; ++x) {
             this.addSlot(new Slot(playerInventory, x, 8 + x * 18, 142));
         }
+
+        // add dye slot
+
     }
 
+    // only called on server
     public void handleFinish(FriendlyByteBuf buffer) {
+        LabelerBlockEntity labeler = this.labelerBlockEntity;
+
         ItemStack record = ItemStack.EMPTY; // TODO: get item in slot
         String author = buffer.readUtf();
         String title = buffer.readUtf();
-        PaintArray recreatedPaintArray = PaintArray.fromBuffer(this.pixelIndexModel, this.pixelModelWidth, this.labelerBlockEntity.getColorLevels(), buffer);
+        // this will modify the colors of the labeler BE, so we need to sync with the clients
+        PaintArray recreatedPaintArray = PaintArray.fromBuffer(
+                labeler.getPixelIndexModel(),
+                labeler.getPixelModelWidth(),
+                labeler.getColorLevels(),
+                buffer
+        );
 
         CompoundTag itemTag = record.getOrCreateTag();
         recreatedPaintArray.applyToTagNoAlpha(itemTag);
@@ -75,17 +79,18 @@ public class LabelerMenu extends AbstractContainerMenu {
         songInfoTag.putString("Title", title);
         itemTag.put("SongInfo", songInfoTag);
 
-        this.labelerBlockEntity.setChanged();
-        BlockState labelerBlockState = this.labelerBlockEntity.getBlockState();
-        this.labelerBlockEntity.getLevel().sendBlockUpdated(this.labelerBlockEntity.getBlockPos(),  labelerBlockState, labelerBlockState, 2); // or the flag with 1 to cause a block update
+        // update color levels
+        this.updateBlockEntity();
+        // update record slot
+        this.broadcastChanges();
     }
 
-    public int[] getPixelIndexModel() {
-        return pixelIndexModel;
-    }
-
-    public int getPixelModelWidth() {
-        return pixelModelWidth;
+    // only called on server
+    private void updateBlockEntity() {
+        LabelerBlockEntity labeler = this.labelerBlockEntity;
+        labeler.setChanged();
+        BlockState blockState = labeler.getBlockState();
+        labeler.getLevel().sendBlockUpdated(labeler.getBlockPos(), blockState, blockState, 2); // or the flag with 1 to cause a block update
     }
 
     public LabelerBlockEntity getLabelerBlockEntity() {

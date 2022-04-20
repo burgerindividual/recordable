@@ -3,7 +3,7 @@ package com.github.burgerguy.recordable.shared.menu;
 import net.minecraft.world.item.DyeColor;
 
 public class LabelerConstants {
-    public static final int CONTAINER_SIZE = 4;
+    public static final int CONTAINER_SIZE = 3;
 
     public static final int PALETTE_X = 4;
     public static final int PALETTE_Y = 13;

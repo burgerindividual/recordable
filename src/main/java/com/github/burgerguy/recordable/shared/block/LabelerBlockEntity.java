@@ -97,6 +97,7 @@ public class LabelerBlockEntity extends BlockEntity implements ImplementedContai
         return this.saveWithoutMetadata();
     }
 
+    // server to client
     @Override
     public void writeScreenOpeningData(ServerPlayer player, FriendlyByteBuf buffer) {
         buffer.writeBlockPos(this.getBlockPos());

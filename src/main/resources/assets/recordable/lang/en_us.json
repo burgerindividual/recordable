@@ -6,5 +6,9 @@
   "item.recordable.copper_record.unknown_author": "Unknown Author",
   "block.recordable.recorder": "Recorder",
   "block.recordable.labeler": "Labeler",
-  "widget.recordable.paint_area": "Paint Area"
+  "screen.recordable.labeler.paint_area": "Paint Area",
+  "screen.recordable.labeler.undo": "Undo",
+  "screen.recordable.labeler.finish": "Finish",
+  "screen.recordable.labeler.author": "Author",
+  "screen.recordable.labeler.title": "Title"
 }

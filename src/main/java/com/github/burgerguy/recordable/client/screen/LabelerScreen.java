@@ -6,11 +6,18 @@ import com.github.burgerguy.recordable.shared.menu.LabelerConstants;
 import com.github.burgerguy.recordable.shared.menu.LabelerMenu;
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.netty.buffer.Unpooled;
+import javax.annotation.Nullable;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.SharedConstants;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import org.lwjgl.system.MemoryStack;
@@ -19,20 +26,17 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
     public static final ResourceLocation IDENTIFIER = new ResourceLocation(Recordable.MOD_ID, "labeler");
     private static final ResourceLocation COLOR_ICON_LOCATION = new ResourceLocation("textures/gui/container/loom.png");
 
-    private final PaintColorWidget[] paintColorWidgets;
     private final ClientPaintArray clientPaintArray;
-    private final PaintWidget paintWidget;
+
+    @Nullable
+    private EditBox authorEditBox;
+    @Nullable
+    private EditBox titleEditBox;
 
     public LabelerScreen(LabelerMenu labelerMenu, Inventory inventory, Component component) {
         super(labelerMenu, inventory, component);
 
-        this.paintColorWidgets = new PaintColorWidget[LabelerConstants.COLOR_COUNT];
-        for (int i = 0; i < LabelerConstants.COLOR_COUNT; i++) {
-            this.paintColorWidgets[i] = new PaintColorWidget(LabelerConstants.DEFINED_COLORS[i], labelerMenu.getLabelerBlockEntity().getColorLevels()[i]);
-        }
-
-        this.clientPaintArray = new ClientPaintArray(labelerMenu.getPixelIndexModel(), labelerMenu.getPixelModelWidth());
-        this.paintWidget = new PaintWidget();
+        this.clientPaintArray = new ClientPaintArray(labelerMenu.getLabelerBlockEntity().getPixelIndexModel(), labelerMenu.getLabelerBlockEntity().getPixelModelWidth());
     }
 
     @Override
@@ -43,10 +47,16 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
 
         // gets ScreenRenderUtil ready for render
         this.addRenderableOnly((poseStack, mouseX, mouseY, partialTick) -> ScreenRenderUtil.startFills());
-        for (int i = 0; i < this.paintColorWidgets.length; i++) {
+
+        // create and add paint colors
+        PaintColorWidget[] paintColorWidgets = new PaintColorWidget[LabelerConstants.COLOR_COUNT];
+        for (int i = 0; i < LabelerConstants.COLOR_COUNT; i++) {
+            paintColorWidgets[i] = new PaintColorWidget(LabelerConstants.DEFINED_COLORS[i], this.menu.getLabelerBlockEntity().getColorLevels()[i]);
+        }
+        for (int i = 0; i < paintColorWidgets.length; i++) {
             int xIdx = i / LabelerConstants.PALETTE_COLUMNS_WRAP;
             int yIdx = i % LabelerConstants.PALETTE_COLUMNS_WRAP;
-            PaintColorWidget paintColorWidget = this.paintColorWidgets[i];
+            PaintColorWidget paintColorWidget = paintColorWidgets[i];
             paintColorWidget.setBounds(
                 this.leftPos + LabelerConstants.PALETTE_X + xIdx * (LabelerConstants.COLOR_WIDTH + LabelerConstants.COLOR_MARGIN_X),
                 this.topPos + LabelerConstants.PALETTE_Y + yIdx * (LabelerConstants.COLOR_HEIGHT + LabelerConstants.COLOR_MARGIN_Y),
@@ -55,21 +65,61 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
             );
             this.addRenderableWidget(paintColorWidget);
         }
+
+        PaintWidget paintWidget = new PaintWidget(30, 18, 20, this.clientPaintArray, paintColorWidgets);
+        this.addRenderableWidget(paintWidget);
+
+        Font font = Minecraft.getInstance().font;
+
+        this.authorEditBox = new EditBox(font, 50, 100, 80, 20, new TranslatableComponent("screen.recordable.labeler.author"));
+        this.addRenderableWidget(this.authorEditBox);
+
+        this.titleEditBox = new EditBox(font, 50, 125, 80, 20, new TranslatableComponent("screen.recordable.labeler.title"));
+        this.addRenderableWidget(this.titleEditBox);
+
+        Button undoButton = new Button(150, 20, 16, 16, new TranslatableComponent("screen.recordable.labeler.undo"), b -> this.clientPaintArray.undo());
+        this.addRenderableWidget(undoButton);
+
+        Button finishButton = new Button(150, 40, 16, 16, new TranslatableComponent("screen.recordable.labeler.finish"), b -> this.sendFinish());
+        this.addRenderableWidget(finishButton);
+
         // renders everything that widgets drew using ScreenRenderUtil
         this.addRenderableOnly((poseStack, mouseX, mouseY, partialTick) -> ScreenRenderUtil.endAndRenderFills());
     }
 
     @Override
+    public void resize(Minecraft minecraft, int width, int height) {
+        String author = this.authorEditBox.getValue();
+        String title = this.authorEditBox.getValue();
+        this.init(minecraft, width, height);
+        this.authorEditBox.setValue(author);
+        this.titleEditBox.setValue(title);
+    }
+
+//    @Override
+//    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+//        if (keyCode == 256) {
+//            this.minecraft.player.closeContainer();
+//        }
+//        if (this.name.keyPressed(keyCode, scanCode, modifiers) || this.name.canConsumeInput()) {
+//            return true;
+//        }
+//        return super.keyPressed(keyCode, scanCode, modifiers);
+//    }
+
+    @Override
     protected void renderBg(PoseStack matrixStack, float partialTick, int mouseX, int mouseY) {
-        // TODO: noop for now
+        // TODO: placeholder background, make real background
+        fill(matrixStack, 0, 0, this.width, this.height, 0xFFFFFFFF);
     }
 
     public void sendFinish() {
+        if (authorEditBox == null || titleEditBox == null) throw new IllegalStateException("Screen not initialized");
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.wrappedBuffer(memoryStack.malloc(Integer.BYTES)));
             buffer.resetWriterIndex();
-            buffer.writeUtf(null); // artist
-            buffer.writeUtf(null); // title
+            buffer.writeUtf(authorEditBox.getValue());
+            buffer.writeUtf(titleEditBox.getValue());
             this.clientPaintArray.writeToPacket(buffer);
             ClientPlayNetworking.send(Recordable.FINALIZE_LABEL_ID, buffer);
         }

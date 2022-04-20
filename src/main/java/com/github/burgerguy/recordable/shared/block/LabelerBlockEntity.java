@@ -12,6 +12,9 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.ContainerHelper;
@@ -59,10 +62,6 @@ public class LabelerBlockEntity extends BlockEntity implements ImplementedContai
         return this.items;
     }
 
-    public int[] getColorLevels() {
-        return colorLevels;
-    }
-
     @Override
     public boolean stillValid(Player player) {
         if (this.level.getBlockEntity(this.worldPosition) != this) {
@@ -87,8 +86,31 @@ public class LabelerBlockEntity extends BlockEntity implements ImplementedContai
         tag.putIntArray("ColorLevels", this.colorLevels);
     }
 
+    @Nullable
+    @Override
+    public Packet<ClientGamePacketListener> getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public CompoundTag getUpdateTag() {
+        return this.saveWithoutMetadata();
+    }
+
     @Override
     public void writeScreenOpeningData(ServerPlayer player, FriendlyByteBuf buffer) {
         buffer.writeBlockPos(this.getBlockPos());
+    }
+
+    public int[] getColorLevels() {
+        return colorLevels;
+    }
+
+    public int[] getPixelIndexModel() {
+        return LabelerConstants.RECORD_PIXEL_INDEX_MODEL;
+    }
+
+    public int getPixelModelWidth() {
+        return LabelerConstants.RECORD_PIXEL_MODEL_WIDTH;
     }
 }

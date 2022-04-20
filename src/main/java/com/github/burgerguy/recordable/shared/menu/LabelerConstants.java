@@ -1,6 +1,5 @@
 package com.github.burgerguy.recordable.shared.menu;
 
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.world.item.DyeColor;
 
 public class LabelerConstants {
@@ -17,8 +16,8 @@ public class LabelerConstants {
     public static final int DEFAULT_BORDER_COLOR = 0xFF000000;
     public static final int SELECTED_BORDER_COLOR = 0xFFFF0000;
 
-    public static final int COLOR_MAX_CAPACITY = 16;
-    public static final int COLOR_CAPACITY_PER_ITEM = 4;
+    public static final int COLOR_MAX_CAPACITY = 20;
+    public static final int COLOR_CAPACITY_PER_ITEM = 5;
 
     // sorted by hue because it looks nice
     public static final PaintColor[] DEFINED_COLORS = {

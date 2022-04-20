@@ -17,6 +17,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class LabelerMenu extends AbstractContainerMenu {
     public static final ResourceLocation IDENTIFIER = new ResourceLocation(Recordable.MOD_ID, "labeler");
@@ -74,17 +75,9 @@ public class LabelerMenu extends AbstractContainerMenu {
         songInfoTag.putString("Title", title);
         itemTag.put("SongInfo", songInfoTag);
 
-        // this is kinda slow for some reason, but eventually should get to other clients
         this.labelerBlockEntity.setChanged();
-
-        // or should i do this?
-        for (ServerPlayer player : PlayerLookup.tracking(this.labelerBlockEntity)) {
-            // i know for sure this will never be null due to our implementation of the method
-            //noinspection ConstantConditions
-            player.connection.send(this.labelerBlockEntity.getUpdatePacket());
-        }
-
-        // or both?
+        BlockState labelerBlockState = this.labelerBlockEntity.getBlockState();
+        this.labelerBlockEntity.getLevel().sendBlockUpdated(this.labelerBlockEntity.getBlockPos(),  labelerBlockState, labelerBlockState, 2); // or the flag with 1 to cause a block update
     }
 
     public int[] getPixelIndexModel() {

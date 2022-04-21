@@ -93,6 +93,10 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
         Button finishButton = new Button(300, 80, 16, 16, new TranslatableComponent("screen.recordable.labeler.finish"), b -> this.doFinish());
         this.addRenderableWidget(finishButton);
 
+        // TODO: add clear button
+        // TODO: deselect paint color widget when using eraser
+        // TODO: stop current paint when run out of color
+
         // renders everything that widgets drew using ScreenRenderUtil
         this.addRenderableOnly((poseStack, mouseX, mouseY, partialTick) -> ScreenRenderUtil.endAndRenderFills());
     }

@@ -143,7 +143,7 @@ public class PaintColorWidget extends Button {
     }
 
     public void decrementLevel() {
-        this.level -= 1;
+        this.level--;
         if (this.level == 0) {
             this.selected = false;
             Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.DISPENSER_FAIL, 1.2f));
@@ -154,7 +154,7 @@ public class PaintColorWidget extends Button {
      * Should only be used for undoing and erasing.
      */
     public void incrementLevel() {
-        this.level += 1;
+        this.level++;
     }
 
 }

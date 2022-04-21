@@ -1,10 +1,10 @@
 package com.github.burgerguy.recordable.client.screen;
 
 import com.github.burgerguy.recordable.shared.menu.Painter;
-import com.google.common.collect.Lists;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrays;
 import java.util.Arrays;
 import java.util.List;
 import net.minecraft.network.FriendlyByteBuf;
@@ -16,13 +16,14 @@ public class ClientPainter extends Painter {
     private boolean erasing = false;
     private boolean mixing = false;
 
-    private final List<PaintStep> paintSteps;
+    private PaintStep[] paintSteps;
+    private int lastPaintStepIdx = EMPTY_INDEX;
     private final IntList[] pixelPaintStepIdxs;
 
     public ClientPainter(int[] pixelIndexModel, int width, PaintColorWidget[] paintColorWidgets) {
         super(pixelIndexModel, width);
         this.paintColorWidgets = paintColorWidgets;
-        this.paintSteps = new ObjectArrayList<>();
+        this.paintSteps = new PaintStep[32]; // seems like a good starting number
         this.pixelPaintStepIdxs = new IntList[this.colors.length];
         // 16 seems like a reasonable amount of edits before a resize is needed
         Arrays.setAll(this.pixelPaintStepIdxs, (idx) -> new IntArrayList(16));
@@ -57,34 +58,35 @@ public class ClientPainter extends Painter {
             // actually decrement applied colors now
             for (PixelPaintEvent event : events) this.paintColorWidgets[event.colorIndex].decrementLevel();
 
-            this.paintSteps.add(new PaintStep(oldColor, pixelIdx, events));
+            this.ensureStepsCapacity();
+            int newStepIdx = ++this.lastPaintStepIdx;
+            this.paintSteps[newStepIdx] = new PaintStep(oldColor, pixelIdx, events);
             IntList stepIndices = this.pixelPaintStepIdxs[pixelIdx];
-            stepIndices.add(this.paintSteps.size() - 1);
+            stepIndices.add(newStepIdx);
         }
     }
 
     public void erase(int pixelIdx) {
-        // reverse because removal will cause a shift of the ones in front.
-        // this is avoided if we go in reverse.
         IntList stepIndices = this.pixelPaintStepIdxs[pixelIdx];
-        for (int stepIdx : Lists.reverse(stepIndices)) {
-            // FIXME: THIS IS BAD AND RUINS THE WHOLE ALGORITHM!!! all other SxS step indices get screwed when this happens
-            PaintStep paintStep = this.paintSteps.remove(stepIdx);
+        for (int stepIdx : stepIndices) {
+            PaintStep paintStep = this.paintSteps[stepIdx];
+            this.paintSteps[stepIdx] = null;
             for (PixelPaintEvent event : paintStep.events) this.paintColorWidgets[event.colorIndex].incrementLevel();
         }
+        this.updateLastIdx();
         stepIndices.clear();
         // set back to white
-        this.setColor(pixelIdx, Painter.CLEAR_COLOR);
+        this.setColor(pixelIdx, CLEAR_COLOR);
     }
 
     public boolean undo() {
-        int paintStepsSize = this.paintSteps.size();
-        if (paintStepsSize == 0) {
+        if (this.lastPaintStepIdx == EMPTY_INDEX) {
             // nothing to remove
             return false;
         } else {
             // remove from both lists
-            PaintStep lastStep = this.paintSteps.remove(paintStepsSize - 1);
+            PaintStep lastStep = this.paintSteps[this.lastPaintStepIdx]; // FIXME check if this returns decremented or original
+            this.paintSteps[this.lastPaintStepIdx--] = null;
             IntList stepIndices = this.pixelPaintStepIdxs[lastStep.pixelIndex];
             stepIndices.removeInt(stepIndices.size() - 1);
             // actually set back variables for user
@@ -97,8 +99,52 @@ public class ClientPainter extends Painter {
     @Override
     public void clear() {
         super.clear();
-        this.paintSteps.clear();
+        Arrays.fill(this.paintSteps, null);
         for (IntList list : this.pixelPaintStepIdxs) list.clear();
+    }
+
+    private void ensureStepsCapacity() {
+        if (this.lastPaintStepIdx == this.paintSteps.length - 1) {
+            this.compact();
+            // compact didn't help need to grow array
+            if (this.lastPaintStepIdx == this.paintSteps.length - 1) {
+                this.paintSteps = ObjectArrays.grow(this.paintSteps, 0); // will increase in size by 50%
+            }
+        }
+    }
+
+    private void compact() {
+        for (IntList list : this.pixelPaintStepIdxs) list.clear();
+
+        int lastIdx = 0;
+        for(int i = 0; i < this.paintSteps.length; i++){
+            PaintStep step = this.paintSteps[i];
+            if (step != null){
+                this.paintSteps[lastIdx] = step;
+                this.pixelPaintStepIdxs[step.pixelIndex].add(lastIdx);
+                lastIdx++;
+            }
+        }
+
+        int previousLastIndex = this.lastPaintStepIdx;
+        if (lastIdx != 0 && lastIdx != previousLastIndex) {
+            for (int i = lastIdx; i <= previousLastIndex; i++) {
+                this.paintSteps[i] = null;
+            }
+        }
+
+        this.lastPaintStepIdx = lastIdx;
+    }
+
+    private void updateLastIdx() {
+        int newIdx = EMPTY_INDEX;
+        for (int i = this.lastPaintStepIdx; i >= 0; i--) {
+            if (this.paintSteps[i] != null) {
+                newIdx = i;
+                break;
+            }
+        }
+        this.lastPaintStepIdx = newIdx;
     }
 
     public void toggleErase() {
@@ -122,8 +168,8 @@ public class ClientPainter extends Painter {
     public int getSizeBytes() {
         int size = 0;
         for (PaintStep step : this.paintSteps) {
-            for (PixelPaintEvent event : step.events) {
-                size += Painter.PER_PAINT_EVENT_BYTES;
+            for (PixelPaintEvent ignored : step.events) {
+                size += PER_PAINT_EVENT_BYTES;
             }
         }
         return size;

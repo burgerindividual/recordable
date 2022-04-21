@@ -28,16 +28,14 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
-public class LabelerBlockEntity extends BlockEntity implements ImplementedContainer, ExtendedScreenHandlerFactory {
+public class LabelerBlockEntity extends BlockEntity implements ExtendedScreenHandlerFactory {
     public static final BlockEntityType<LabelerBlockEntity> INSTANCE = FabricBlockEntityTypeBuilder.create(LabelerBlockEntity::new, LabelerBlock.INSTANCE).build(null);
     public static final ResourceLocation IDENTIFIER = new ResourceLocation(Recordable.MOD_ID, "labeler");
 
-    private final NonNullList<ItemStack> items;
     private final int[] colorLevels;
 
     public LabelerBlockEntity(BlockPos blockPos, BlockState blockState) {
         super(INSTANCE, blockPos, blockState);
-        this.items = NonNullList.withSize(LabelerConstants.CONTAINER_SIZE, ItemStack.EMPTY);
         this.colorLevels = new int[LabelerConstants.COLOR_COUNT];
     }
 
@@ -47,7 +45,6 @@ public class LabelerBlockEntity extends BlockEntity implements ImplementedContai
         return new LabelerMenu(
                 containerId,
                 playerInventory,
-                this,
                 this
         );
     }
@@ -57,23 +54,23 @@ public class LabelerBlockEntity extends BlockEntity implements ImplementedContai
         return getBlockState().getBlock().getName();
     }
 
-    @Override
-    public NonNullList<ItemStack> getItems() {
-        return this.items;
-    }
-
-    @Override
-    public boolean stillValid(Player player) {
-        if (this.level.getBlockEntity(this.worldPosition) != this) {
-            return false;
-        }
-        return player.distanceToSqr((double)this.worldPosition.getX() + 0.5, (double)this.worldPosition.getY() + 0.5, (double)this.worldPosition.getZ() + 0.5) <= 64.0;
-    }
+//    @Override
+//    public NonNullList<ItemStack> getItems() {
+//        return this.items;
+//    }
+//
+//    @Override
+//    public boolean stillValid(Player player) {
+//        if (this.level.getBlockEntity(this.worldPosition) != this) {
+//            return false;
+//        }
+//        return player.distanceToSqr((double)this.worldPosition.getX() + 0.5, (double)this.worldPosition.getY() + 0.5, (double)this.worldPosition.getZ() + 0.5) <= 64.0;
+//    }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        ContainerHelper.loadAllItems(tag, this.items);
+//        ContainerHelper.loadAllItems(tag, this.items);
         if (tag.contains("ColorLevels", Tag.TAG_INT_ARRAY)) {
             System.arraycopy(tag.getIntArray("ColorLevels"), 0, this.colorLevels, 0, this.colorLevels.length);
         }
@@ -82,7 +79,7 @@ public class LabelerBlockEntity extends BlockEntity implements ImplementedContai
     @Override
     public void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        ContainerHelper.saveAllItems(tag, this.items);
+//        ContainerHelper.saveAllItems(tag, this.items);
         tag.putIntArray("ColorLevels", this.colorLevels);
     }
 

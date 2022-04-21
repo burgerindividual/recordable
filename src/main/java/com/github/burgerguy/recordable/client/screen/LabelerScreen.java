@@ -6,10 +6,9 @@ import com.github.burgerguy.recordable.shared.menu.LabelerConstants;
 import com.github.burgerguy.recordable.shared.menu.LabelerMenu;
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.netty.buffer.Unpooled;
+import java.nio.charset.StandardCharsets;
 import javax.annotation.Nullable;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.SharedConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.Button;
@@ -26,7 +25,7 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
     public static final ResourceLocation IDENTIFIER = new ResourceLocation(Recordable.MOD_ID, "labeler");
     private static final ResourceLocation COLOR_ICON_LOCATION = new ResourceLocation("textures/gui/container/loom.png");
 
-    private final ClientPaintArray clientPaintArray;
+    private ClientPainter clientPainter;
 
     @Nullable
     private EditBox authorEditBox;
@@ -35,8 +34,6 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
 
     public LabelerScreen(LabelerMenu labelerMenu, Inventory inventory, Component component) {
         super(labelerMenu, inventory, component);
-
-        this.clientPaintArray = new ClientPaintArray(labelerMenu.getLabelerBlockEntity().getPixelIndexModel(), labelerMenu.getLabelerBlockEntity().getPixelModelWidth());
     }
 
     @Override
@@ -66,21 +63,34 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
             this.addRenderableWidget(paintColorWidget);
         }
 
-        PaintWidget paintWidget = new PaintWidget(30, 18, 20, this.clientPaintArray, paintColorWidgets);
+        this.clientPainter = new ClientPainter(
+                menu.getLabelerBlockEntity().getPixelIndexModel(),
+                menu.getLabelerBlockEntity().getPixelModelWidth(),
+                paintColorWidgets
+        );
+
+        PaintWidget paintWidget = new PaintWidget(200, 40, 16, this.clientPainter);
         this.addRenderableWidget(paintWidget);
 
         Font font = Minecraft.getInstance().font;
 
-        this.authorEditBox = new EditBox(font, 50, 100, 80, 20, new TranslatableComponent("screen.recordable.labeler.author"));
+        this.authorEditBox = new EditBox(font, 200, 200, 80, 20, new TranslatableComponent("screen.recordable.labeler.author"));
         this.addRenderableWidget(this.authorEditBox);
 
-        this.titleEditBox = new EditBox(font, 50, 125, 80, 20, new TranslatableComponent("screen.recordable.labeler.title"));
+        this.titleEditBox = new EditBox(font, 200, 225, 80, 20, new TranslatableComponent("screen.recordable.labeler.title"));
         this.addRenderableWidget(this.titleEditBox);
 
-        Button undoButton = new Button(150, 20, 16, 16, new TranslatableComponent("screen.recordable.labeler.undo"), b -> this.clientPaintArray.undo());
+        Button undoButton = new Button(300, 20, 16, 16, new TranslatableComponent("screen.recordable.labeler.undo"), b -> this.clientPainter.undo());
         this.addRenderableWidget(undoButton);
 
-        Button finishButton = new Button(150, 40, 16, 16, new TranslatableComponent("screen.recordable.labeler.finish"), b -> this.sendFinish());
+        Button eraseButton = new Button(300, 40, 16, 16, new TranslatableComponent("screen.recordable.labeler.eraser"), b -> this.clientPainter.toggleErase());
+        this.addRenderableWidget(eraseButton);
+
+        Button mixButton = new Button(300, 60, 16, 16, new TranslatableComponent("screen.recordable.labeler.mix"), b -> this.clientPainter.toggleMix());
+        this.addRenderableWidget(mixButton);
+
+        // gray this out when no edits have been made
+        Button finishButton = new Button(300, 80, 16, 16, new TranslatableComponent("screen.recordable.labeler.finish"), b -> this.doFinish());
         this.addRenderableWidget(finishButton);
 
         // renders everything that widgets drew using ScreenRenderUtil
@@ -96,7 +106,30 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
         this.titleEditBox.setValue(title);
     }
 
-//    @Override
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        // from ContainerEventHandler
+        boolean superDuperMouseDragged = this.getFocused() != null && this.isDragging() && button == 0 && this.getFocused().mouseDragged(mouseX, mouseY, button, dragX, dragY);
+        if (superDuperMouseDragged) {
+            return true;
+        } else {
+            return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+        }
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        // from ContainerEventHandler
+        this.setDragging(false);
+        boolean superDuperMouseReleased = this.getChildAt(mouseX, mouseY).filter(guiEventListener -> guiEventListener.mouseReleased(mouseX, mouseY, button)).isPresent();
+        if (superDuperMouseReleased) {
+            return true;
+        } else {
+            return super.mouseReleased(mouseX, mouseY, button);
+        }
+    }
+
+    //    @Override
 //    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
 //        if (keyCode == 256) {
 //            this.minecraft.player.closeContainer();
@@ -110,17 +143,24 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
     @Override
     protected void renderBg(PoseStack matrixStack, float partialTick, int mouseX, int mouseY) {
         // TODO: placeholder background, make real background
-        fill(matrixStack, 0, 0, this.width, this.height, 0xFFFFFFFF);
+        fill(matrixStack, 0, 0, this.width, this.height, 0xFFCCCCCC);
     }
 
-    public void sendFinish() {
+    public void doFinish() {
         if (authorEditBox == null || titleEditBox == null) throw new IllegalStateException("Screen not initialized");
+        this.clientPainter.clear();
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
-            FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.wrappedBuffer(memoryStack.malloc(Integer.BYTES)));
+            String author = authorEditBox.getValue();
+            String title = titleEditBox.getValue();
+            // kind of an inefficient way of figuring it out, but whatever
+            int sizeBytes = Integer.BYTES + author.getBytes(StandardCharsets.UTF_8).length
+                    + Integer.BYTES + title.getBytes(StandardCharsets.UTF_8).length
+                    + this.clientPainter.getSizeBytes();
+            FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.wrappedBuffer(memoryStack.malloc(sizeBytes)));
             buffer.resetWriterIndex();
-            buffer.writeUtf(authorEditBox.getValue());
-            buffer.writeUtf(titleEditBox.getValue());
-            this.clientPaintArray.writeToPacket(buffer);
+            buffer.writeUtf(author);
+            buffer.writeUtf(title);
+            this.clientPainter.writeToPacket(buffer);
             ClientPlayNetworking.send(Recordable.FINALIZE_LABEL_ID, buffer);
         }
     }

@@ -4,11 +4,10 @@ import com.github.burgerguy.recordable.shared.Recordable;
 import com.github.burgerguy.recordable.shared.block.LabelerBlockEntity;
 import java.util.Objects;
 import net.fabricmc.fabric.impl.screenhandler.ExtendedScreenHandlerType;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.Container;
-import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -21,25 +20,23 @@ public class LabelerMenu extends AbstractContainerMenu {
     public static final ResourceLocation IDENTIFIER = new ResourceLocation(Recordable.MOD_ID, "labeler");
     public static final MenuType<LabelerMenu> INSTANCE = new ExtendedScreenHandlerType<>(LabelerMenu::new);
 
-    private final Container container;
     private final LabelerBlockEntity labelerBlockEntity;
 
     public LabelerMenu(int containerId, Inventory playerInventory, FriendlyByteBuf buffer) {
         this(
                 containerId,
                 playerInventory,
-                new SimpleContainer(LabelerConstants.CONTAINER_SIZE),
                 (LabelerBlockEntity) Objects.requireNonNull(playerInventory.player.getLevel().getBlockEntity(buffer.readBlockPos())) // any means necessary
         );
     }
 
-    public LabelerMenu(int containerId, Inventory playerInventory, Container container, LabelerBlockEntity labelerBlockEntity) {
+    public LabelerMenu(int containerId, Inventory playerInventory, LabelerBlockEntity labelerBlockEntity) {
         super(INSTANCE, containerId);
         // get from BE
         this.labelerBlockEntity = labelerBlockEntity;
-        checkContainerSize(container, LabelerConstants.CONTAINER_SIZE);
-        this.container = container;
-        container.startOpen(playerInventory.player);
+//        checkContainerSize(container, LabelerConstants.CONTAINER_SIZE);
+//        this.container = container;
+//        container.startOpen(playerInventory.player);
 
         // add player inventory
         for (int y = 0; y < 3; ++y) {
@@ -65,7 +62,7 @@ public class LabelerMenu extends AbstractContainerMenu {
         String author = buffer.readUtf();
         String title = buffer.readUtf();
         // this will modify the colors of the labeler BE, so we need to sync with the clients
-        PaintArray recreatedPaintArray = PaintArray.fromBuffer(
+        Painter recreatedPainter = Painter.fromBuffer(
                 labeler.getPixelIndexModel(),
                 labeler.getPixelModelWidth(),
                 labeler.getColorLevels(),
@@ -73,7 +70,7 @@ public class LabelerMenu extends AbstractContainerMenu {
         );
 
         CompoundTag itemTag = record.getOrCreateTag();
-        recreatedPaintArray.applyToTagNoAlpha(itemTag);
+        recreatedPainter.applyToTagNoAlpha(itemTag);
         CompoundTag songInfoTag = new CompoundTag();
         songInfoTag.putString("Author", author);
         songInfoTag.putString("Title", title);
@@ -82,6 +79,7 @@ public class LabelerMenu extends AbstractContainerMenu {
         // update color levels
         this.updateBlockEntity();
         // update record slot
+//        this.slotsChanged(this.container);
         this.broadcastChanges();
     }
 
@@ -99,12 +97,16 @@ public class LabelerMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return this.container.stillValid(player);
+        BlockPos labelerPos = this.labelerBlockEntity.getBlockPos();
+        if (player.level.getBlockEntity(labelerPos) != this.labelerBlockEntity) {
+            return false;
+        }
+        return player.distanceToSqr((double)labelerPos.getX() + 0.5, (double)labelerPos.getY() + 0.5, (double)labelerPos.getZ() + 0.5) <= 64.0;
     }
 
-    @Override
-    public void removed(Player player) {
-        super.removed(player);
-        this.container.stopOpen(player);
-    }
+//    @Override
+//    public void removed(Player player) {
+//        super.removed(player);
+//        this.container.stopOpen(player);
+//    }
 }

@@ -8,6 +8,8 @@
   "block.recordable.labeler": "Labeler",
   "screen.recordable.labeler.paint_area": "Paint Area",
   "screen.recordable.labeler.undo": "Undo",
+  "screen.recordable.labeler.mix": "Mix Colors",
+  "screen.recordable.labeler.eraser": "Eraser",
   "screen.recordable.labeler.finish": "Finish",
   "screen.recordable.labeler.author": "Author",
   "screen.recordable.labeler.title": "Title"

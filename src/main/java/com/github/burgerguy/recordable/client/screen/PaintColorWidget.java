@@ -7,8 +7,11 @@ import com.github.burgerguy.recordable.shared.util.ColorUtil;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Matrix4f;
 import java.awt.Color;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.TextComponent;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -39,7 +42,9 @@ public class PaintColorWidget extends Button {
 
     private static void onPressedAction(Button button) {
         PaintColorWidget paintColorWidget = (PaintColorWidget) button;
-        paintColorWidget.selected = !paintColorWidget.selected;
+        if (paintColorWidget.level > 0) {
+            paintColorWidget.selected = !paintColorWidget.selected;
+        }
     }
 
     /**
@@ -125,14 +130,9 @@ public class PaintColorWidget extends Button {
 
     /**
      * Mix or get color if selected and has a high enough level, otherwise don't affect the color.
-     * This also decrements the level if possible.
      */
     public int applyColor(boolean mix, int otherColor) {
         if(this.selected && this.level > 0) {
-            this.level -= 1;
-            if (this.level == 0) {
-                this.selected = false;
-            }
             if (mix) {
                 return ColorUtil.mixColors(this.color, otherColor);
             } else {
@@ -140,6 +140,21 @@ public class PaintColorWidget extends Button {
             }
         }
         return otherColor;
+    }
+
+    public void decrementLevel() {
+        this.level -= 1;
+        if (this.level == 0) {
+            this.selected = false;
+            Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.DISPENSER_FAIL, 1.2f));
+        }
+    }
+
+    /**
+     * Should only be used for undoing and erasing.
+     */
+    public void incrementLevel() {
+        this.level += 1;
     }
 
 }

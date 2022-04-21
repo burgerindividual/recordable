@@ -42,7 +42,7 @@ public class LabelerConstants {
 
     public static final int[] RECORD_PIXEL_INDEX_MODEL = {
             -1,  0,  1,  2, -1,
-             3,  4, -1,  5,  6,
+            3,  4, -1,  5,  6,
             -1,  7,  8,  9, -1
     };
     public static final int RECORD_PIXEL_MODEL_WIDTH = 5;

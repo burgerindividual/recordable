@@ -6,18 +6,20 @@ import java.util.Arrays;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.Mth;
-import net.minecraft.world.item.ItemStack;
 
-public class PaintArray {
+public class Painter {
 
-    private static final int PER_PAINT_EVENT_BYTES = Integer.BYTES + Integer.BYTES + Byte.BYTES;
+    public static final int EMPTY_INDEX = -1;
+    public static final int OUT_OF_BOUNDS_INDEX = -2;
+    public static final int CLEAR_COLOR = 0xFFFFFFFF;
+    protected static final int PER_PAINT_EVENT_BYTES = Integer.BYTES + Integer.BYTES + Byte.BYTES;
 
     private final int width;
     private final int height;
     protected final int[] pixelIndexModel;
     protected final int[] colors;
 
-    public PaintArray(int[] pixelIndexModel, int width) {
+    public Painter(int[] pixelIndexModel, int width) {
         this.pixelIndexModel = pixelIndexModel;
         this.width = width;
         // get maximum rows
@@ -32,15 +34,15 @@ public class PaintArray {
         if (maxIdx == -1) throw new IllegalArgumentException("model needs to have at least 1 valid index");
 
         this.colors = new int[maxIdx + 1];
-        // all pixels default to white
-        Arrays.fill(this.colors, 0xFFFFFFFF);
+        // all pixels default to clear color (white)
+        Arrays.fill(this.colors, CLEAR_COLOR);
     }
 
     /**
      * This also reflects the side effects on the color levels from coloring.
      */
-    public static PaintArray fromBuffer(int[] pixelIndexModel, int width, int[] colorLevels, FriendlyByteBuf buffer) {
-        PaintArray paintArray = new PaintArray(pixelIndexModel, width);
+    public static Painter fromBuffer(int[] pixelIndexModel, int width, int[] colorLevels, FriendlyByteBuf buffer) {
+        Painter painter = new Painter(pixelIndexModel, width);
         while (buffer.isReadable() && buffer.readableBytes() >= PER_PAINT_EVENT_BYTES) {
             int colorIdx = buffer.readInt();
             int pixelIdx = buffer.readInt();
@@ -49,16 +51,16 @@ public class PaintArray {
                 Recordable.LOGGER.warn("Color index out of bounds: " + colorIdx);
             } else if (colorLevels[colorIdx] == 0) {
                 Recordable.LOGGER.warn("Tried to use color which is already at 0 level (idx: " + colorIdx + ")");
-            } else if (paintArray.isIndexValid(pixelIdx)) {
+            } else if (!painter.isIndexValid(pixelIdx)) {
                 Recordable.LOGGER.warn("Pixel index out of bounds: " + pixelIdx);
             } else {
                 int resolvedColor = LabelerConstants.DEFINED_COLORS[colorIdx].color();
-                int newColor = isMixed ? ColorUtil.mixColors(paintArray.getColor(pixelIdx), resolvedColor) : resolvedColor;
-                paintArray.setColor(pixelIdx, newColor);
+                int newColor = isMixed ? ColorUtil.mixColors(painter.getColor(pixelIdx), resolvedColor) : resolvedColor;
+                painter.setColor(pixelIdx, newColor);
                 colorLevels[colorIdx] -= 1;
             }
         }
-        return paintArray;
+        return painter;
     }
 
     public void applyToTagNoAlpha(CompoundTag tag) {
@@ -81,12 +83,20 @@ public class PaintArray {
         return this.colors[index];
     }
 
+    public void clear() {
+        Arrays.fill(this.colors, CLEAR_COLOR);
+    }
+
     public boolean isIndexValid(int index) {
-        return 0 < index && index < colors.length;
+        return 0 <= index && index < colors.length;
+    }
+
+    public boolean isCoordInBounds(int x, int y) {
+        return (0 <= x && x < this.width) && (0 <= y && y < this.height);
     }
 
     public int coordsToIndex(int x, int y) {
-        return this.pixelIndexModel[y * this.width + x];
+        return isCoordInBounds(x, y) ? this.pixelIndexModel[y * this.width + x] : OUT_OF_BOUNDS_INDEX;
     }
 
     public int getWidth() {

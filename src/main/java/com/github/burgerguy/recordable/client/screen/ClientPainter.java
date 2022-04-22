@@ -19,6 +19,7 @@ public class ClientPainter extends Painter {
     private PaintStep[] paintSteps;
     private int lastPaintStepIdx = EMPTY_INDEX;
     private final IntList[] pixelPaintStepIdxs;
+    private boolean forceStopPaint;
 
     public ClientPainter(int[] pixelIndexModel, int width, PaintColorWidget[] paintColorWidgets) {
         super(pixelIndexModel, width);
@@ -29,11 +30,13 @@ public class ClientPainter extends Painter {
         Arrays.setAll(this.pixelPaintStepIdxs, (idx) -> new IntArrayList(16));
     }
 
-    public void apply(int pixelIdx) {
+    public boolean apply(int pixelIdx) {
         if (this.erasing) {
             this.erase(pixelIdx);
+            return false;
         } else {
             this.paint(pixelIdx, this.mixing);
+            return true;
         }
     }
 
@@ -79,22 +82,20 @@ public class ClientPainter extends Painter {
         this.setColor(pixelIdx, CLEAR_COLOR);
     }
 
-    public boolean undo() {
+    public void undo() {
         this.updateLastIdx();
-        if (this.lastPaintStepIdx == EMPTY_INDEX) {
-            // nothing to remove
-            return false;
-        } else {
-            // remove from both lists
-            PaintStep lastStep = this.paintSteps[this.lastPaintStepIdx]; // FIXME check if this returns decremented or original
-            this.paintSteps[this.lastPaintStepIdx--] = null;
-            IntList stepIndices = this.pixelPaintStepIdxs[lastStep.pixelIndex];
-            stepIndices.removeInt(stepIndices.size() - 1);
-            // actually set back variables for user
-            this.setColor(lastStep.pixelIndex, lastStep.previousColorState);
-            for (PixelPaintEvent event : lastStep.events) this.paintColorWidgets[event.colorIndex].incrementLevel();
-            return true;
-        }
+        // remove from both lists
+        PaintStep lastStep = this.paintSteps[this.lastPaintStepIdx]; // FIXME check if this returns decremented or original
+        this.paintSteps[this.lastPaintStepIdx--] = null;
+        IntList stepIndices = this.pixelPaintStepIdxs[lastStep.pixelIndex];
+        stepIndices.removeInt(stepIndices.size() - 1);
+        // actually set back variables for user
+        this.setColor(lastStep.pixelIndex, lastStep.previousColorState);
+        for (PixelPaintEvent event : lastStep.events) this.paintColorWidgets[event.colorIndex].incrementLevel();
+    }
+
+    public boolean canUndo() {
+        return this.lastPaintStepIdx != EMPTY_INDEX;
     }
 
     @Override
@@ -102,6 +103,10 @@ public class ClientPainter extends Painter {
         super.clear();
         Arrays.fill(this.paintSteps, null);
         for (IntList list : this.pixelPaintStepIdxs) list.clear();
+    }
+
+    public void reset() {
+        while (canUndo()) undo();
     }
 
     private void ensureStepsCapacity() {

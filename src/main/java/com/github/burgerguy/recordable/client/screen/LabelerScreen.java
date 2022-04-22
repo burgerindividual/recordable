@@ -69,6 +69,7 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
                 paintColorWidgets
         );
 
+        // TODO: reactivate undo button when paint applied
         PaintWidget paintWidget = new PaintWidget(200, 40, 16, this.clientPainter);
         this.addRenderableWidget(paintWidget);
 
@@ -80,7 +81,13 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
         this.titleEditBox = new EditBox(font, 200, 225, 80, 20, new TranslatableComponent("screen.recordable.labeler.title"));
         this.addRenderableWidget(this.titleEditBox);
 
-        Button undoButton = new Button(300, 20, 16, 16, new TranslatableComponent("screen.recordable.labeler.undo"), b -> this.clientPainter.undo());
+        Button undoButton = new Button(300, 20, 16, 16, new TranslatableComponent("screen.recordable.labeler.undo"), b -> {
+            if (this.clientPainter.canUndo()) {
+                this.clientPainter.undo();
+            } else {
+                b.active = false;
+            }
+        });
         this.addRenderableWidget(undoButton);
 
         Button eraseButton = new Button(300, 40, 16, 16, new TranslatableComponent("screen.recordable.labeler.eraser"), b -> this.clientPainter.toggleErase());
@@ -89,11 +96,19 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
         Button mixButton = new Button(300, 60, 16, 16, new TranslatableComponent("screen.recordable.labeler.mix"), b -> this.clientPainter.toggleMix());
         this.addRenderableWidget(mixButton);
 
+        Button resetButton = new Button(300, 80, 16, 16, new TranslatableComponent("screen.recordable.labeler.reset"), b -> {
+            this.clientPainter.reset();
+            undoButton.active = false;
+        });
+        this.addRenderableWidget(resetButton);
+
         // gray this out when no edits have been made
-        Button finishButton = new Button(300, 80, 16, 16, new TranslatableComponent("screen.recordable.labeler.finish"), b -> this.doFinish());
+        Button finishButton = new Button(300, 100, 16, 16, new TranslatableComponent("screen.recordable.labeler.finish"), b -> {
+            this.doFinish();
+            undoButton.active = false;
+        });
         this.addRenderableWidget(finishButton);
 
-        // TODO: add clear button
         // TODO: deselect paint color widget when using eraser
         // TODO: stop current paint when run out of color
         // TODO: make paint widgets not sound when clicked and not selected

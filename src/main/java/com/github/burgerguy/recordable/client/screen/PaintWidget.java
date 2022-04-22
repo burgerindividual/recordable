@@ -15,30 +15,33 @@ public class PaintWidget extends AbstractWidget {
     private static final int GRID_COLOR = 0xFF000000;
     private static final float GRID_HALF_LINE_WIDTH = 0.5f;
 
-    private final ClientPainter paintArray;
+    private final ClientPainter clientPainter;
     private final int pixelSize;
 
     private int exitEventPixelIdx = Painter.EMPTY_INDEX;
 
-    public PaintWidget(int x, int y, int pixelSize, ClientPainter paintArray) {
+    public PaintWidget(int x, int y, int pixelSize, ClientPainter clientPainter) {
         super(
                 x,
                 y,
-                paintArray.getWidth() * pixelSize,
-                paintArray.getHeight() * pixelSize,
+                clientPainter.getWidth() * pixelSize,
+                clientPainter.getHeight() * pixelSize,
                 new TranslatableComponent("screen.recordable.labeler.paint_area")
         );
-        this.paintArray = paintArray;
+        this.clientPainter = clientPainter;
         this.pixelSize = pixelSize;
     }
 
-    private void tryApply(double mouseX, double mouseY) {
+    /**
+     * Returns true if any paint color widget runs out.
+     */
+    private boolean tryApply(double mouseX, double mouseY) {
         int x = (int) ((mouseX - this.x) / this.pixelSize);
         int y = (int) ((mouseY - this.y) / this.pixelSize);
-        int pixelIdx = this.paintArray.coordsToIndex(x, y);
+        int pixelIdx = this.clientPainter.coordsToIndex(x, y);
         if (this.exitEventPixelIdx != pixelIdx) {
             if (pixelIdx != Painter.EMPTY_INDEX && pixelIdx != Painter.OUT_OF_BOUNDS_INDEX) {
-                this.paintArray.apply(pixelIdx);
+                this.clientPainter.apply(pixelIdx);
                 this.exitEventPixelIdx = pixelIdx;
             }
         }
@@ -47,8 +50,9 @@ public class PaintWidget extends AbstractWidget {
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         boolean superResult = super.keyPressed(keyCode, scanCode, modifiers);
-        if (!superResult && Screen.hasControlDown() && keyCode == GLFW.GLFW_KEY_Z) {
-            return this.paintArray.undo();
+        if (!superResult && Screen.hasControlDown() && keyCode == GLFW.GLFW_KEY_Z && this.clientPainter.canUndo()) {
+            this.clientPainter.undo();
+            return true;
         }
         return false;
     }
@@ -74,13 +78,13 @@ public class PaintWidget extends AbstractWidget {
         float widgetX = this.x;
         float widgetY = this.y;
         float pixelSize = this.pixelSize;
-        int paHeight = this.paintArray.getHeight();
-        int paWidth = this.paintArray.getWidth();
+        int paHeight = this.clientPainter.getHeight();
+        int paWidth = this.clientPainter.getWidth();
 
         // pixels
         for (int pxYCoord = 0; pxYCoord < paHeight; pxYCoord++) {
             for (int pxXCoord = 0; pxXCoord < paWidth; pxXCoord++) {
-                int pxIndex = this.paintArray.coordsToIndex(pxXCoord, pxYCoord);
+                int pxIndex = this.clientPainter.coordsToIndex(pxXCoord, pxYCoord);
                 if (pxIndex != Painter.EMPTY_INDEX) {
                     ScreenRenderUtil.fill(
                             matrix,
@@ -88,7 +92,7 @@ public class PaintWidget extends AbstractWidget {
                             widgetY + (pxYCoord * pixelSize),
                             widgetX + (pxXCoord * pixelSize) + pixelSize,
                             widgetY + (pxYCoord * pixelSize) + pixelSize,
-                            this.paintArray.getColor(pxIndex) | 0xFF000000 // make opaque
+                            this.clientPainter.getColor(pxIndex) | 0xFF000000 // make opaque
                     );
                 }
             }
@@ -99,9 +103,9 @@ public class PaintWidget extends AbstractWidget {
             for (int pxXCoord = 0; pxXCoord <= paWidth; pxXCoord++) {
                 float lineX = pxXCoord * pixelSize;
                 float lineY = pxYCoord * pixelSize;
-                int currentIdx = this.paintArray.coordsToIndex(pxXCoord, pxYCoord);
-                int prevIdxX = this.paintArray.coordsToIndex(pxXCoord - 1, pxYCoord);
-                int prevIdxY = this.paintArray.coordsToIndex(pxXCoord, pxYCoord - 1);
+                int currentIdx = this.clientPainter.coordsToIndex(pxXCoord, pxYCoord);
+                int prevIdxX = this.clientPainter.coordsToIndex(pxXCoord - 1, pxYCoord);
+                int prevIdxY = this.clientPainter.coordsToIndex(pxXCoord, pxYCoord - 1);
 
                 // horizontal lines, drawn in vertical order
                 if ((currentIdx != Painter.EMPTY_INDEX &&

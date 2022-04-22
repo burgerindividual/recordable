@@ -42,9 +42,7 @@ public class PaintColorWidget extends Button {
 
     private static void onPressedAction(Button button) {
         PaintColorWidget paintColorWidget = (PaintColorWidget) button;
-        if (paintColorWidget.level > 0) {
-            paintColorWidget.selected = !paintColorWidget.selected;
-        }
+        paintColorWidget.selected = !paintColorWidget.selected;
     }
 
     /**
@@ -132,7 +130,7 @@ public class PaintColorWidget extends Button {
      * Mix or get color if selected and has a high enough level, otherwise don't affect the color.
      */
     public int applyColor(boolean mix, int otherColor) {
-        if(this.selected && this.level > 0) {
+        if(this.selected && this.active && this.level > 0) {
             if (mix) {
                 return ColorUtil.mixColors(this.color, otherColor);
             } else {
@@ -142,10 +140,14 @@ public class PaintColorWidget extends Button {
         return otherColor;
     }
 
+    /**
+     * Returns true if the level
+     */
     public void decrementLevel() {
         this.level--;
         if (this.level == 0) {
             this.selected = false;
+            this.active = false;
             Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.DISPENSER_FAIL, 1.2f));
         }
     }
@@ -155,6 +157,7 @@ public class PaintColorWidget extends Button {
      */
     public void incrementLevel() {
         this.level++;
+        this.active = true;
     }
 
 }

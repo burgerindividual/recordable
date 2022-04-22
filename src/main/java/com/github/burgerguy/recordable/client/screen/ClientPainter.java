@@ -80,6 +80,7 @@ public class ClientPainter extends Painter {
     }
 
     public boolean undo() {
+        this.updateLastIdx();
         if (this.lastPaintStepIdx == EMPTY_INDEX) {
             // nothing to remove
             return false;
@@ -108,7 +109,7 @@ public class ClientPainter extends Painter {
             this.compact();
             // compact didn't help need to grow array
             if (this.lastPaintStepIdx == this.paintSteps.length - 1) {
-                this.paintSteps = ObjectArrays.grow(this.paintSteps, 0); // will increase in size by 50%
+                this.paintSteps = ObjectArrays.grow(this.paintSteps, this.paintSteps.length + 1); // will increase in size by 50%
             }
         }
     }
@@ -116,24 +117,23 @@ public class ClientPainter extends Painter {
     private void compact() {
         for (IntList list : this.pixelPaintStepIdxs) list.clear();
 
-        int lastIdx = 0;
+        int lastIdx = EMPTY_INDEX;
         for(int i = 0; i < this.paintSteps.length; i++){
             PaintStep step = this.paintSteps[i];
             if (step != null){
+                lastIdx++;
                 this.paintSteps[lastIdx] = step;
                 this.pixelPaintStepIdxs[step.pixelIndex].add(lastIdx);
-                lastIdx++;
             }
         }
 
         int previousLastIndex = this.lastPaintStepIdx;
-        if (lastIdx != 0 && lastIdx != previousLastIndex) {
+        if (lastIdx != EMPTY_INDEX && lastIdx != previousLastIndex) {
             for (int i = lastIdx; i <= previousLastIndex; i++) {
                 this.paintSteps[i] = null;
             }
+            this.lastPaintStepIdx = lastIdx;
         }
-
-        this.lastPaintStepIdx = lastIdx;
     }
 
     private void updateLastIdx() {

@@ -96,6 +96,7 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
         // TODO: add clear button
         // TODO: deselect paint color widget when using eraser
         // TODO: stop current paint when run out of color
+        // TODO: make paint widgets not sound when clicked and not selected
 
         // renders everything that widgets drew using ScreenRenderUtil
         this.addRenderableOnly((poseStack, mouseX, mouseY, partialTick) -> ScreenRenderUtil.endAndRenderFills());

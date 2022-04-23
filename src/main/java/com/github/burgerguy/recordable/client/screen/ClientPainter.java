@@ -13,18 +13,18 @@ import net.minecraft.network.FriendlyByteBuf;
 public class ClientPainter extends Painter {
 
     private final PaintColorWidget[] paintColorWidgets;
+    private final PaintStep[] paintSteps;
+    private final IntList[] pixelPaintStepIdxs;
+
+    private int lastPaintStepIdx = EMPTY_INDEX;
     private boolean erasing = false;
     private boolean mixing = false;
-
-    private PaintStep[] paintSteps;
-    private int lastPaintStepIdx = EMPTY_INDEX;
-    private final IntList[] pixelPaintStepIdxs;
-    private boolean forceStopPaint;
 
     public ClientPainter(int[] pixelIndexModel, int width, PaintColorWidget[] paintColorWidgets) {
         super(pixelIndexModel, width);
         this.paintColorWidgets = paintColorWidgets;
-        this.paintSteps = new PaintStep[32]; // seems like a good starting number
+        int maximumSteps = Arrays.stream(paintColorWidgets).mapToInt(PaintColorWidget::getMaxCapacity).sum();
+        this.paintSteps = new PaintStep[maximumSteps];
         this.pixelPaintStepIdxs = new IntList[this.colors.length];
         // 16 seems like a reasonable amount of edits before a resize is needed
         Arrays.setAll(this.pixelPaintStepIdxs, (idx) -> new IntArrayList(16));
@@ -35,13 +35,16 @@ public class ClientPainter extends Painter {
             this.erase(pixelIdx);
             return false;
         } else {
-            this.paint(pixelIdx, this.mixing);
-            return true;
+            return this.paint(pixelIdx, this.mixing);
         }
     }
 
-    public void paint(int pixelIdx, boolean mix) {
+    /**
+     * Returns true if any paint color runs out.
+     */
+    public boolean paint(int pixelIdx, boolean mix) {
         List<PixelPaintEvent> events = new ObjectArrayList<>();
+        boolean anyPaintEmpty = false;
         int oldColor = this.getColor(pixelIdx);
         int currentColor = oldColor;
 
@@ -59,7 +62,11 @@ public class ClientPainter extends Painter {
         if (oldColor != currentColor) {
             this.setColor(pixelIdx, currentColor);
             // actually decrement applied colors now
-            for (PixelPaintEvent event : events) this.paintColorWidgets[event.colorIndex].decrementLevel();
+            for (PixelPaintEvent event : events) {
+                PaintColorWidget paintColorWidget = this.paintColorWidgets[event.colorIndex];
+                paintColorWidget.decrementLevel();
+                anyPaintEmpty |= paintColorWidget.isEmpty();
+            }
 
             this.ensureStepsCapacity();
             int newStepIdx = ++this.lastPaintStepIdx;
@@ -67,6 +74,8 @@ public class ClientPainter extends Painter {
             IntList stepIndices = this.pixelPaintStepIdxs[pixelIdx];
             stepIndices.add(newStepIdx);
         }
+
+        return anyPaintEmpty;
     }
 
     public void erase(int pixelIdx) {
@@ -74,7 +83,7 @@ public class ClientPainter extends Painter {
         for (int stepIdx : stepIndices) {
             PaintStep paintStep = this.paintSteps[stepIdx];
             this.paintSteps[stepIdx] = null;
-            for (PixelPaintEvent event : paintStep.events) this.paintColorWidgets[event.colorIndex].incrementLevel();
+            for (PixelPaintEvent event : paintStep.events) this.paintColorWidgets[event.colorIndex].increaseLevel(1);
         }
         this.updateLastIdx();
         stepIndices.clear();
@@ -91,7 +100,7 @@ public class ClientPainter extends Painter {
         stepIndices.removeInt(stepIndices.size() - 1);
         // actually set back variables for user
         this.setColor(lastStep.pixelIndex, lastStep.previousColorState);
-        for (PixelPaintEvent event : lastStep.events) this.paintColorWidgets[event.colorIndex].incrementLevel();
+        for (PixelPaintEvent event : lastStep.events) this.paintColorWidgets[event.colorIndex].increaseLevel(1);
     }
 
     public boolean canUndo() {
@@ -111,11 +120,9 @@ public class ClientPainter extends Painter {
 
     private void ensureStepsCapacity() {
         if (this.lastPaintStepIdx == this.paintSteps.length - 1) {
+            // because we calculate the total possible amount of steps at the start,
+            // we know that compacting will always give us enough space.
             this.compact();
-            // compact didn't help need to grow array
-            if (this.lastPaintStepIdx == this.paintSteps.length - 1) {
-                this.paintSteps = ObjectArrays.grow(this.paintSteps, this.paintSteps.length + 1); // will increase in size by 50%
-            }
         }
     }
 
@@ -162,10 +169,12 @@ public class ClientPainter extends Painter {
 
     public void writeToPacket(FriendlyByteBuf buffer) {
         for (PaintStep step : this.paintSteps) {
-            for (PixelPaintEvent event : step.events) {
-                buffer.writeInt(event.colorIndex);
-                buffer.writeInt(step.pixelIndex);
-                buffer.writeBoolean(event.isMixed);
+            if (step != null) {
+                for (PixelPaintEvent event : step.events) {
+                    buffer.writeInt(event.colorIndex);
+                    buffer.writeInt(step.pixelIndex);
+                    buffer.writeBoolean(event.isMixed);
+                }
             }
         }
     }
@@ -173,8 +182,10 @@ public class ClientPainter extends Painter {
     public int getSizeBytes() {
         int size = 0;
         for (PaintStep step : this.paintSteps) {
-            for (PixelPaintEvent ignored : step.events) {
-                size += PER_PAINT_EVENT_BYTES;
+            if (step != null) {
+                for (PixelPaintEvent ignored : step.events) {
+                    size += PER_PAINT_EVENT_BYTES;
+                }
             }
         }
         return size;

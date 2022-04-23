@@ -7,12 +7,7 @@ import com.github.burgerguy.recordable.shared.util.ColorUtil;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Matrix4f;
 import java.awt.Color;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
@@ -21,15 +16,19 @@ public class PaintColorWidget extends Button {
     private final int color;
     private final int colorGrad;
     private final Item dyeItem;
+    private final int maxCapacity;
+    private final int levelPerItem;
 
     private int level;
     private boolean selected;
 
-    public PaintColorWidget(PaintColor paintColor, int initialLevel) {
+    public PaintColorWidget(PaintColor paintColor, int initialLevel, int maxCapacity, int levelPerItem) {
         super(0, 0, 0, 0, paintColor.name(), PaintColorWidget::onPressedAction);
         this.color = paintColor.color(); // make opaque
         this.colorGrad = new Color(color).darker().getRGB();
         this.dyeItem = paintColor.dyeItem();
+        this.maxCapacity = maxCapacity;
+        this.levelPerItem = levelPerItem;
         this.level = initialLevel;
     }
 
@@ -53,9 +52,9 @@ public class PaintColorWidget extends Button {
     public boolean addCapacity(ItemStack itemStack) {
         if (itemStack.is(this.dyeItem)) {
             // integer division truncates, which is what we want
-            int consumed = (LabelerConstants.COLOR_MAX_CAPACITY - this.level) / LabelerConstants.COLOR_CAPACITY_PER_ITEM;
+            int consumed = (this.maxCapacity - this.level) / this.levelPerItem;
             itemStack.shrink(consumed);
-            this.level += (consumed * LabelerConstants.COLOR_CAPACITY_PER_ITEM);
+            this.level += (consumed * this.levelPerItem);
             return true;
         }
         return false;
@@ -109,7 +108,7 @@ public class PaintColorWidget extends Button {
                 borderColor
         );
 
-        float filledPixels = (((y2 - 1) - (y1 + 1)) * this.level) / LabelerConstants.COLOR_MAX_CAPACITY;
+        float filledPixels = (((y2 - 1) - (y1 + 1)) * this.level) / this.maxCapacity;
         // middle
         ScreenRenderUtil.fillGradient(
                 matrix,
@@ -130,7 +129,7 @@ public class PaintColorWidget extends Button {
      * Mix or get color if selected and has a high enough level, otherwise don't affect the color.
      */
     public int applyColor(boolean mix, int otherColor) {
-        if(this.selected && this.active && this.level > 0) {
+        if(this.selected && this.active) {
             if (mix) {
                 return ColorUtil.mixColors(this.color, otherColor);
             } else {
@@ -144,20 +143,26 @@ public class PaintColorWidget extends Button {
      * Returns true if the level
      */
     public void decrementLevel() {
+        if (isEmpty()) throw new IllegalStateException("Tried to decrement level when already empty");
+
         this.level--;
-        if (this.level == 0) {
+        if (isEmpty()) {
             this.selected = false;
             this.active = false;
-            Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.DISPENSER_FAIL, 1.2f));
         }
     }
 
-    /**
-     * Should only be used for undoing and erasing.
-     */
-    public void incrementLevel() {
-        this.level++;
+    public void increaseLevel(int amount) {
+        this.level += amount;
         this.active = true;
+    }
+
+    public boolean isEmpty() {
+        return level == 0;
+    }
+
+    public int getMaxCapacity() {
+        return this.maxCapacity;
     }
 
 }

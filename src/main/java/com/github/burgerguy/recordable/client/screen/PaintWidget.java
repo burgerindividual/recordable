@@ -4,11 +4,14 @@ import com.github.burgerguy.recordable.client.render.util.ScreenRenderUtil;
 import com.github.burgerguy.recordable.shared.menu.Painter;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Matrix4f;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.sounds.SoundEvents;
 import org.lwjgl.glfw.GLFW;
 
 public class PaintWidget extends AbstractWidget {
@@ -18,7 +21,8 @@ public class PaintWidget extends AbstractWidget {
     private final ClientPainter clientPainter;
     private final int pixelSize;
 
-    private int exitEventPixelIdx = Painter.EMPTY_INDEX;
+    private int currentEventPixelIdx = Painter.EMPTY_INDEX;
+    private boolean pauseEvents;
 
     public PaintWidget(int x, int y, int pixelSize, ClientPainter clientPainter) {
         super(
@@ -32,19 +36,26 @@ public class PaintWidget extends AbstractWidget {
         this.pixelSize = pixelSize;
     }
 
-    /**
-     * Returns true if any paint color widget runs out.
-     */
-    private boolean tryApply(double mouseX, double mouseY) {
+    private void tryApply(double mouseX, double mouseY) {
+        if (this.pauseEvents) return;
+
         int x = (int) ((mouseX - this.x) / this.pixelSize);
         int y = (int) ((mouseY - this.y) / this.pixelSize);
         int pixelIdx = this.clientPainter.coordsToIndex(x, y);
-        if (this.exitEventPixelIdx != pixelIdx) {
+        if (this.currentEventPixelIdx != pixelIdx) {
             if (pixelIdx != Painter.EMPTY_INDEX && pixelIdx != Painter.OUT_OF_BOUNDS_INDEX) {
-                this.clientPainter.apply(pixelIdx);
-                this.exitEventPixelIdx = pixelIdx;
+                boolean anyPaintEmpty = this.clientPainter.apply(pixelIdx);
+                if (anyPaintEmpty) {
+                    this.playEmptySound();
+                    this.pauseEvents = true;
+                }
+                this.currentEventPixelIdx = pixelIdx;
             }
         }
+    }
+
+    private void playEmptySound() {
+        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.DISPENSER_FAIL, 1.2f));
     }
 
     @Override
@@ -59,7 +70,8 @@ public class PaintWidget extends AbstractWidget {
 
     @Override
     public void onRelease(double mouseX, double mouseY) {
-        this.exitEventPixelIdx = Painter.EMPTY_INDEX;
+        this.currentEventPixelIdx = Painter.EMPTY_INDEX;
+        this.pauseEvents = false;
     }
 
     @Override

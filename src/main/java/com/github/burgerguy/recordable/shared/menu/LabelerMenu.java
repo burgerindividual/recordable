@@ -34,9 +34,6 @@ public class LabelerMenu extends AbstractContainerMenu {
         super(INSTANCE, containerId);
         // get from BE
         this.labelerBlockEntity = labelerBlockEntity;
-//        checkContainerSize(container, LabelerConstants.CONTAINER_SIZE);
-//        this.container = container;
-//        container.startOpen(playerInventory.player);
 
         // add player inventory
         for (int y = 0; y < 3; ++y) {
@@ -104,9 +101,4 @@ public class LabelerMenu extends AbstractContainerMenu {
         return player.distanceToSqr((double)labelerPos.getX() + 0.5, (double)labelerPos.getY() + 0.5, (double)labelerPos.getZ() + 0.5) <= 64.0;
     }
 
-//    @Override
-//    public void removed(Player player) {
-//        super.removed(player);
-//        this.container.stopOpen(player);
-//    }
 }

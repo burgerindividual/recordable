@@ -54,23 +54,9 @@ public class LabelerBlockEntity extends BlockEntity implements ExtendedScreenHan
         return getBlockState().getBlock().getName();
     }
 
-//    @Override
-//    public NonNullList<ItemStack> getItems() {
-//        return this.items;
-//    }
-//
-//    @Override
-//    public boolean stillValid(Player player) {
-//        if (this.level.getBlockEntity(this.worldPosition) != this) {
-//            return false;
-//        }
-//        return player.distanceToSqr((double)this.worldPosition.getX() + 0.5, (double)this.worldPosition.getY() + 0.5, (double)this.worldPosition.getZ() + 0.5) <= 64.0;
-//    }
-
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-//        ContainerHelper.loadAllItems(tag, this.items);
         if (tag.contains("ColorLevels", Tag.TAG_INT_ARRAY)) {
             System.arraycopy(tag.getIntArray("ColorLevels"), 0, this.colorLevels, 0, this.colorLevels.length);
         }
@@ -79,7 +65,6 @@ public class LabelerBlockEntity extends BlockEntity implements ExtendedScreenHan
     @Override
     public void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-//        ContainerHelper.saveAllItems(tag, this.items);
         tag.putIntArray("ColorLevels", this.colorLevels);
     }
 

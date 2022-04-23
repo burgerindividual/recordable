@@ -7,7 +7,6 @@ import com.github.burgerguy.recordable.shared.menu.LabelerMenu;
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.netty.buffer.Unpooled;
 import java.nio.charset.StandardCharsets;
-import javax.annotation.Nullable;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -27,13 +26,22 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
 
     private ClientPainter clientPainter;
 
-    @Nullable
     private EditBox authorEditBox;
-    @Nullable
     private EditBox titleEditBox;
+    private Button undoButton;
+    private Button resetButton;
 
     public LabelerScreen(LabelerMenu labelerMenu, Inventory inventory, Component component) {
         super(labelerMenu, inventory, component);
+    }
+
+    @Override
+    public void containerTick() {
+        this.authorEditBox.tick();
+        this.titleEditBox.tick();
+        boolean canUndo = this.clientPainter.canUndo();
+        this.undoButton.active = canUndo;
+        this.resetButton.active = canUndo;
     }
 
     @Override
@@ -48,7 +56,12 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
         // create and add paint colors
         PaintColorWidget[] paintColorWidgets = new PaintColorWidget[LabelerConstants.COLOR_COUNT];
         for (int i = 0; i < LabelerConstants.COLOR_COUNT; i++) {
-            paintColorWidgets[i] = new PaintColorWidget(LabelerConstants.DEFINED_COLORS[i], this.menu.getLabelerBlockEntity().getColorLevels()[i]);
+            paintColorWidgets[i] = new PaintColorWidget(
+                    LabelerConstants.DEFINED_COLORS[i],
+                    this.menu.getLabelerBlockEntity().getColorLevels()[i],
+                    LabelerConstants.COLOR_MAX_CAPACITY,
+                    LabelerConstants.COLOR_LEVEL_PER_ITEM
+            );
         }
         for (int i = 0; i < paintColorWidgets.length; i++) {
             int xIdx = i / LabelerConstants.PALETTE_COLUMNS_WRAP;
@@ -81,14 +94,8 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
         this.titleEditBox = new EditBox(font, 200, 225, 80, 20, new TranslatableComponent("screen.recordable.labeler.title"));
         this.addRenderableWidget(this.titleEditBox);
 
-        Button undoButton = new Button(300, 20, 16, 16, new TranslatableComponent("screen.recordable.labeler.undo"), b -> {
-            if (this.clientPainter.canUndo()) {
-                this.clientPainter.undo();
-            } else {
-                b.active = false;
-            }
-        });
-        this.addRenderableWidget(undoButton);
+        this.undoButton = new Button(300, 20, 16, 16, new TranslatableComponent("screen.recordable.labeler.undo"), b -> this.clientPainter.undo());
+        this.addRenderableWidget(this.undoButton);
 
         Button eraseButton = new Button(300, 40, 16, 16, new TranslatableComponent("screen.recordable.labeler.eraser"), b -> this.clientPainter.toggleErase());
         this.addRenderableWidget(eraseButton);
@@ -96,17 +103,11 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
         Button mixButton = new Button(300, 60, 16, 16, new TranslatableComponent("screen.recordable.labeler.mix"), b -> this.clientPainter.toggleMix());
         this.addRenderableWidget(mixButton);
 
-        Button resetButton = new Button(300, 80, 16, 16, new TranslatableComponent("screen.recordable.labeler.reset"), b -> {
-            this.clientPainter.reset();
-            undoButton.active = false;
-        });
-        this.addRenderableWidget(resetButton);
+        this.resetButton = new Button(300, 80, 16, 16, new TranslatableComponent("screen.recordable.labeler.reset"), b -> this.clientPainter.reset());
+        this.addRenderableWidget(this.resetButton);
 
         // gray this out when no edits have been made
-        Button finishButton = new Button(300, 100, 16, 16, new TranslatableComponent("screen.recordable.labeler.finish"), b -> {
-            this.doFinish();
-            undoButton.active = false;
-        });
+        Button finishButton = new Button(300, 100, 16, 16, new TranslatableComponent("screen.recordable.labeler.finish"), b -> this.doFinish());
         this.addRenderableWidget(finishButton);
 
         // TODO: deselect paint color widget when using eraser
@@ -167,11 +168,11 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
     }
 
     public void doFinish() {
-        if (authorEditBox == null || titleEditBox == null) throw new IllegalStateException("Screen not initialized");
+        if (this.authorEditBox == null || this.titleEditBox == null) throw new IllegalStateException("Screen not initialized");
         this.clientPainter.clear();
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
-            String author = authorEditBox.getValue();
-            String title = titleEditBox.getValue();
+            String author = this.authorEditBox.getValue();
+            String title = this.titleEditBox.getValue();
             // kind of an inefficient way of figuring it out, but whatever
             int sizeBytes = Integer.BYTES + author.getBytes(StandardCharsets.UTF_8).length
                     + Integer.BYTES + title.getBytes(StandardCharsets.UTF_8).length

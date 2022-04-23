@@ -17,7 +17,7 @@ public class LabelerConstants {
     public static final int SELECTED_BORDER_COLOR = 0xFFFF0000;
 
     public static final int COLOR_MAX_CAPACITY = 20;
-    public static final int COLOR_CAPACITY_PER_ITEM = 5;
+    public static final int COLOR_LEVEL_PER_ITEM = 5;
 
     // sorted by hue because it looks nice
     public static final PaintColor[] DEFINED_COLORS = {

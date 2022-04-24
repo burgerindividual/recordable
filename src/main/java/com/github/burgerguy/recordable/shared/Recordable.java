@@ -9,7 +9,6 @@ import com.github.burgerguy.recordable.shared.block.RecorderBlock;
 import com.github.burgerguy.recordable.shared.block.RecorderBlockEntity;
 import com.github.burgerguy.recordable.shared.item.CopperRecordItem;
 import com.github.burgerguy.recordable.shared.menu.LabelerMenu;
-import io.netty.buffer.Unpooled;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.file.FileSystem;
@@ -20,6 +19,7 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.loader.impl.launch.FabricLauncherBase;
 import net.minecraft.core.Registry;
@@ -27,7 +27,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.storage.LevelResource;
-import org.lwjgl.system.MemoryStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.bernie.geckolib3.GeckoLib;
@@ -108,12 +107,9 @@ public class Recordable implements ModInitializer {
 
 			ScoreDatabase scoreDatabase = ((ScoreDatabaseContainer) server).getScoreDatabase();
 
-			try (ScoreDatabase.ScoreRequest scoreRequest = scoreDatabase.requestScore(scoreId);
-				 MemoryStack memoryStack = MemoryStack.stackPush()) {
+			try (ScoreDatabase.ScoreRequest scoreRequest = scoreDatabase.requestScore(scoreId)) {
 				ByteBuffer scoreData = scoreRequest.getData();
-				int packetSize = scoreData != null ? Long.BYTES + scoreData.capacity() : Long.BYTES;
-
-				FriendlyByteBuf newPacketBuffer = new FriendlyByteBuf(Unpooled.wrappedBuffer(memoryStack.malloc(packetSize)));
+				FriendlyByteBuf newPacketBuffer = new FriendlyByteBuf(PacketByteBufs.create());
 				newPacketBuffer.resetWriterIndex();
 				newPacketBuffer.writeLong(scoreId);
 

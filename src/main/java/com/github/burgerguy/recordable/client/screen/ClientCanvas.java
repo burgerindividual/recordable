@@ -1,29 +1,28 @@
 package com.github.burgerguy.recordable.client.screen;
 
-import com.github.burgerguy.recordable.shared.menu.Painter;
+import com.github.burgerguy.recordable.shared.menu.Canvas;
+import com.github.burgerguy.recordable.shared.menu.Paint;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectArrays;
 import java.util.Arrays;
 import java.util.List;
 import net.minecraft.network.FriendlyByteBuf;
 
-// TODO: rename to ClientPainter and Painter? not sure yet
-public class ClientPainter extends Painter {
+public class ClientCanvas extends Canvas {
 
-    private final PaintColorWidget[] paintColorWidgets;
-    private final PaintStep[] paintSteps;
     private final IntList[] pixelPaintStepIdxs;
+    private final PaintStep[] paintSteps;
+    private final Paint[] paints;
 
     private int lastPaintStepIdx = EMPTY_INDEX;
     private boolean erasing = false;
     private boolean mixing = false;
 
-    public ClientPainter(int[] pixelIndexModel, int width, PaintColorWidget[] paintColorWidgets) {
+    public ClientCanvas(int[] pixelIndexModel, int width, Paint[] paints) {
         super(pixelIndexModel, width);
-        this.paintColorWidgets = paintColorWidgets;
-        int maximumSteps = Arrays.stream(paintColorWidgets).mapToInt(PaintColorWidget::getMaxCapacity).sum();
+        this.paints = paints;
+        int maximumSteps = Arrays.stream(paints).mapToInt(Paint::getMaxCapacity).sum();
         this.paintSteps = new PaintStep[maximumSteps];
         this.pixelPaintStepIdxs = new IntList[this.colors.length];
         // 16 seems like a reasonable amount of edits before a resize is needed
@@ -48,9 +47,9 @@ public class ClientPainter extends Painter {
         int oldColor = this.getColor(pixelIdx);
         int currentColor = oldColor;
 
-        for (int colorIdx = 0; colorIdx < this.paintColorWidgets.length; colorIdx++) {
-            PaintColorWidget paintColorWidget = this.paintColorWidgets[colorIdx];
-            int newColor = paintColorWidget.applyColor(mix, currentColor);
+        for (int colorIdx = 0; colorIdx < this.paints.length; colorIdx++) {
+            Paint paints = this.paints[colorIdx];
+            int newColor = paints.applyColor(mix, currentColor);
             if (currentColor != newColor) {
                 currentColor = newColor;
                 events.add(new PixelPaintEvent(colorIdx, mix));
@@ -63,9 +62,9 @@ public class ClientPainter extends Painter {
             this.setColor(pixelIdx, currentColor);
             // actually decrement applied colors now
             for (PixelPaintEvent event : events) {
-                PaintColorWidget paintColorWidget = this.paintColorWidgets[event.colorIndex];
-                paintColorWidget.decrementLevel();
-                anyPaintEmpty |= paintColorWidget.isEmpty();
+                Paint paints = this.paints[event.colorIndex];
+                paints.decrementLevel();
+                anyPaintEmpty |= paints.isEmpty();
             }
 
             this.ensureStepsCapacity();
@@ -83,7 +82,10 @@ public class ClientPainter extends Painter {
         for (int stepIdx : stepIndices) {
             PaintStep paintStep = this.paintSteps[stepIdx];
             this.paintSteps[stepIdx] = null;
-            for (PixelPaintEvent event : paintStep.events) this.paintColorWidgets[event.colorIndex].increaseLevel(1);
+            for (PixelPaintEvent event : paintStep.events) {
+                Paint paint = this.paints[event.colorIndex];
+                if (!paint.isFull()) paint.incrementLevel();
+            }
         }
         this.updateLastIdx();
         stepIndices.clear();
@@ -100,7 +102,7 @@ public class ClientPainter extends Painter {
         stepIndices.removeInt(stepIndices.size() - 1);
         // actually set back variables for user
         this.setColor(lastStep.pixelIndex, lastStep.previousColorState);
-        for (PixelPaintEvent event : lastStep.events) this.paintColorWidgets[event.colorIndex].increaseLevel(1);
+        for (PixelPaintEvent event : lastStep.events) this.paints[event.colorIndex].incrementLevel();
     }
 
     public boolean canUndo() {
@@ -159,12 +161,14 @@ public class ClientPainter extends Painter {
         this.lastPaintStepIdx = newIdx;
     }
 
-    public void toggleErase() {
+    public boolean toggleErase() {
         this.erasing = !this.erasing;
+        return this.erasing;
     }
 
-    public void toggleMix() {
+    public boolean toggleMix() {
         this.mixing = !this.mixing;
+        return this.mixing;
     }
 
     public void writeToPacket(FriendlyByteBuf buffer) {

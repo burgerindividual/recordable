@@ -8,14 +8,13 @@ import com.github.burgerguy.recordable.client.score.play.ScorePlayerRegistry;
 import com.github.burgerguy.recordable.client.score.play.ScorePlayerRegistryContainer;
 import com.github.burgerguy.recordable.shared.Recordable;
 import com.github.burgerguy.recordable.shared.score.PlayerConstants;
-import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
-import org.lwjgl.system.MemoryStack;
 
 public class ClientPacketHandler {
 
@@ -32,12 +31,10 @@ public class ClientPacketHandler {
 
         if (score.request()) {
             // hasn't been previously requested
-            try (MemoryStack memoryStack = MemoryStack.stackPush()) {
-                FriendlyByteBuf newPacketBuffer = new FriendlyByteBuf(Unpooled.wrappedBuffer(memoryStack.malloc(Long.BYTES)));
-                newPacketBuffer.resetWriterIndex();
-                newPacketBuffer.writeLong(scoreId);
-                responseSender.sendPacket(Recordable.REQUEST_SCORE_ID, newPacketBuffer);
-            }
+            FriendlyByteBuf newPacketBuffer = new FriendlyByteBuf(PacketByteBufs.create());
+            newPacketBuffer.resetWriterIndex();
+            newPacketBuffer.writeLong(scoreId);
+            responseSender.sendPacket(Recordable.REQUEST_SCORE_ID, newPacketBuffer);
         }
 
         client.execute(() -> {

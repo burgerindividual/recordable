@@ -21,11 +21,6 @@ public class BlockScoreBroadcaster extends ScoreBroadcaster {
     }
 
     @Override
-    protected int getPlayPacketSize() {
-        return 8 + 2 + 4 + 8;
-    }
-
-    @Override
     protected ResourceLocation getPlayPacketChannelId() {
         return Recordable.PLAY_SCORE_INSTANCE_AT_POS_ID;
     }

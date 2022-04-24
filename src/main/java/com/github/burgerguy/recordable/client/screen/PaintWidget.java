@@ -1,168 +1,113 @@
 package com.github.burgerguy.recordable.client.screen;
 
 import com.github.burgerguy.recordable.client.render.util.ScreenRenderUtil;
-import com.github.burgerguy.recordable.shared.menu.Painter;
+import com.github.burgerguy.recordable.shared.menu.LabelerConstants;
+import com.github.burgerguy.recordable.shared.menu.Paint;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Matrix4f;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.narration.NarrationElementOutput;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.client.sounds.SoundManager;
-import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.sounds.SoundEvents;
-import org.lwjgl.glfw.GLFW;
+import java.awt.Color;
+import net.minecraft.client.gui.components.Button;
 
-public class PaintWidget extends AbstractWidget {
-    private static final int GRID_COLOR = 0xFF000000;
-    private static final float GRID_HALF_LINE_WIDTH = 0.5f;
+public class PaintWidget extends Button {
 
-    private final ClientPainter clientPainter;
-    private final int pixelSize;
+    private final Paint paint;
+    private final int rawColor;
+    private final int rawColorGrad;
 
-    private int currentEventPixelIdx = Painter.EMPTY_INDEX;
-    private boolean pauseEvents;
+    private boolean selected;
+    private boolean forceInactive;
 
-    public PaintWidget(int x, int y, int pixelSize, ClientPainter clientPainter) {
-        super(
-                x,
-                y,
-                clientPainter.getWidth() * pixelSize,
-                clientPainter.getHeight() * pixelSize,
-                new TranslatableComponent("screen.recordable.labeler.paint_area")
+    public PaintWidget(int x, int y, int width, int height, Paint paint) {
+        super(x, y, width, height, paint.getColor().name(), PaintWidget::onPressedAction);
+        this.paint = paint;
+        this.rawColor = paint.getColor().rawColor();
+        this.rawColorGrad = new Color(this.rawColor).darker().getRGB();
+    }
+
+    private static void onPressedAction(Button button) {
+        PaintWidget paintWidget = (PaintWidget) button;
+        paintWidget.selected = !paintWidget.selected;
+        paintWidget.update();
+    }
+
+    @Override
+    public void renderButton(PoseStack matrixStack, int mouseX, int mouseY, float partialTick) {
+        float x1 = this.x;
+        float x2 = this.x + this.width;
+        float y1 = this.y;
+        float y2 = this.y + this.height;
+
+        int borderColor = getBorderColor();
+
+        Matrix4f matrix = matrixStack.last().pose();
+
+        // top border
+        ScreenRenderUtil.fill(
+                matrix,
+                x1,
+                y1,
+                x2,
+                y1 + 1,
+                borderColor
         );
-        this.clientPainter = clientPainter;
-        this.pixelSize = pixelSize;
-    }
+        // left border
+        ScreenRenderUtil.fill(
+                matrix,
+                x1,
+                y1,
+                x1 + 1,
+                y2,
+                borderColor
+        );
+        // bottom border
+        ScreenRenderUtil.fill(
+                matrix,
+                x1,
+                y2 - 1,
+                x2,
+                y2,
+                borderColor
+        );
+        // right border
+        ScreenRenderUtil.fill(
+                matrix,
+                x2 - 1,
+                y1,
+                x2,
+                y2,
+                borderColor
+        );
 
-    private void tryApply(double mouseX, double mouseY) {
-        if (this.pauseEvents) return;
+        float filledPixels = (((y2 - 1) - (y1 + 1)) * this.paint.getLevel()) / this.paint.getMaxCapacity();
+        // middle
+        ScreenRenderUtil.fillGradient(
+                matrix,
+                x1 + 1,
+                y2 - 1 - filledPixels,
+                x2 - 1,
+                y2 - 1,
+                this.rawColor | 0xFF000000, // make opaque
+                this.rawColorGrad | 0xFF000000 // make opaque
+        );
 
-        int x = (int) ((mouseX - this.x) / this.pixelSize);
-        int y = (int) ((mouseY - this.y) / this.pixelSize);
-        int pixelIdx = this.clientPainter.coordsToIndex(x, y);
-        if (this.currentEventPixelIdx != pixelIdx) {
-            if (pixelIdx != Painter.EMPTY_INDEX && pixelIdx != Painter.OUT_OF_BOUNDS_INDEX) {
-                boolean anyPaintEmpty = this.clientPainter.apply(pixelIdx);
-                if (anyPaintEmpty) {
-                    this.playEmptySound();
-                    this.pauseEvents = true;
-                }
-                this.currentEventPixelIdx = pixelIdx;
-            }
+        // darken if inactive
+        if (!active) {
+            ScreenRenderUtil.fill(matrix, x1, y1, x2, y2, 0x50303030);
         }
     }
 
-    private void playEmptySound() {
-        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.DISPENSER_FAIL, 1.2f));
+    private int getBorderColor() {
+        return this.selected ? LabelerConstants.SELECTED_BORDER_COLOR : LabelerConstants.DEFAULT_BORDER_COLOR;
     }
 
-    @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        boolean superResult = super.keyPressed(keyCode, scanCode, modifiers);
-        if (!superResult && Screen.hasControlDown() && keyCode == GLFW.GLFW_KEY_Z && this.clientPainter.canUndo()) {
-            this.clientPainter.undo();
-            return true;
-        }
-        return false;
+    public void setForceInactive(boolean forceInactive) {
+        this.forceInactive = forceInactive;
+        update();
     }
 
-    @Override
-    public void onRelease(double mouseX, double mouseY) {
-        this.currentEventPixelIdx = Painter.EMPTY_INDEX;
-        this.pauseEvents = false;
+    public void update() {
+        this.active = !this.paint.isEmpty() && !this.forceInactive;
+        this.paint.setCanApply(this.selected && this.active);
     }
 
-    @Override
-    public void onClick(double mouseX, double mouseY) {
-        tryApply(mouseX, mouseY);
-    }
-
-    @Override
-    protected void onDrag(double mouseX, double mouseY, double dragX, double dragY) {
-        tryApply(mouseX, mouseY);
-    }
-
-    @Override
-    public void renderButton(PoseStack poseStack, int mouseX, int mouseY, float partialTick) {
-        Matrix4f matrix = poseStack.last().pose();
-        float widgetX = this.x;
-        float widgetY = this.y;
-        float pixelSize = this.pixelSize;
-        int paHeight = this.clientPainter.getHeight();
-        int paWidth = this.clientPainter.getWidth();
-
-        // pixels
-        for (int pxYCoord = 0; pxYCoord < paHeight; pxYCoord++) {
-            for (int pxXCoord = 0; pxXCoord < paWidth; pxXCoord++) {
-                int pxIndex = this.clientPainter.coordsToIndex(pxXCoord, pxYCoord);
-                if (pxIndex != Painter.EMPTY_INDEX) {
-                    ScreenRenderUtil.fill(
-                            matrix,
-                            widgetX + (pxXCoord * pixelSize),
-                            widgetY + (pxYCoord * pixelSize),
-                            widgetX + (pxXCoord * pixelSize) + pixelSize,
-                            widgetY + (pxYCoord * pixelSize) + pixelSize,
-                            this.clientPainter.getColor(pxIndex) | 0xFF000000 // make opaque
-                    );
-                }
-            }
-        }
-
-        // grid lines
-        for (int pxYCoord = 0; pxYCoord <= paHeight; pxYCoord++) {
-            for (int pxXCoord = 0; pxXCoord <= paWidth; pxXCoord++) {
-                float lineX = pxXCoord * pixelSize;
-                float lineY = pxYCoord * pixelSize;
-                int currentIdx = this.clientPainter.coordsToIndex(pxXCoord, pxYCoord);
-                int prevIdxX = this.clientPainter.coordsToIndex(pxXCoord - 1, pxYCoord);
-                int prevIdxY = this.clientPainter.coordsToIndex(pxXCoord, pxYCoord - 1);
-
-                // horizontal lines, drawn in vertical order
-                if ((currentIdx != Painter.EMPTY_INDEX &&
-                    currentIdx != Painter.OUT_OF_BOUNDS_INDEX)
-                    ||
-                    (pxXCoord != paWidth &&
-                    prevIdxY != Painter.EMPTY_INDEX &&
-                    prevIdxY != Painter.OUT_OF_BOUNDS_INDEX)) {
-                    ScreenRenderUtil.fill(
-                            matrix,
-                            widgetX + lineX,
-                            widgetY + lineY - GRID_HALF_LINE_WIDTH,
-                            widgetX + lineX + pixelSize,
-                            widgetY + lineY + GRID_HALF_LINE_WIDTH,
-                            GRID_COLOR
-                    );
-                }
-
-                // vertical lines, drawn in horizontal order
-                if ((currentIdx != Painter.EMPTY_INDEX &&
-                    currentIdx != Painter.OUT_OF_BOUNDS_INDEX)
-                    ||
-                    (pxYCoord != paHeight &&
-                    prevIdxX != Painter.EMPTY_INDEX &&
-                    prevIdxX != Painter.OUT_OF_BOUNDS_INDEX)) {
-                    ScreenRenderUtil.fill(
-                            matrix,
-                            widgetX + lineX - GRID_HALF_LINE_WIDTH,
-                            widgetY + lineY,
-                            widgetX + lineX + GRID_HALF_LINE_WIDTH,
-                            widgetY + lineY + pixelSize,
-                            GRID_COLOR
-                    );
-                }
-            }
-        }
-    }
-
-    @Override
-    public void playDownSound(SoundManager handler) {
-        // no sound should be played
-    }
-
-    @Override
-    public void updateNarration(NarrationElementOutput narrationElementOutput) {
-        this.defaultButtonNarrationText(narrationElementOutput);
-    }
 }

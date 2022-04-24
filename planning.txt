@@ -153,7 +153,11 @@ handle recording other records playing, my own and default
 fix relative audio with hrtf
 make audio quieter when further away from jukebox
 
-looping?
+record looping?
 
 try to get access to blockstate on client and server in screen, no need to sync thru screenhandler
 figure out how to update when record is removed from result slot (maybe just stick with button?)
+
+hold items and color state in labeler block entity NBT?
+
+packet on draw to update dyes and BE levels, reverse when exit? maybe try to just do it on client side?

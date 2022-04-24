@@ -7,7 +7,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.Mth;
 
-public class Painter {
+public class Canvas {
 
     public static final int EMPTY_INDEX = -1;
     public static final int OUT_OF_BOUNDS_INDEX = -2;
@@ -19,7 +19,7 @@ public class Painter {
     protected final int[] pixelIndexModel;
     protected final int[] colors;
 
-    public Painter(int[] pixelIndexModel, int width) {
+    public Canvas(int[] pixelIndexModel, int width) {
         this.pixelIndexModel = pixelIndexModel;
         this.width = width;
         // get maximum rows
@@ -41,8 +41,8 @@ public class Painter {
     /**
      * This also reflects the side effects on the color levels from coloring.
      */
-    public static Painter fromBuffer(int[] pixelIndexModel, int width, int[] colorLevels, FriendlyByteBuf buffer) {
-        Painter painter = new Painter(pixelIndexModel, width);
+    public static Canvas fromBuffer(int[] pixelIndexModel, int width, int[] colorLevels, FriendlyByteBuf buffer) {
+        Canvas canvas = new Canvas(pixelIndexModel, width);
         while (buffer.isReadable() && buffer.readableBytes() >= PER_PAINT_EVENT_BYTES) {
             int colorIdx = buffer.readInt();
             int pixelIdx = buffer.readInt();
@@ -51,16 +51,16 @@ public class Painter {
                 Recordable.LOGGER.warn("Color index out of bounds: " + colorIdx);
             } else if (colorLevels[colorIdx] == 0) {
                 Recordable.LOGGER.warn("Tried to use color which is already at 0 level (idx: " + colorIdx + ")");
-            } else if (!painter.isIndexValid(pixelIdx)) {
+            } else if (!canvas.isIndexValid(pixelIdx)) {
                 Recordable.LOGGER.warn("Pixel index out of bounds: " + pixelIdx);
             } else {
-                int resolvedColor = LabelerConstants.DEFINED_COLORS[colorIdx].color();
-                int newColor = isMixed ? ColorUtil.mixColors(painter.getColor(pixelIdx), resolvedColor) : resolvedColor;
-                painter.setColor(pixelIdx, newColor);
+                int resolvedColor = LabelerConstants.DEFINED_COLORS[colorIdx].rawColor();
+                int newColor = isMixed ? ColorUtil.mixColors(canvas.getColor(pixelIdx), resolvedColor) : resolvedColor;
+                canvas.setColor(pixelIdx, newColor);
                 colorLevels[colorIdx] -= 1;
             }
         }
-        return painter;
+        return canvas;
     }
 
     public void applyToTagNoAlpha(CompoundTag tag) {

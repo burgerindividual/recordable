@@ -5,6 +5,7 @@ import com.github.burgerguy.recordable.shared.menu.Paint;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrays;
 import java.util.Arrays;
 import java.util.List;
 import net.minecraft.network.FriendlyByteBuf;
@@ -12,8 +13,8 @@ import net.minecraft.network.FriendlyByteBuf;
 public class ClientCanvas extends Canvas {
 
     private final IntList[] pixelPaintStepIdxs;
-    private final PaintStep[] paintSteps;
     private final Paint[] paints;
+    private PaintStep[] paintSteps;
 
     private int lastPaintStepIdx = EMPTY_INDEX;
     private boolean erasing = false;
@@ -23,6 +24,7 @@ public class ClientCanvas extends Canvas {
         super(pixelIndexModel, width);
         this.paints = paints;
         int maximumSteps = Arrays.stream(paints).mapToInt(Paint::getMaxCapacity).sum();
+        // this isn't the true maximum because dyes can be refilled as you're drawing, but it's a good starting point
         this.paintSteps = new PaintStep[maximumSteps];
         this.pixelPaintStepIdxs = new IntList[this.colors.length];
         // 16 seems like a reasonable amount of edits before a resize is needed
@@ -122,9 +124,11 @@ public class ClientCanvas extends Canvas {
 
     private void ensureStepsCapacity() {
         if (this.lastPaintStepIdx == this.paintSteps.length - 1) {
-            // because we calculate the total possible amount of steps at the start,
-            // we know that compacting will always give us enough space.
             this.compact();
+            // compact didn't help need to grow array
+            if (this.lastPaintStepIdx == this.paintSteps.length - 1) {
+                this.paintSteps = ObjectArrays.grow(this.paintSteps, this.paintSteps.length + 1); // will increase in size by 50%
+            }
         }
     }
 

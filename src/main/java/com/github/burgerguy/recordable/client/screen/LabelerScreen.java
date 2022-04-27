@@ -188,8 +188,7 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
         if (this.authorEditBox == null || this.titleEditBox == null) throw new IllegalStateException("Screen not initialized");
         String author = this.authorEditBox.getValue();
         String title = this.titleEditBox.getValue();
-        FriendlyByteBuf buffer = new FriendlyByteBuf(PacketByteBufs.create());
-        buffer.resetWriterIndex();
+        FriendlyByteBuf buffer = PacketByteBufs.create();
         buffer.writeUtf(author);
         buffer.writeUtf(title);
         this.clientCanvas.writeToPacket(buffer);

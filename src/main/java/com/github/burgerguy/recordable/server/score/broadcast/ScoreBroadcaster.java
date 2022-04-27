@@ -38,8 +38,7 @@ public abstract class ScoreBroadcaster {
 
         for (ServerPlayer player : serverLevel.players()) {
             if (!sentTargets.contains(player) && isInRange(player.getX(), player.getY(), player.getZ())) {
-                FriendlyByteBuf buffer = new FriendlyByteBuf(PacketByteBufs.create());
-                buffer.resetWriterIndex();
+                FriendlyByteBuf buffer = PacketByteBufs.create();
                 writePlayPacket(buffer);
                 ServerPlayNetworking.send(player, getPlayPacketChannelId(), buffer);
                 sentTargets.add(player);
@@ -59,8 +58,7 @@ public abstract class ScoreBroadcaster {
     public void stop() {
         setBroadcasting(false);
 
-        FriendlyByteBuf buffer = new FriendlyByteBuf(PacketByteBufs.create());
-        buffer.resetWriterIndex();
+        FriendlyByteBuf buffer = PacketByteBufs.create();
         buffer.writeInt(playId);
         for (ServerPlayer player : sentTargets) {
             ServerPlayNetworking.send(player, Recordable.STOP_SCORE_INSTANCE_ID, buffer);
@@ -80,11 +78,10 @@ public abstract class ScoreBroadcaster {
             // From there, the sentTargets set will be frozen, and when unpaused, all
             // the users that were sent the pause packet will be sent the unpaused packet.
             for(ServerPlayer player : sentTargets) {
-                FriendlyByteBuf buffer = new FriendlyByteBuf(PacketByteBufs.create());
-                buffer.resetWriterIndex();
+                FriendlyByteBuf buffer = PacketByteBufs.create();
                 buffer.writeInt(playId);
                 buffer.writeBoolean(paused); // byte disguised as boolean
-                ServerPlayNetworking.send(player, getPlayPacketChannelId(), buffer);
+                ServerPlayNetworking.send(player, Recordable.SET_SCORE_INSTANCE_PAUSED_ID, buffer);
             }
         }
     }

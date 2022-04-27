@@ -31,8 +31,7 @@ public class ClientPacketHandler {
 
         if (score.request()) {
             // hasn't been previously requested
-            FriendlyByteBuf newPacketBuffer = new FriendlyByteBuf(PacketByteBufs.create());
-            newPacketBuffer.resetWriterIndex();
+            FriendlyByteBuf newPacketBuffer = PacketByteBufs.create();
             newPacketBuffer.writeLong(scoreId);
             responseSender.sendPacket(Recordable.REQUEST_SCORE_ID, newPacketBuffer);
         }

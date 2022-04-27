@@ -109,8 +109,7 @@ public class Recordable implements ModInitializer {
 
 			try (ScoreDatabase.ScoreRequest scoreRequest = scoreDatabase.requestScore(scoreId)) {
 				ByteBuffer scoreData = scoreRequest.getData();
-				FriendlyByteBuf newPacketBuffer = new FriendlyByteBuf(PacketByteBufs.create());
-				newPacketBuffer.resetWriterIndex();
+				FriendlyByteBuf newPacketBuffer = PacketByteBufs.create();
 				newPacketBuffer.writeLong(scoreId);
 
 				if (scoreData != null) {

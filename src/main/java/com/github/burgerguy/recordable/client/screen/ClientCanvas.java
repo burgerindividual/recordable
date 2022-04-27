@@ -187,18 +187,6 @@ public class ClientCanvas extends Canvas {
         }
     }
 
-    public int getSizeBytes() {
-        int size = 0;
-        for (PaintStep step : this.paintSteps) {
-            if (step != null) {
-                for (PixelPaintEvent ignored : step.events) {
-                    size += PER_PAINT_EVENT_BYTES;
-                }
-            }
-        }
-        return size;
-    }
-
     private record PixelPaintEvent(int colorIndex, boolean isMixed) {}
     private record PaintStep(int previousColorState, int pixelIndex, List<PixelPaintEvent> events) {}
 }

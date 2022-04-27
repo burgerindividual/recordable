@@ -41,7 +41,6 @@ public abstract class ScoreBroadcaster {
                 FriendlyByteBuf buffer = new FriendlyByteBuf(PacketByteBufs.create());
                 buffer.resetWriterIndex();
                 writePlayPacket(buffer);
-                // TODO: this will be really bad if the packet is scheduled to be sent for later
                 ServerPlayNetworking.send(player, getPlayPacketChannelId(), buffer);
                 sentTargets.add(player);
             }
@@ -85,7 +84,6 @@ public abstract class ScoreBroadcaster {
                 buffer.resetWriterIndex();
                 buffer.writeInt(playId);
                 buffer.writeBoolean(paused); // byte disguised as boolean
-                // TODO: this will be really bad if the packet is scheduled to be sent for later
                 ServerPlayNetworking.send(player, getPlayPacketChannelId(), buffer);
             }
         }

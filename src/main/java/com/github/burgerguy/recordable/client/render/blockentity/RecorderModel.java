@@ -17,7 +17,6 @@ public class RecorderModel extends AnimatedGeoModel<RecorderBlockEntity> {
 
     @Override
     public ResourceLocation getTextureLocation(RecorderBlockEntity recorderBlockEntity) {
-        // TODO: when
         ItemStack record = recorderBlockEntity.getRecordItem();
         if (record != null) {
             return new ResourceLocation(Recordable.MOD_ID, "textures/block/recorder_model_written.png");

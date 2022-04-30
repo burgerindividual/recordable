@@ -6,6 +6,7 @@ import com.github.burgerguy.recordable.shared.block.LabelerBlockEntity;
 import com.github.burgerguy.recordable.shared.menu.LabelerConstants;
 import com.github.burgerguy.recordable.shared.menu.LabelerMenu;
 import com.github.burgerguy.recordable.shared.menu.Paint;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
@@ -14,6 +15,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
@@ -21,11 +23,12 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerListener;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
 
 public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
-    private static final ResourceLocation COLOR_ICON_LOCATION = new ResourceLocation(Recordable.MOD_ID, "textures/gui/labeler.png");
+    private static final ResourceLocation BG_LOCATION = new ResourceLocation(Recordable.MOD_ID, "textures/gui/labeler.png");
 
     private final ClientCanvas clientCanvas;
 
@@ -58,6 +61,10 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
                 labelerBlockEntity.getPixelModelWidth(),
                 labelerMenu.getPaints()
         );
+
+        // image height adjustment
+        this.imageHeight = 179;
+        this.inventoryLabelY = this.imageHeight - 94;
     }
 
     @Override
@@ -74,7 +81,7 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
     protected void init() {
         super.init();
 
-        this.titleLabelX = (this.imageWidth - this.font.width(this.title)) / 2;
+//        this.titleLabelX = (this.imageWidth - this.font.width(this.title)) / 2;
 
         // gets ScreenRenderUtil ready for render
         this.addRenderableOnly((poseStack, mouseX, mouseY, partialTick) -> ScreenRenderUtil.startFills());
@@ -95,22 +102,18 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
             this.addRenderableWidget(paintWidget);
         }
 
-        CanvasWidget canvasWidget = new CanvasWidget(this.leftPos + 70, this.topPos + 20, 16, this.clientCanvas);
+        CanvasWidget canvasWidget = new CanvasWidget(this.leftPos + 74, this.topPos + 31, LabelerConstants.PIXEL_SIZE, this.clientCanvas);
         this.addRenderableWidget(canvasWidget);
 
         Font font = Minecraft.getInstance().font;
 
-        this.authorEditBox = new EditBox(font, this.leftPos + 80, this.topPos - 30, 80, 12, new TranslatableComponent("screen.recordable.labeler.author"));
+        this.authorEditBox = new EditBox(font, this.leftPos + 70, this.topPos + 10, 38, 9, new TranslatableComponent("screen.recordable.labeler.author"));
         this.addRenderableWidget(this.authorEditBox);
 
-        this.titleEditBox = new EditBox(font, this.leftPos + 80, this.topPos - 15, 80, 12, new TranslatableComponent("screen.recordable.labeler.title"));
+        this.titleEditBox = new EditBox(font, this.leftPos + 109, this.topPos + 10, 54, 9, new TranslatableComponent("screen.recordable.labeler.title"));
         this.addRenderableWidget(this.titleEditBox);
 
-        this.undoButton = new Button(this.leftPos + 160, this.topPos, 16, 16, new TranslatableComponent("screen.recordable.labeler.undo"), b -> this.clientCanvas.undo());
-        this.undoButton.active = false;
-        this.addRenderableWidget(this.undoButton);
-
-        Button eraseButton = new Button(this.leftPos + 160, this.topPos + 20, 16, 16, new TranslatableComponent("screen.recordable.labeler.eraser"), b -> {
+        Button eraseButton = new Button(this.leftPos + 8, this.topPos + 22, 12, 12, new TranslatableComponent("screen.recordable.labeler.eraser"), b -> {
             boolean erasing = this.clientCanvas.toggleErase();
 
             for (PaintWidget paintColorWidget : paintWidgets) {
@@ -119,14 +122,18 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
         });
         this.addRenderableWidget(eraseButton);
 
-        Button mixButton = new Button(this.leftPos + 160, this.topPos + 40, 16, 16, new TranslatableComponent("screen.recordable.labeler.mix"), b -> this.clientCanvas.toggleMix());
+        Button mixButton = new Button(this.leftPos + 22, this.topPos + 22, 12, 12, new TranslatableComponent("screen.recordable.labeler.mix"), b -> this.clientCanvas.toggleMix());
         this.addRenderableWidget(mixButton);
 
-        this.resetButton = new Button(this.leftPos + 160, this.topPos + 60, 16, 16, new TranslatableComponent("screen.recordable.labeler.reset"), b -> this.clientCanvas.reset());
+        this.undoButton = new Button(this.leftPos + 36, this.topPos + 22, 12, 12, new TranslatableComponent("screen.recordable.labeler.undo"), b -> this.clientCanvas.undo());
+        this.undoButton.active = false;
+        this.addRenderableWidget(this.undoButton);
+
+        this.resetButton = new Button(this.leftPos + 50, this.topPos + 22, 12, 12, new TranslatableComponent("screen.recordable.labeler.reset"), b -> this.clientCanvas.reset());
         this.resetButton.active = false;
         this.addRenderableWidget(this.resetButton);
 
-        this.finishButton = new Button(this.leftPos + 160, this.topPos + 80, 16, 16, new TranslatableComponent("screen.recordable.labeler.finish"), b -> this.doFinish());
+        this.finishButton = new Button(this.leftPos + 150, this.topPos + 73, 18, 18, new TranslatableComponent("screen.recordable.labeler.finish"), b -> this.doFinish());
         this.finishButton.active = false; // this turns true when the paper and record are filled
         this.addRenderableWidget(this.finishButton);
 
@@ -180,8 +187,24 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
 
     @Override
     protected void renderBg(PoseStack matrixStack, float partialTick, int mouseX, int mouseY) {
-        // TODO: placeholder background, make real background
-        fill(matrixStack, 0, 0, this.width, this.height, 0xFFCCCCCC);
+        this.renderBackground(matrixStack);
+        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShaderTexture(0, BG_LOCATION);
+        int i = this.leftPos;
+        int j = this.topPos;
+        this.blit(matrixStack, i, j, 0, 0, this.imageWidth, this.imageHeight);
+        Slot recordSlot = this.menu.getRecordSlot();
+        Slot dyeSlot = this.menu.getDyeSlot();
+        Slot paperSlot = this.menu.getPaperSlot();
+        if (!recordSlot.hasItem()) {
+            this.blit(matrixStack, i + recordSlot.x, j + recordSlot.y, this.imageWidth, 0, 16, 16);
+        }
+        if (!dyeSlot.hasItem()) {
+            this.blit(matrixStack, i + dyeSlot.x, j + dyeSlot.y, this.imageWidth + 16, 0, 16, 16);
+        }
+        if (!paperSlot.hasItem()) {
+            this.blit(matrixStack, i + paperSlot.x, j + paperSlot.y, this.imageWidth + 32, 0, 16, 16);
+        }
     }
 
     public void doFinish() {

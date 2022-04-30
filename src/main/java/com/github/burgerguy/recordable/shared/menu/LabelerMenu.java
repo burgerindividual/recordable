@@ -34,6 +34,9 @@ public class LabelerMenu extends AbstractContainerMenu {
     private final Paint[] paints;
 
     private final Container container;
+    private final Slot dyeSlot;
+    private final Slot recordSlot;
+    private final Slot paperSlot;
 
     public LabelerMenu(int containerId, Inventory playerInventory, FriendlyByteBuf buffer) {
         this(
@@ -79,7 +82,7 @@ public class LabelerMenu extends AbstractContainerMenu {
         };
 
         // add dye slot
-        this.addSlot(new Slot(this.container, DYE_SLOT_ID, 50, 65) {
+        this.dyeSlot = this.addSlot(new Slot(this.container, DYE_SLOT_ID, 66, 74) {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return stack.getItem() instanceof DyeItem;
@@ -87,7 +90,7 @@ public class LabelerMenu extends AbstractContainerMenu {
         });
 
         // add paper slot
-        this.addSlot(new Slot(this.container, PAPER_SLOT_ID, 50, 47) {
+        this.paperSlot = this.addSlot(new Slot(this.container, PAPER_SLOT_ID, 151, 24) {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return stack.is(Items.PAPER);
@@ -95,7 +98,7 @@ public class LabelerMenu extends AbstractContainerMenu {
         });
 
         // add record slot
-        this.addSlot(new Slot(this.container, RECORD_SLOT_ID, 180, 47) {
+        this.recordSlot = this.addSlot(new Slot(this.container, RECORD_SLOT_ID, 109, 49) {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return stack.is(CopperRecordItem.INSTANCE) && (!stack.hasTag() || !stack.getTag().contains("Colors", Tag.TAG_BYTE_ARRAY));
@@ -119,8 +122,8 @@ public class LabelerMenu extends AbstractContainerMenu {
     public void handleFinish(FriendlyByteBuf buffer) {
         LabelerBlockEntity labeler = this.labelerBlockEntity;
 
-        ItemStack paper = this.container.getItem(PAPER_SLOT_ID);
-        ItemStack record = this.container.getItem(RECORD_SLOT_ID);
+        ItemStack paper = this.paperSlot.getItem();
+        ItemStack record = this.recordSlot.getItem();
         if (record.isEmpty() || paper.isEmpty()) {
             Recordable.LOGGER.warn("Tried to finish without record/paper");
         }
@@ -155,6 +158,18 @@ public class LabelerMenu extends AbstractContainerMenu {
 
     public Paint[] getPaints() {
         return paints;
+    }
+
+    public Slot getDyeSlot() {
+        return dyeSlot;
+    }
+
+    public Slot getRecordSlot() {
+        return recordSlot;
+    }
+
+    public Slot getPaperSlot() {
+        return paperSlot;
     }
 
     @Override

@@ -51,7 +51,7 @@ public class LabelerBlockEntity extends BlockEntity implements ExtendedScreenHan
 
     @Override
     public Component getDisplayName() {
-        return getBlockState().getBlock().getName();
+        return this.getBlockState().getBlock().getName();
     }
 
     @Override
@@ -86,7 +86,7 @@ public class LabelerBlockEntity extends BlockEntity implements ExtendedScreenHan
     }
 
     public int[] getColorLevels() {
-        return colorLevels;
+        return this.colorLevels;
     }
 
     public int[] getPixelIndexModel() {

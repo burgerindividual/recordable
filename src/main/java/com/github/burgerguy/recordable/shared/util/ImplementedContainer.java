@@ -40,7 +40,7 @@ public interface ImplementedContainer extends Container {
      */
     @Override
     default int getContainerSize() {
-        return getItems().size();
+        return this.getItems().size();
     }
 
     /**
@@ -49,8 +49,8 @@ public interface ImplementedContainer extends Container {
      */
     @Override
     default boolean isEmpty() {
-        for (int i = 0; i < getContainerSize(); i++) {
-            ItemStack stack = getItem(i);
+        for (int i = 0; i < this.getContainerSize(); i++) {
+            ItemStack stack = this.getItem(i);
             if (!stack.isEmpty()) {
                 return false;
             }
@@ -63,7 +63,7 @@ public interface ImplementedContainer extends Container {
      */
     @Override
     default ItemStack getItem(int index) {
-        return getItems().get(index);
+        return this.getItems().get(index);
     }
 
     /**
@@ -74,9 +74,9 @@ public interface ImplementedContainer extends Container {
      */
     @Override
     default ItemStack removeItem(int index, int count) {
-        ItemStack result = ContainerHelper.removeItem(getItems(), index, count);
+        ItemStack result = ContainerHelper.removeItem(this.getItems(), index, count);
         if (!result.isEmpty()) {
-            setChanged();
+            this.setChanged();
         }
         return result;
     }
@@ -87,7 +87,7 @@ public interface ImplementedContainer extends Container {
      */
     @Override
     default ItemStack removeItemNoUpdate(int index) {
-        return ContainerHelper.takeItem(getItems(), index);
+        return ContainerHelper.takeItem(this.getItems(), index);
     }
 
     /**
@@ -99,9 +99,9 @@ public interface ImplementedContainer extends Container {
      */
     @Override
     default void setItem(int index, ItemStack stack) {
-        getItems().set(index, stack);
-        if (stack.getCount() > getMaxStackSize()) {
-            stack.setCount(getMaxStackSize());
+        this.getItems().set(index, stack);
+        if (stack.getCount() > this.getMaxStackSize()) {
+            stack.setCount(this.getMaxStackSize());
         }
     }
 
@@ -110,7 +110,7 @@ public interface ImplementedContainer extends Container {
      */
     @Override
     default void clearContent() {
-        getItems().clear();
+        this.getItems().clear();
     }
 
     /**

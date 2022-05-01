@@ -119,7 +119,7 @@ public class ClientCanvas extends Canvas {
     }
 
     public void reset() {
-        while (canUndo()) undo();
+        while (this.canUndo()) this.undo();
     }
 
     private void ensureStepsCapacity() {
@@ -165,13 +165,19 @@ public class ClientCanvas extends Canvas {
         this.lastPaintStepIdx = newIdx;
     }
 
-    public boolean toggleErase() {
-        this.erasing = !this.erasing;
+    public void setErasing(boolean erasing) {
+        this.erasing = erasing;
+    }
+
+    public void setMixing(boolean mixing) {
+        this.mixing = mixing;
+    }
+
+    public boolean isErasing() {
         return this.erasing;
     }
 
-    public boolean toggleMix() {
-        this.mixing = !this.mixing;
+    public boolean isMixing() {
         return this.mixing;
     }
 

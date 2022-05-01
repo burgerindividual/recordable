@@ -25,30 +25,30 @@ public abstract class ScorePlayer {
     }
 
     public void tick() {
-        if (isDone()) throw new IllegalStateException("Score player ticked after done");
+        if (this.isDone()) throw new IllegalStateException("Score player ticked after done");
 
-        Score score = futureScore.getScoreOrNull();
+        Score score = this.futureScore.getScoreOrNull();
 
-        if (score != null && currentTick > score.finalTick()) {
-            stop();
+        if (score != null && this.currentTick > score.finalTick()) {
+            this.stop();
             return;
         }
 
-        if (isPaused()) return;
+        if (this.isPaused()) return;
 
-        if (score != null && arrayIdx < score.orderedScheduledSoundGroups().length) {
-            ScheduledSoundGroup scheduledSoundGroup = score.orderedScheduledSoundGroups()[arrayIdx];
-            if (currentTick == scheduledSoundGroup.tick()) {
+        if (score != null && this.arrayIdx < score.orderedScheduledSoundGroups().length) {
+            ScheduledSoundGroup scheduledSoundGroup = score.orderedScheduledSoundGroups()[this.arrayIdx];
+            if (this.currentTick == scheduledSoundGroup.tick()) {
                 for (PartialSoundInstance partialSoundInstance : scheduledSoundGroup.sounds()) {
-                    SoundInstance soundInstance = createSoundInstance(partialSoundInstance);
+                    SoundInstance soundInstance = this.createSoundInstance(partialSoundInstance);
                     if (soundInstance != null) {
-                        soundManager.play(soundInstance);
+                        this.soundManager.play(soundInstance);
                     }
                 }
-                arrayIdx++;
+                this.arrayIdx++;
             }
         }
-        currentTick++;
+        this.currentTick++;
     }
 
     @Nullable
@@ -59,14 +59,14 @@ public abstract class ScorePlayer {
     }
 
     public boolean isPaused() {
-        return paused;
+        return this.paused;
     }
 
     public void stop() {
-        done = true;
+        this.done = true;
     }
 
     public boolean isDone() {
-        return done;
+        return this.done;
     }
 }

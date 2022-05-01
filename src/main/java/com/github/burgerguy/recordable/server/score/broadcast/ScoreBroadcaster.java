@@ -31,43 +31,45 @@ public abstract class ScoreBroadcaster {
     protected abstract void writePlayPacket(FriendlyByteBuf buffer);
 
     public void tick(ServerLevel serverLevel) {
-        if (!isBroadcasting() || isPaused()) return;
+        if (!this.isBroadcasting() || this.isPaused()) return;
 
         // clean out set so reconnected players can hear
-        sentTargets.removeIf(ServerPlayer::hasDisconnected);
+        this.sentTargets.removeIf(ServerPlayer::hasDisconnected);
 
         for (ServerPlayer player : serverLevel.players()) {
-            if (!sentTargets.contains(player) && isInRange(player.getX(), player.getY(), player.getZ())) {
+            if (!this.sentTargets.contains(player) && this.isInRange(player.getX(), player.getY(), player.getZ())) {
                 FriendlyByteBuf buffer = PacketByteBufs.create();
-                writePlayPacket(buffer);
-                ServerPlayNetworking.send(player, getPlayPacketChannelId(), buffer);
-                sentTargets.add(player);
+                buffer.resetWriterIndex();
+                this.writePlayPacket(buffer);
+                ServerPlayNetworking.send(player, this.getPlayPacketChannelId(), buffer);
+                this.sentTargets.add(player);
             }
         }
-        currentTick++;
+        this.currentTick++;
     }
 
     public void play(long scoreId) {
         this.scoreId = scoreId;
-        sentTargets.clear();
-        currentTick = 0;
-        playId = ThreadLocalRandom.current().nextInt(); // meh...
-        setBroadcasting(true);
+        this.sentTargets.clear();
+        this.currentTick = 0;
+        this.playId = ThreadLocalRandom.current().nextInt(); // meh...
+        this.setBroadcasting(true);
     }
 
     public void stop() {
-        setBroadcasting(false);
+        this.setBroadcasting(false);
 
         FriendlyByteBuf buffer = PacketByteBufs.create();
-        buffer.writeInt(playId);
-        for (ServerPlayer player : sentTargets) {
+        buffer.resetWriterIndex();
+        buffer.writeInt(this.playId);
+        for (ServerPlayer player : this.sentTargets) {
             ServerPlayNetworking.send(player, Recordable.STOP_SCORE_INSTANCE_ID, buffer);
         }
-        sentTargets.clear();
+        this.sentTargets.clear();
     }
 
     public boolean isPaused() {
-        return paused;
+        return this.paused;
     }
 
     public void setPaused(boolean paused) {
@@ -77,9 +79,10 @@ public abstract class ScoreBroadcaster {
             // All clients that are currently playing it will be sent the pause packet.
             // From there, the sentTargets set will be frozen, and when unpaused, all
             // the users that were sent the pause packet will be sent the unpaused packet.
-            for(ServerPlayer player : sentTargets) {
+            for(ServerPlayer player : this.sentTargets) {
                 FriendlyByteBuf buffer = PacketByteBufs.create();
-                buffer.writeInt(playId);
+                buffer.resetWriterIndex();
+                buffer.writeInt(this.playId);
                 buffer.writeBoolean(paused); // byte disguised as boolean
                 ServerPlayNetworking.send(player, Recordable.SET_SCORE_INSTANCE_PAUSED_ID, buffer);
             }
@@ -87,7 +90,7 @@ public abstract class ScoreBroadcaster {
     }
 
     public boolean isBroadcasting() {
-        return broadcasting;
+        return this.broadcasting;
     }
 
     public void setBroadcasting(boolean broadcasting) {

@@ -9,8 +9,8 @@ public class FutureScore {
     private final AtomicReference<Score> scoreReference;
 
     public FutureScore() {
-        requested = new AtomicBoolean(false);
-        scoreReference = new AtomicReference<>(null);
+        this.requested = new AtomicBoolean(false);
+        this.scoreReference = new AtomicReference<>(null);
     }
 
     /**
@@ -20,11 +20,11 @@ public class FutureScore {
      * @return if the score needs to be requested
      */
     public boolean request() {
-        return !requested.getAndSet(true);
+        return !this.requested.getAndSet(true);
     }
 
     public void setScore(Score score) {
-        scoreReference.lazySet(score);
+        this.scoreReference.lazySet(score);
     }
 
     /**
@@ -32,6 +32,6 @@ public class FutureScore {
      * the request hasn't finished.
      */
     public Score getScoreOrNull() {
-        return scoreReference.get();
+        return this.scoreReference.get();
     }
 }

@@ -30,6 +30,11 @@ public class LabelerMenu extends AbstractContainerMenu {
     public static final int PAPER_SLOT_ID = 1;
     public static final int RECORD_SLOT_ID = 2;
 
+    private static final int INVENTORY_X = 8;
+    private static final int INVENTORY_Y = 100;
+    private static final int HOTBAR_X = 8;
+    private static final int HOTBAR_Y = 158;
+
     private final LabelerBlockEntity labelerBlockEntity;
     private final Paint[] paints;
 
@@ -82,7 +87,7 @@ public class LabelerMenu extends AbstractContainerMenu {
         };
 
         // add dye slot
-        this.dyeSlot = this.addSlot(new Slot(this.container, DYE_SLOT_ID, 66, 74) {
+        this.dyeSlot = this.addSlot(new Slot(this.container, DYE_SLOT_ID, 65, 68) {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return stack.getItem() instanceof DyeItem;
@@ -90,7 +95,7 @@ public class LabelerMenu extends AbstractContainerMenu {
         });
 
         // add paper slot
-        this.paperSlot = this.addSlot(new Slot(this.container, PAPER_SLOT_ID, 151, 24) {
+        this.paperSlot = this.addSlot(new Slot(this.container, PAPER_SLOT_ID, 152, 24) {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return stack.is(Items.PAPER);
@@ -98,7 +103,7 @@ public class LabelerMenu extends AbstractContainerMenu {
         });
 
         // add record slot
-        this.recordSlot = this.addSlot(new Slot(this.container, RECORD_SLOT_ID, 109, 49) {
+        this.recordSlot = this.addSlot(new Slot(this.container, RECORD_SLOT_ID, 110, 46) {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return stack.is(CopperRecordItem.INSTANCE) && (!stack.hasTag() || !stack.getTag().contains("Colors", Tag.TAG_BYTE_ARRAY));
@@ -109,12 +114,12 @@ public class LabelerMenu extends AbstractContainerMenu {
         // add player inventory
         for (i = 0; i < 3; ++i) {
             for (int k = 0; k < 9; ++k) {
-                this.addSlot(new Slot(playerInventory, k + i * 9 + 9, 8 + k * 18, 84 + i * 18));
+                this.addSlot(new Slot(playerInventory, k + i * 9 + 9, INVENTORY_X + k * 18, INVENTORY_Y + i * 18));
             }
         }
         // add player hotbar
         for (i = 0; i < 9; ++i) {
-            this.addSlot(new Slot(playerInventory, i, 8 + i * 18, 142));
+            this.addSlot(new Slot(playerInventory, i, HOTBAR_X + i * 18, HOTBAR_Y));
         }
     }
 
@@ -153,23 +158,23 @@ public class LabelerMenu extends AbstractContainerMenu {
     }
 
     public LabelerBlockEntity getLabelerBlockEntity() {
-        return labelerBlockEntity;
+        return this.labelerBlockEntity;
     }
 
     public Paint[] getPaints() {
-        return paints;
+        return this.paints;
     }
 
     public Slot getDyeSlot() {
-        return dyeSlot;
+        return this.dyeSlot;
     }
 
     public Slot getRecordSlot() {
-        return recordSlot;
+        return this.recordSlot;
     }
 
     public Slot getPaperSlot() {
-        return paperSlot;
+        return this.paperSlot;
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.github.burgerguy.recordable.client.screen;
 
 import com.github.burgerguy.recordable.client.render.util.ScreenRenderUtil;
 import com.github.burgerguy.recordable.shared.menu.Canvas;
+import com.github.burgerguy.recordable.shared.menu.LabelerConstants;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Matrix4f;
 import net.minecraft.client.Minecraft;
@@ -14,9 +15,10 @@ import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.sounds.SoundEvents;
 import org.lwjgl.glfw.GLFW;
 
+import static com.github.burgerguy.recordable.shared.menu.LabelerConstants.CANVAS_LINE_WIDTH;
+
 public class CanvasWidget extends AbstractWidget {
     private static final int GRID_COLOR = 0xFF000000;
-    private static final float GRID_HALF_LINE_WIDTH = 0.5f;
 
     private final ClientCanvas clientCanvas;
     private final int pixelSize;
@@ -76,12 +78,24 @@ public class CanvasWidget extends AbstractWidget {
 
     @Override
     public void onClick(double mouseX, double mouseY) {
-        tryApply(mouseX, mouseY);
+        this.tryApply(mouseX, mouseY);
+    }
+
+    @Override
+    protected boolean clicked(double mouseX, double mouseY) {
+        boolean parentClicked = super.clicked(mouseX, mouseY);
+        if (parentClicked) {
+            int x = (int) ((mouseX - this.x) / this.pixelSize);
+            int y = (int) ((mouseY - this.y) / this.pixelSize);
+            int pixelIdx = this.clientCanvas.coordsToIndex(x, y);
+            return pixelIdx != Canvas.EMPTY_INDEX && pixelIdx != Canvas.OUT_OF_BOUNDS_INDEX;
+        }
+        return false;
     }
 
     @Override
     protected void onDrag(double mouseX, double mouseY, double dragX, double dragY) {
-        tryApply(mouseX, mouseY);
+        this.tryApply(mouseX, mouseY);
     }
 
     @Override
@@ -99,11 +113,13 @@ public class CanvasWidget extends AbstractWidget {
                 int pxIndex = this.clientCanvas.coordsToIndex(pxXCoord, pxYCoord);
                 if (pxIndex != Canvas.EMPTY_INDEX) {
                     ScreenRenderUtil.fill(
+                            ScreenRenderUtil.FILL_BUFFER_1,
                             matrix,
                             widgetX + (pxXCoord * pixelSize),
                             widgetY + (pxYCoord * pixelSize),
-                            widgetX + (pxXCoord * pixelSize) + pixelSize,
-                            widgetY + (pxYCoord * pixelSize) + pixelSize,
+                            widgetX + (pxXCoord * pixelSize) + pixelSize - CANVAS_LINE_WIDTH,
+                            widgetY + (pxYCoord * pixelSize) + pixelSize - CANVAS_LINE_WIDTH,
+                            0.0f,
                             this.clientCanvas.getColor(pxIndex) | 0xFF000000 // make opaque
                     );
                 }
@@ -127,11 +143,13 @@ public class CanvasWidget extends AbstractWidget {
                     prevIdxY != Canvas.EMPTY_INDEX &&
                     prevIdxY != Canvas.OUT_OF_BOUNDS_INDEX)) {
                     ScreenRenderUtil.fill(
+                            ScreenRenderUtil.FILL_BUFFER_1,
                             matrix,
-                            widgetX + lineX,
-                            widgetY + lineY - GRID_HALF_LINE_WIDTH,
+                            widgetX + lineX - CANVAS_LINE_WIDTH,
+                            widgetY + lineY - CANVAS_LINE_WIDTH,
                             widgetX + lineX + pixelSize,
-                            widgetY + lineY + GRID_HALF_LINE_WIDTH,
+                            widgetY + lineY,
+                            0.0f,
                             GRID_COLOR
                     );
                 }
@@ -144,11 +162,13 @@ public class CanvasWidget extends AbstractWidget {
                     prevIdxX != Canvas.EMPTY_INDEX &&
                     prevIdxX != Canvas.OUT_OF_BOUNDS_INDEX)) {
                     ScreenRenderUtil.fill(
+                            ScreenRenderUtil.FILL_BUFFER_1,
                             matrix,
-                            widgetX + lineX - GRID_HALF_LINE_WIDTH,
-                            widgetY + lineY,
-                            widgetX + lineX + GRID_HALF_LINE_WIDTH,
+                            widgetX + lineX - CANVAS_LINE_WIDTH,
+                            widgetY + lineY - CANVAS_LINE_WIDTH,
+                            widgetX + lineX,
                             widgetY + lineY + pixelSize,
+                            0.0f,
                             GRID_COLOR
                     );
                 }

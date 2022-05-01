@@ -30,20 +30,21 @@ public abstract class JukeboxBlockEntityMixin extends BlockEntity implements Sco
         super.setLevel(level);
         if (!level.isClientSide) {
             ServerLevel serverLevel = (ServerLevel) level;
-            scoreBroadcaster = new BlockScoreBroadcaster(PlayerConstants.DISTANCE_FACTOR * PlayerConstants.VOLUME, getBlockPos());
-            ((ServerScoreRegistriesContainer) serverLevel).getScoreBroadcasterRegistry().add(scoreBroadcaster);
+            this.scoreBroadcaster = new BlockScoreBroadcaster(PlayerConstants.DISTANCE_FACTOR * PlayerConstants.VOLUME,
+                                                              this.getBlockPos());
+            ((ServerScoreRegistriesContainer) serverLevel).getScoreBroadcasterRegistry().add(this.scoreBroadcaster);
         }
     }
 
     @Override
     public void setRemoved() {
         super.setRemoved();
-        if (level == null) throw new IllegalStateException("Removed record player block entity with no level");
-        if (!level.isClientSide) {
-            if (scoreBroadcaster.isBroadcasting()) scoreBroadcaster.stop();
-            ServerLevel serverLevel = (ServerLevel) level;
-            ((ServerScoreRegistriesContainer) serverLevel).getScoreBroadcasterRegistry().remove(scoreBroadcaster);
-            scoreBroadcaster = null;
+        if (this.level == null) throw new IllegalStateException("Removed record player block entity with no level");
+        if (!this.level.isClientSide) {
+            if (this.scoreBroadcaster.isBroadcasting()) this.scoreBroadcaster.stop();
+            ServerLevel serverLevel = (ServerLevel) this.level;
+            ((ServerScoreRegistriesContainer) serverLevel).getScoreBroadcasterRegistry().remove(this.scoreBroadcaster);
+            this.scoreBroadcaster = null;
         }
     }
 
@@ -51,6 +52,6 @@ public abstract class JukeboxBlockEntityMixin extends BlockEntity implements Sco
     @Unique
     @Override
     public BlockScoreBroadcaster getScoreBroadcaster() {
-        return scoreBroadcaster;
+        return this.scoreBroadcaster;
     }
 }

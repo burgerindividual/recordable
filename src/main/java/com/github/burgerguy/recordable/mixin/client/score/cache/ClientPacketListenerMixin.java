@@ -13,6 +13,6 @@ public class ClientPacketListenerMixin implements ScoreCacheContainer {
 
     @Override
     public Long2ObjectMap<FutureScore> getScoreCache() {
-        return scoreCache;
+        return this.scoreCache;
     }
 }

@@ -12,15 +12,15 @@ public class ScoreBroadcasterRegistry {
     }
 
     public void add(ScoreBroadcaster broadcaster) {
-        broadcasters.add(broadcaster);
+        this.broadcasters.add(broadcaster);
     }
 
     public void remove(ScoreBroadcaster broadcaster) {
-        broadcasters.remove(broadcaster);
+        this.broadcasters.remove(broadcaster);
     }
 
     public void tick(ServerLevel serverLevel) {
-        for (ScoreBroadcaster broadcaster : broadcasters) {
+        for (ScoreBroadcaster broadcaster : this.broadcasters) {
             broadcaster.tick(serverLevel);
         }
     }

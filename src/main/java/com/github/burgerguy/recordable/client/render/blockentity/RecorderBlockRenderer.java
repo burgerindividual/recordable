@@ -13,12 +13,12 @@ public class RecorderBlockRenderer extends GeoBlockRenderer<RecorderBlockEntity>
     }
 
     public void render(RecorderBlockEntity recorderBlockEntity, float partialTicks, PoseStack stack, MultiBufferSource bufferIn, int packedLightIn) {
-        setRecordHidden(!recorderBlockEntity.hasRecord());
+        this.setRecordHidden(!recorderBlockEntity.hasRecord());
         super.render(recorderBlockEntity, partialTicks, stack, bufferIn, packedLightIn);
     }
 
     public void setRecordHidden(boolean hidden) {
-        IBone recordBone = getGeoModelProvider().getAnimationProcessor().getBone("record");
+        IBone recordBone = this.getGeoModelProvider().getAnimationProcessor().getBone("record");
         if (recordBone != null) recordBone.setHidden(hidden);
     }
 

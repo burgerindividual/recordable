@@ -64,7 +64,7 @@ public abstract class ScoreRecorder implements Closeable {
     public abstract boolean isInRange(double x, double y, double z, float volume);
 
     public boolean isRecording() {
-        return recording;
+        return this.recording;
     }
 
     private void setRecording(boolean recording) {
@@ -75,12 +75,12 @@ public abstract class ScoreRecorder implements Closeable {
      * Starts the recording process and allocates the needed memory.
      */
     public void start() {
-        if (isRecording()) throw new IllegalStateException("Recorder started while recording");
-        setRecording(true);
+        if (this.isRecording()) throw new IllegalStateException("Recorder started while recording");
+        this.setRecording(true);
 
         // free after storing in DB
         // order is big endian because LMDB likes it
-        rawScoreBuffer = MemoryUtil.memAlloc(ScoreConstants.MAX_RECORD_SIZE_BYTES).order(ByteOrder.BIG_ENDIAN);
+        this.rawScoreBuffer = MemoryUtil.memAlloc(ScoreConstants.MAX_RECORD_SIZE_BYTES).order(ByteOrder.BIG_ENDIAN);
     }
 
     /**
@@ -88,27 +88,27 @@ public abstract class ScoreRecorder implements Closeable {
      * This also stores the recording in the database and frees the allocated memory.
      */
     public void stop() {
-        if (!isRecording()) {
+        if (!this.isRecording()) {
             throw new IllegalStateException("Recorder stopped while not recording");
         } else { // why tf do i need this else here??? wtf ij???
-            setRecording(false);
+            this.setRecording(false);
 
             // add blank final tick if no sounds were played on it, and we have enough room
-            if (currentTickSoundCount == 0 && rawScoreBuffer.remaining() >= ScoreConstants.TICK_HEADER_SIZE_BYTES) {
-                tickHeaderPointer.putShort(currentTick);
-                tickHeaderPointer.put(currentTickSoundCount);
+            if (this.currentTickSoundCount == 0 && this.rawScoreBuffer.remaining() >= ScoreConstants.TICK_HEADER_SIZE_BYTES) {
+                this.tickHeaderPointer.putShort(this.currentTick);
+                this.tickHeaderPointer.put(this.currentTickSoundCount);
             }
 
-            currentTick = 0;
-            currentTickSoundCount = 0;
-            hasTicked = false;
+            this.currentTick = 0;
+            this.currentTickSoundCount = 0;
+            this.hasTicked = false;
 
-            long id = database.storeScore(rawScoreBuffer.flip());
-            MemoryUtil.memFree(rawScoreBuffer);
-            rawScoreBuffer = null;
-            tickHeaderPointer = null;
+            long id = this.database.storeScore(this.rawScoreBuffer.flip());
+            MemoryUtil.memFree(this.rawScoreBuffer);
+            this.rawScoreBuffer = null;
+            this.tickHeaderPointer = null;
 
-            onStopCallback.onStop(this, id);
+            this.onStopCallback.onStop(this, id);
         }
     }
 
@@ -116,53 +116,53 @@ public abstract class ScoreRecorder implements Closeable {
      * Only mixins will call this. You probably don't want to call it manually.
      */
     public void tick() {
-        currentRotation = createRotation();
+        this.currentRotation = this.createRotation();
 
-        if (currentTickSoundCount > 0) {
-            tickHeaderPointer.putShort(currentTick);
-            tickHeaderPointer.put(currentTickSoundCount);
+        if (this.currentTickSoundCount > 0) {
+            this.tickHeaderPointer.putShort(this.currentTick);
+            this.tickHeaderPointer.put(this.currentTickSoundCount);
         }
 
         // keep a pointer so we can write to the previous tick
-        if (!hasTicked || currentTickSoundCount > 0) {
-            if (rawScoreBuffer.remaining() < ScoreConstants.TICK_HEADER_SIZE_BYTES) stop();
-            tickHeaderPointer = MemoryUtil.memSlice(rawScoreBuffer, 0, ScoreConstants.TICK_HEADER_SIZE_BYTES);
-            rawScoreBuffer.position(rawScoreBuffer.position() + 3);
-            hasTicked = true;
+        if (!this.hasTicked || this.currentTickSoundCount > 0) {
+            if (this.rawScoreBuffer.remaining() < ScoreConstants.TICK_HEADER_SIZE_BYTES) this.stop();
+            this.tickHeaderPointer = MemoryUtil.memSlice(this.rawScoreBuffer, 0, ScoreConstants.TICK_HEADER_SIZE_BYTES);
+            this.rawScoreBuffer.position(this.rawScoreBuffer.position() + 3);
+            this.hasTicked = true;
         }
 
-        currentTickSoundCount = 0;
-        currentTick++;
+        this.currentTickSoundCount = 0;
+        this.currentTick++;
     }
 
     /**
      * Has to be called between beginTick and endTick
      */
     public void recordSound(SoundEvent sound, double x, double y, double z, float volume, float pitch) {
-        if (!isRecording()) throw new IllegalStateException("Tried to record sound while not recording");
+        if (!this.isRecording()) throw new IllegalStateException("Tried to record sound while not recording");
 
-        if (rawScoreBuffer.remaining() < ScoreConstants.SOUND_SIZE_BYTES) stop();
+        if (this.rawScoreBuffer.remaining() < ScoreConstants.SOUND_SIZE_BYTES) this.stop();
 
-        rawScoreBuffer.putInt(Registry.SOUND_EVENT.getId(sound)); // sound ID, registry needs to be synced with server
+        this.rawScoreBuffer.putInt(Registry.SOUND_EVENT.getId(sound)); // sound ID, registry needs to be synced with server
 
         // rotate around recorder to compensate for orientation
-        Vector3f newPos = new Vector3f((float) (x - getXPos()), (float) (y - getYPos()), (float) (z - getZPos()));
-        newPos.transform(currentRotation);
+        Vector3f newPos = new Vector3f((float) (x - this.getXPos()), (float) (y - this.getYPos()), (float) (z - this.getZPos()));
+        newPos.transform(this.currentRotation);
 
         // relative pos to sound source from recording location
-        rawScoreBuffer.putFloat(newPos.x());
-        rawScoreBuffer.putFloat(newPos.y());
-        rawScoreBuffer.putFloat(newPos.z());
+        this.rawScoreBuffer.putFloat(newPos.x());
+        this.rawScoreBuffer.putFloat(newPos.y());
+        this.rawScoreBuffer.putFloat(newPos.z());
 
-        rawScoreBuffer.putFloat(volume);
-        rawScoreBuffer.putFloat(pitch);
+        this.rawScoreBuffer.putFloat(volume);
+        this.rawScoreBuffer.putFloat(pitch);
 
-        if (currentTickSoundCount == (byte) ScoreConstants.MAX_SOUNDS_PER_TICK
-                || currentTick == (byte) ScoreConstants.MAX_TICKS
-                || rawScoreBuffer.remaining() <= 0) {
-            stop();
+        if (this.currentTickSoundCount == (byte) ScoreConstants.MAX_SOUNDS_PER_TICK
+            || this.currentTick == (byte) ScoreConstants.MAX_TICKS
+            || this.rawScoreBuffer.remaining() <= 0) {
+            this.stop();
         } else {
-            currentTickSoundCount++;
+            this.currentTickSoundCount++;
         }
     }
 
@@ -171,15 +171,15 @@ public abstract class ScoreRecorder implements Closeable {
      */
     @Override
     public void close() {
-        setRecording(false);
-        if (rawScoreBuffer != null) MemoryUtil.memFree(rawScoreBuffer);
-        rawScoreBuffer = null;
-        tickHeaderPointer = null;
-        closed = true;
+        this.setRecording(false);
+        if (this.rawScoreBuffer != null) MemoryUtil.memFree(this.rawScoreBuffer);
+        this.rawScoreBuffer = null;
+        this.tickHeaderPointer = null;
+        this.closed = true;
     }
 
     public boolean isClosed() {
-        return closed;
+        return this.closed;
     }
 
     public interface OnStopCallback {

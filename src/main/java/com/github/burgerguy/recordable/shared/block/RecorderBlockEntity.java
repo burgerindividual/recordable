@@ -69,15 +69,15 @@ public class RecorderBlockEntity extends BlockEntity implements IAnimatable {
         super.load(tag);
 
         if (tag.contains("record")) {
-            recordItem = ItemStack.of(tag.getCompound("record"));
+            this.recordItem = ItemStack.of(tag.getCompound("record"));
         }
     }
 
     @Override
     public void saveAdditional(CompoundTag tag) {
         // Save the current value of the number to the tag
-        if (hasRecord()) {
-            tag.put("record", recordItem.save(new CompoundTag()));
+        if (this.hasRecord()) {
+            tag.put("record", this.recordItem.save(new CompoundTag()));
         }
 
         super.saveAdditional(tag);
@@ -95,12 +95,12 @@ public class RecorderBlockEntity extends BlockEntity implements IAnimatable {
 //    }
 
     public boolean hasRecord() {
-        return recordItem != null;
+        return this.recordItem != null;
     }
 
     @Nullable
     public ItemStack getRecordItem() {
-        return recordItem;
+        return this.recordItem;
     }
 
     public void setRecordItem(ItemStack recordItem) {
@@ -112,50 +112,53 @@ public class RecorderBlockEntity extends BlockEntity implements IAnimatable {
         super.setLevel(level);
         if (!level.isClientSide) {
             ServerLevel serverLevel = (ServerLevel) level;
-            scoreRecorder = new BlockEntityScoreRecorder(
+            this.scoreRecorder = new BlockEntityScoreRecorder(
                     this,
                     this.rotationSupplier,
                     ((ScoreDatabaseContainer) serverLevel.getServer()).getScoreDatabase(),
                     (r, id) -> {
-                        recordItem.addTagElement("ScoreID", LongTag.valueOf(id));
-                        dropRecord();
+                        this.recordItem.addTagElement("ScoreID", LongTag.valueOf(id));
+                        this.dropRecord();
                     }
             );
-            ((ServerScoreRegistriesContainer) serverLevel).getScoreRecorderRegistry().add(scoreRecorder);
+            ((ServerScoreRegistriesContainer) serverLevel).getScoreRecorderRegistry().add(this.scoreRecorder);
         }
     }
 
     @Override
     public void setRemoved() {
         super.setRemoved();
-        if (level == null) throw new IllegalStateException("Removed recorder block entity with no level");
-        if (!level.isClientSide) {
-            ServerLevel serverLevel = (ServerLevel) level;
-            ((ServerScoreRegistriesContainer) serverLevel).getScoreRecorderRegistry().remove(scoreRecorder);
-            scoreRecorder.close();
-            scoreRecorder = null;
+        if (this.level == null) throw new IllegalStateException("Removed recorder block entity with no level");
+        if (!this.level.isClientSide) {
+            ServerLevel serverLevel = (ServerLevel) this.level;
+            ((ServerScoreRegistriesContainer) serverLevel).getScoreRecorderRegistry().remove(this.scoreRecorder);
+            this.scoreRecorder.close();
+            this.scoreRecorder = null;
         }
     }
 
     public void dropRecord() {
-        if (level == null) throw new IllegalStateException("Tried to drop record from recorder block entity with no level");
-        if (!level.isClientSide) {
+        if (this.level == null) throw new IllegalStateException("Tried to drop record from recorder block entity with no level");
+        if (!this.level.isClientSide) {
             float multiplier = 0.7F;
-            double randOffX = (double) (level.random.nextFloat() * multiplier) + 0.15;
-            double randOffY = (double) (level.random.nextFloat() * multiplier) + 0.66;
-            double randOffZ = (double) (level.random.nextFloat() * multiplier) + 0.15;
-            BlockPos pos = getBlockPos();
+            double randOffX = (double) (this.level.random.nextFloat() * multiplier) + 0.15;
+            double randOffY = (double) (this.level.random.nextFloat() * multiplier) + 0.66;
+            double randOffZ = (double) (this.level.random.nextFloat() * multiplier) + 0.15;
+            BlockPos pos = this.getBlockPos();
 
-            ItemEntity itemEntity = new ItemEntity(level, pos.getX() + randOffX, pos.getY() + randOffY, pos.getZ() + randOffZ, recordItem);
+            ItemEntity itemEntity = new ItemEntity(
+                    this.level, pos.getX() + randOffX, pos.getY() + randOffY, pos.getZ() + randOffZ,
+                    this.recordItem
+            );
             itemEntity.setDefaultPickUpDelay();
 
-            level.addFreshEntity(itemEntity);
+            this.level.addFreshEntity(itemEntity);
         }
     }
 
     @Nullable
     public BlockEntityScoreRecorder getScoreRecorder() {
-        return scoreRecorder;
+        return this.scoreRecorder;
     }
 
     private <E extends IAnimatable> PlayState predicate(AnimationEvent<E> event) {
@@ -175,6 +178,6 @@ public class RecorderBlockEntity extends BlockEntity implements IAnimatable {
 
     @Override
     public AnimationFactory getFactory() {
-        return animationFactory;
+        return this.animationFactory;
     }
 }

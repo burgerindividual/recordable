@@ -11,6 +11,6 @@ public class ClientPacketListenerMixin implements ScorePlayerRegistryContainer {
 
     @Override
     public ScorePlayerRegistry getScorePlayerRegistry() {
-        return scorePlayerRegistry;
+        return this.scorePlayerRegistry;
     }
 }

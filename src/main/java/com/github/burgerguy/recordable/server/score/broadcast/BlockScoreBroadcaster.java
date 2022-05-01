@@ -17,7 +17,7 @@ public class BlockScoreBroadcaster extends ScoreBroadcaster {
 
     @Override
     public boolean isInRange(double x, double y, double z) {
-        return blockPos.distToCenterSqr(x, y, z) < radius * radius;
+        return this.blockPos.distToCenterSqr(x, y, z) < this.radius * this.radius;
     }
 
     @Override
@@ -27,9 +27,9 @@ public class BlockScoreBroadcaster extends ScoreBroadcaster {
 
     @Override
     protected void writePlayPacket(FriendlyByteBuf buffer) {
-        buffer.writeLong(scoreId);
-        buffer.writeShort(currentTick);
-        buffer.writeInt(playId);
-        buffer.writeBlockPos(blockPos);
+        buffer.writeLong(this.scoreId);
+        buffer.writeShort(this.currentTick);
+        buffer.writeInt(this.playId);
+        buffer.writeBlockPos(this.blockPos);
     }
 }

@@ -20,10 +20,10 @@ public class ScoreDatabase implements Closeable {
                     .setMapSize(67108864) // 2^26, 64MiB
                     .open(dbFile.toFile(), EnvFlags.MDB_WRITEMAP, EnvFlags.MDB_NOSUBDIR);
         // use long keys for performance
-        this.internalDb = dbEnv.openDbi(DB_NAME, DbiFlags.MDB_CREATE, DbiFlags.MDB_INTEGERKEY);
+        this.internalDb = this.dbEnv.openDbi(DB_NAME, DbiFlags.MDB_CREATE, DbiFlags.MDB_INTEGERKEY);
 
-        try (Txn<ByteBuffer> txn = dbEnv.txnRead()) {
-            this.nextScoreId = internalDb.stat(txn).entries;
+        try (Txn<ByteBuffer> txn = this.dbEnv.txnRead()) {
+            this.nextScoreId = this.internalDb.stat(txn).entries;
         }
     }
 
@@ -31,13 +31,13 @@ public class ScoreDatabase implements Closeable {
      * The buffer provided should be in big endian
      */
     public long storeScore(ByteBuffer value) {
-        long id = nextScoreId;
+        long id = this.nextScoreId;
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             // LMDB usually expects big endian, but because we're using direct long keys, we can keep it as native
-            ByteBuffer idBuffer = memoryStack.malloc(8, 8).putLong(nextScoreId).flip();
-            internalDb.put(idBuffer, value);
+            ByteBuffer idBuffer = memoryStack.malloc(8, 8).putLong(this.nextScoreId).flip();
+            this.internalDb.put(idBuffer, value);
         }
-        nextScoreId++;
+        this.nextScoreId++;
         return id;
     }
 
@@ -47,11 +47,11 @@ public class ScoreDatabase implements Closeable {
     public ScoreRequest requestScore(long scoreId) {
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             // not in try-with-resources because returned value should close it
-            Txn<ByteBuffer> readTxn = dbEnv.txnRead();
+            Txn<ByteBuffer> readTxn = this.dbEnv.txnRead();
             // LMDB usually expects big endian, but because we're using direct long keys, we can keep it as native
             ByteBuffer idBuffer = memoryStack.malloc(8, 8).putLong(scoreId).flip();
 
-            ByteBuffer data = internalDb.get(readTxn, idBuffer).order(ByteOrder.BIG_ENDIAN);
+            ByteBuffer data = this.internalDb.get(readTxn, idBuffer).order(ByteOrder.BIG_ENDIAN);
             return new ScoreRequest(data, readTxn);
         }
     }
@@ -60,13 +60,13 @@ public class ScoreDatabase implements Closeable {
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             // LMDB usually expects big endian, but because we're using direct long keys, we can keep it as native
             ByteBuffer idBuffer = memoryStack.malloc(8, 8).putLong(scoreId).flip();
-            return internalDb.delete(idBuffer);
+            return this.internalDb.delete(idBuffer);
         }
     }
 
     @Override
     public void close() {
-        dbEnv.close();
+        this.dbEnv.close();
     }
 
     public static class ScoreRequest implements AutoCloseable {
@@ -79,12 +79,12 @@ public class ScoreDatabase implements Closeable {
         }
 
         public ByteBuffer getData() {
-            return data;
+            return this.data;
         }
 
         @Override
         public void close() {
-            txn.close();
+            this.txn.close();
         }
     }
 }

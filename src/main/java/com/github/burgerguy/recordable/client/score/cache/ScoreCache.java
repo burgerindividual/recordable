@@ -12,6 +12,6 @@ public class ScoreCache {
     }
 
     public FutureScore getFutureScore(long scoreId) {
-        return scoreIdToScoreFutures.computeIfAbsent(scoreId, unused -> new FutureScore());
+        return this.scoreIdToScoreFutures.computeIfAbsent(scoreId, unused -> new FutureScore());
     }
 }

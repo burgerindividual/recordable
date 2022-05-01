@@ -14,30 +14,30 @@ public class EntityScoreRecorder extends ScoreRecorder {
 
     @Override
     public double getXPos() {
-        return entity.getX();
+        return this.entity.getX();
     }
 
     @Override
     public double getYPos() {
-        return entity.getY();
+        return this.entity.getY();
     }
 
     @Override
     public double getZPos() {
-        return entity.getZ();
+        return this.entity.getZ();
     }
 
     @Override
     public Quaternion createRotation() {
-        return new Quaternion(entity.getXRot(), entity.getYRot(), 0.0f, true);
+        return new Quaternion(this.entity.getXRot(), this.entity.getYRot(), 0.0f, true);
     }
 
     @Override
     public boolean isInRange(double x, double y, double z, float volume) {
         double radius = volume > 1.0F ? 16.0D * volume : 16.0;
-        double relX = x - getXPos();
-        double relY = y - getYPos();
-        double relZ = z - getZPos();
+        double relX = x - this.getXPos();
+        double relY = y - this.getYPos();
+        double relZ = z - this.getZPos();
         return relX * relX + relY * relY + relZ * relZ < radius * radius;
     }
 

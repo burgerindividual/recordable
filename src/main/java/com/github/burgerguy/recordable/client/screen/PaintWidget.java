@@ -37,62 +37,81 @@ public class PaintWidget extends Button {
         float y1 = this.y;
         float y2 = this.y + this.height;
 
-        int borderColor = getBorderColor();
+        int borderColor = this.getBorderColor();
 
         Matrix4f matrix = matrixStack.last().pose();
 
         // top border
         ScreenRenderUtil.fill(
+                ScreenRenderUtil.FILL_BUFFER_1,
                 matrix,
                 x1,
                 y1,
                 x2,
                 y1 + 1,
+                0.0f,
                 borderColor
         );
         // left border
         ScreenRenderUtil.fill(
+                ScreenRenderUtil.FILL_BUFFER_1,
                 matrix,
                 x1,
                 y1,
                 x1 + 1,
                 y2,
+                0.0f,
                 borderColor
         );
         // bottom border
         ScreenRenderUtil.fill(
+                ScreenRenderUtil.FILL_BUFFER_1,
                 matrix,
                 x1,
                 y2 - 1,
                 x2,
                 y2,
+                0.0f,
                 borderColor
         );
         // right border
         ScreenRenderUtil.fill(
+                ScreenRenderUtil.FILL_BUFFER_1,
                 matrix,
                 x2 - 1,
                 y1,
                 x2,
                 y2,
+                0.0f,
                 borderColor
         );
 
         float filledPixels = (((y2 - 1) - (y1 + 1)) * this.paint.getLevel()) / this.paint.getMaxCapacity();
         // middle
         ScreenRenderUtil.fillGradient(
+                ScreenRenderUtil.FILL_BUFFER_1,
                 matrix,
                 x1 + 1,
                 y2 - 1 - filledPixels,
                 x2 - 1,
                 y2 - 1,
+                0.0f,
                 this.rawColor | 0xFF000000, // make opaque
                 this.rawColorGrad | 0xFF000000 // make opaque
         );
 
         // darken if inactive
-        if (!active) {
-            ScreenRenderUtil.fill(matrix, x1, y1, x2, y2, 0x50303030);
+        if (!this.active) {
+            ScreenRenderUtil.fill(
+                    ScreenRenderUtil.FILL_BUFFER_2,
+                    matrix,
+                    x1,
+                    y1,
+                    x2,
+                    y2,
+                    10.0f,
+                    LabelerConstants.INACTIVE_COLOR
+            );
         }
     }
 
@@ -102,11 +121,12 @@ public class PaintWidget extends Button {
 
     public void setForceInactive(boolean forceInactive) {
         this.forceInactive = forceInactive;
-        update();
+        this.update();
     }
 
     public void update() {
         this.active = !this.paint.isEmpty() && !this.forceInactive;
+        this.selected &= !this.paint.isEmpty();
         this.paint.setCanApply(this.selected && this.active);
     }
 

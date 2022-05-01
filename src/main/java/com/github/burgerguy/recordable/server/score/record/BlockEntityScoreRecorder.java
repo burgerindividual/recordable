@@ -23,30 +23,30 @@ public class BlockEntityScoreRecorder extends ScoreRecorder {
 
     @Override
     public double getXPos() {
-        return blockEntity.getBlockPos().getX() + .5;
+        return this.blockEntity.getBlockPos().getX() + .5;
     }
 
     @Override
     public double getYPos() {
-        return blockEntity.getBlockPos().getY() + .5;
+        return this.blockEntity.getBlockPos().getY() + .5;
     }
 
     @Override
     public double getZPos() {
-        return blockEntity.getBlockPos().getZ() + .5;
+        return this.blockEntity.getBlockPos().getZ() + .5;
     }
 
     @Override
     public Quaternion createRotation() {
-        return rotationSupplier.get();
+        return this.rotationSupplier.get();
     }
 
     @Override
     public boolean isInRange(double x, double y, double z, float volume) {
         double radius = volume > 1.0F ? 16.0D * volume : 16.0;
-        double relX = x - getXPos();
-        double relY = y - getYPos();
-        double relZ = z - getZPos();
+        double relX = x - this.getXPos();
+        double relY = y - this.getYPos();
+        double relZ = z - this.getZPos();
         return relX * relX + relY * relY + relZ * relZ < radius * radius;
     }
 

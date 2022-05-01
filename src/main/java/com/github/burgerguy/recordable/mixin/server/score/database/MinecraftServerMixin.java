@@ -11,7 +11,7 @@ public class MinecraftServerMixin implements ScoreDatabaseContainer {
 
     @Override
     public ScoreDatabase getScoreDatabase() {
-        return scoreDatabase;
+        return this.scoreDatabase;
     }
 
     @Override

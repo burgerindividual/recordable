@@ -5,8 +5,8 @@ import net.minecraft.world.item.DyeColor;
 public class LabelerConstants {
     public static final int CONTAINER_SIZE = 3;
 
-    public static final int PALETTE_X = 8;
-    public static final int PALETTE_Y = 37;
+    public static final int PALETTE_X = 7;
+    public static final int PALETTE_Y = 31;
     public static final int PALETTE_COLUMNS_WRAP = 4;
     public static final int COLOR_WIDTH = 12;
     public static final int COLOR_HEIGHT = 12;
@@ -18,6 +18,8 @@ public class LabelerConstants {
 
     public static final int COLOR_MAX_CAPACITY = 20;
     public static final int COLOR_LEVEL_PER_ITEM = 5;
+
+    public static final float CANVAS_LINE_WIDTH = 1.0f;
 
     public static final int PIXEL_SIZE = 17;
 
@@ -49,5 +51,8 @@ public class LabelerConstants {
     };
     public static final int RECORD_PIXEL_MODEL_WIDTH = 5;
 
+    public static final float SMALL_BUTTON_U = 176;
+    public static final float SMALL_BUTTON_V = 16;
 
+    public static final int INACTIVE_COLOR = 0x50303030;
 }

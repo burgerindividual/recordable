@@ -14,6 +14,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.FriendlyByteBuf;
@@ -21,10 +22,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ContainerListener;
 import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
 
 public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
@@ -41,21 +39,25 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
 
     public LabelerScreen(LabelerMenu labelerMenu, Inventory inventory, Component component) {
         super(labelerMenu, inventory, component);
-        labelerMenu.addSlotListener(new ContainerListener() {
-            @Override
-            public void slotChanged(AbstractContainerMenu menu, int slotId, ItemStack stack) {
-                Button finishButton = LabelerScreen.this.finishButton;
-                if (finishButton != null) {
-                    finishButton.active = !menu.getSlot(LabelerMenu.PAPER_SLOT_ID).getItem().isEmpty() &&
-                            !menu.getSlot(LabelerMenu.PAPER_SLOT_ID).getItem().isEmpty();
-                }
-            }
-
-            @Override
-            public void dataChanged(AbstractContainerMenu menu, int dataSlotIndex, int value) {
-            }
-        });
-        LabelerBlockEntity labelerBlockEntity = menu.getLabelerBlockEntity();
+//        labelerMenu.addSlotListener(new ContainerListener() {
+//            @Override
+//            public void slotChanged(AbstractContainerMenu menu, int slotId, ItemStack stack) {
+//                if (menu instanceof LabelerMenu labelerMenuInner) {
+//                    Button finishButton = LabelerScreen.this.finishButton;
+//                    if (finishButton != null) {
+//                        finishButton.active = !labelerMenuInner.getPaperSlot().getItem().isEmpty() &&
+//                                              !labelerMenuInner.getRecordSlot().getItem().isEmpty() &&
+//                                              !LabelerScreen.this.authorEditBox.getValue().isEmpty() &&
+//                                              !LabelerScreen.this.titleEditBox.getValue().isEmpty();
+//                    }
+//                }
+//            }
+//
+//            @Override
+//            public void dataChanged(AbstractContainerMenu menu, int dataSlotIndex, int value) {
+//            }
+//        });
+        LabelerBlockEntity labelerBlockEntity = this.menu.getLabelerBlockEntity();
         this.clientCanvas = new ClientCanvas(
                 labelerBlockEntity.getPixelIndexModel(),
                 labelerBlockEntity.getPixelModelWidth(),
@@ -63,28 +65,35 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
         );
 
         // image height adjustment
-        this.imageHeight = 179;
+        this.imageHeight = 182;
         this.inventoryLabelY = this.imageHeight - 94;
     }
 
     @Override
     public void containerTick() {
+        super.containerTick();
         for (PaintWidget paintWidget : this.paintWidgets) paintWidget.update();
         this.authorEditBox.tick();
         this.titleEditBox.tick();
         boolean canUndo = this.clientCanvas.canUndo();
         this.undoButton.active = canUndo;
         this.resetButton.active = canUndo;
+        this.finishButton.active = !this.menu.getPaperSlot().getItem().isEmpty() &&
+                                   !this.menu.getRecordSlot().getItem().isEmpty() &&
+                                   !LabelerScreen.this.authorEditBox.getValue().isEmpty() &&
+                                   !LabelerScreen.this.titleEditBox.getValue().isEmpty();
     }
 
     @Override
     protected void init() {
         super.init();
 
-//        this.titleLabelX = (this.imageWidth - this.font.width(this.title)) / 2;
-
         // gets ScreenRenderUtil ready for render
-        this.addRenderableOnly((poseStack, mouseX, mouseY, partialTick) -> ScreenRenderUtil.startFills());
+        this.addRenderableOnly((poseStack, mouseX, mouseY, partialTick) -> {
+            ScreenRenderUtil.startFills(ScreenRenderUtil.FILL_BUFFER_1);
+            ScreenRenderUtil.startFills(ScreenRenderUtil.FILL_BUFFER_2);
+            ScreenRenderUtil.startBlits(ScreenRenderUtil.BLIT_BUFFER_1);
+        });
 
         Paint[] paints = this.menu.getPaints();
         this.paintWidgets = new PaintWidget[paints.length];
@@ -102,63 +111,103 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
             this.addRenderableWidget(paintWidget);
         }
 
-        CanvasWidget canvasWidget = new CanvasWidget(this.leftPos + 74, this.topPos + 31, LabelerConstants.PIXEL_SIZE, this.clientCanvas);
-        this.addRenderableWidget(canvasWidget);
+        this.addRenderableWidget(new CanvasWidget(
+                this.leftPos + 76,
+                this.topPos + 29,
+                LabelerConstants.PIXEL_SIZE,
+                this.clientCanvas
+        ));
 
         Font font = Minecraft.getInstance().font;
 
-        this.authorEditBox = new EditBox(font, this.leftPos + 70, this.topPos + 10, 38, 9, new TranslatableComponent("screen.recordable.labeler.author"));
-        this.addRenderableWidget(this.authorEditBox);
+        this.authorEditBox = this.addRenderableWidget(new EditBox(font, this.leftPos + 68, this.topPos + 9, 40, 10, this.authorEditBox, new TranslatableComponent("screen.recordable.labeler.author")) {
+            @Override
+            public void renderButton(PoseStack poseStack, int mouseX, int mouseY, float partialTick) {
+                super.renderButton(poseStack, mouseX, mouseY, partialTick);
 
-        this.titleEditBox = new EditBox(font, this.leftPos + 109, this.topPos + 10, 54, 9, new TranslatableComponent("screen.recordable.labeler.title"));
-        this.addRenderableWidget(this.titleEditBox);
-
-        Button eraseButton = new Button(this.leftPos + 8, this.topPos + 22, 12, 12, new TranslatableComponent("screen.recordable.labeler.eraser"), b -> {
-            boolean erasing = this.clientCanvas.toggleErase();
-
-            for (PaintWidget paintColorWidget : paintWidgets) {
-                paintColorWidget.setForceInactive(erasing);
+                if (!this.isFocused() && this.getValue().isEmpty()) {
+                    // mc does this, we should too
+                    //noinspection IntegerDivisionInFloatingPointContext
+                    font.draw(poseStack, this.getMessage(), this.x + 4, this.y + (this.height - 8) / 2, 0x707070);
+                }
             }
         });
-        this.addRenderableWidget(eraseButton);
 
-        Button mixButton = new Button(this.leftPos + 22, this.topPos + 22, 12, 12, new TranslatableComponent("screen.recordable.labeler.mix"), b -> this.clientCanvas.toggleMix());
-        this.addRenderableWidget(mixButton);
+        this.titleEditBox = this.addRenderableWidget(new EditBox(font, this.leftPos + 111, this.topPos + 9, 57, 10, this.titleEditBox, new TranslatableComponent("screen.recordable.labeler.title")) {
+            @Override
+            public void renderButton(PoseStack poseStack, int mouseX, int mouseY, float partialTick) {
+                super.renderButton(poseStack, mouseX, mouseY, partialTick);
 
-        this.undoButton = new Button(this.leftPos + 36, this.topPos + 22, 12, 12, new TranslatableComponent("screen.recordable.labeler.undo"), b -> this.clientCanvas.undo());
+                if (!this.isFocused() && this.getValue().isEmpty()) {
+                    // mc does this, we should too
+                    //noinspection IntegerDivisionInFloatingPointContext
+                    font.draw(poseStack, this.getMessage(), this.x + 4, this.y + (this.height - 8) / 2, 0x707070);
+                }
+            }
+        });
+
+        this.addRenderableWidget(new SmallToggleButtonWidget(
+                this.leftPos + 7,
+                this.topPos + 16,
+                176.0f,
+                28.0f,
+                this.clientCanvas.isErasing(),
+                new TranslatableComponent("screen.recordable.labeler.eraser"),
+                pressed -> {
+                    this.clientCanvas.setErasing(pressed);
+
+                    for (PaintWidget paintColorWidget : this.paintWidgets) {
+                        paintColorWidget.setForceInactive(pressed);
+                    }
+                }
+        ));
+
+        this.addRenderableWidget(new SmallToggleButtonWidget(
+                this.leftPos + 21,
+                this.topPos + 16,
+                176.0f,
+                40.0f,
+                this.clientCanvas.isMixing(),
+                new TranslatableComponent("screen.recordable.labeler.mix"),
+                this.clientCanvas::setMixing
+        ));
+
+        this.undoButton = this.addRenderableWidget(new SmallButtonWidget(
+                this.leftPos + 35,
+                this.topPos + 16,
+                176.0f,
+                52.0f,
+                new TranslatableComponent("screen.recordable.labeler.undo"),
+                b -> this.clientCanvas.undo()
+        ));
         this.undoButton.active = false;
-        this.addRenderableWidget(this.undoButton);
 
-        this.resetButton = new Button(this.leftPos + 50, this.topPos + 22, 12, 12, new TranslatableComponent("screen.recordable.labeler.reset"), b -> this.clientCanvas.reset());
+        this.resetButton = this.addRenderableWidget(new SmallButtonWidget(
+                this.leftPos + 49,
+                this.topPos + 16,
+                176.0f,
+                64.0f,
+                new TranslatableComponent("screen.recordable.labeler.reset"),
+                b -> this.clientCanvas.reset()
+        ));
         this.resetButton.active = false;
-        this.addRenderableWidget(this.resetButton);
 
-        this.finishButton = new Button(this.leftPos + 150, this.topPos + 73, 18, 18, new TranslatableComponent("screen.recordable.labeler.finish"), b -> this.doFinish());
+        this.finishButton = this.addRenderableWidget(new Button(this.leftPos + 151, this.topPos + 67, 18, 18, new TranslatableComponent("screen.recordable.labeler.finish"), b -> this.doFinish()));
         this.finishButton.active = false; // this turns true when the paper and record are filled
-        this.addRenderableWidget(this.finishButton);
 
         // renders everything that widgets drew using ScreenRenderUtil
-        this.addRenderableOnly((poseStack, mouseX, mouseY, partialTick) -> ScreenRenderUtil.endAndRenderFills());
-    }
-
-    @Override
-    public void resize(Minecraft minecraft, int width, int height) {
-        String author = this.authorEditBox.getValue();
-        String title = this.authorEditBox.getValue();
-        this.init(minecraft, width, height);
-        this.authorEditBox.setValue(author);
-        this.titleEditBox.setValue(title);
+        this.addRenderableOnly((poseStack, mouseX, mouseY, partialTick) -> {
+            ScreenRenderUtil.endAndRenderFills(ScreenRenderUtil.FILL_BUFFER_1);
+            ScreenRenderUtil.endAndRenderBlits(ScreenRenderUtil.BLIT_BUFFER_1, BG_LOCATION, 0);
+            ScreenRenderUtil.endAndRenderFills(ScreenRenderUtil.FILL_BUFFER_2);
+        });
     }
 
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
         // from ContainerEventHandler
         boolean superDuperMouseDragged = this.getFocused() != null && this.isDragging() && button == 0 && this.getFocused().mouseDragged(mouseX, mouseY, button, dragX, dragY);
-        if (superDuperMouseDragged) {
-            return true;
-        } else {
-            return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
-        }
+        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY) || superDuperMouseDragged;
     }
 
     @Override
@@ -166,11 +215,7 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
         // from ContainerEventHandler
         this.setDragging(false);
         boolean superDuperMouseReleased = this.getChildAt(mouseX, mouseY).filter(guiEventListener -> guiEventListener.mouseReleased(mouseX, mouseY, button)).isPresent();
-        if (superDuperMouseReleased) {
-            return true;
-        } else {
-            return super.mouseReleased(mouseX, mouseY, button);
-        }
+        return super.mouseReleased(mouseX, mouseY, button) || superDuperMouseReleased;
     }
 
     @Override
@@ -212,11 +257,26 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
         String author = this.authorEditBox.getValue();
         String title = this.titleEditBox.getValue();
         FriendlyByteBuf buffer = PacketByteBufs.create();
+        buffer.resetWriterIndex();
         buffer.writeUtf(author);
         buffer.writeUtf(title);
         this.clientCanvas.writeToPacket(buffer);
         ClientPlayNetworking.send(Recordable.FINALIZE_LABEL_ID, buffer);
         this.clientCanvas.clear();
+    }
+
+    // workaround for the double-selection bug
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        GuiEventListener lastFocused = this.getFocused();
+        boolean parentClicked = super.mouseClicked(mouseX, mouseY, button);
+        if (parentClicked) {
+            GuiEventListener currentFocused = this.getFocused();
+            if (lastFocused != null && !lastFocused.equals(currentFocused)) {
+                while (lastFocused.changeFocus(true)) ; // removes focus from the previous element
+            }
+        }
+        return parentClicked;
     }
 
 }

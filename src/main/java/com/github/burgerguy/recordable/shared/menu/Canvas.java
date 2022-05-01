@@ -64,9 +64,9 @@ public class Canvas {
     }
 
     public void applyToTagNoAlpha(CompoundTag tag) {
-        byte[] byteColors = new byte[colors.length * 3];
-        for (int i = 0; i < colors.length; i++) {
-            int color = colors[i];
+        byte[] byteColors = new byte[this.colors.length * 3];
+        for (int i = 0; i < this.colors.length; i++) {
+            int color = this.colors[i];
             int firstIdx = i * 3;
             byteColors[firstIdx] = (byte) ((color >> 16) & 0xFF);
             byteColors[firstIdx + 1] = (byte) ((color >> 8) & 0xFF);
@@ -88,7 +88,7 @@ public class Canvas {
     }
 
     public boolean isIndexValid(int index) {
-        return 0 <= index && index < colors.length;
+        return 0 <= index && index < this.colors.length;
     }
 
     public boolean isCoordInBounds(int x, int y) {
@@ -96,7 +96,7 @@ public class Canvas {
     }
 
     public int coordsToIndex(int x, int y) {
-        return isCoordInBounds(x, y) ? this.pixelIndexModel[y * this.width + x] : OUT_OF_BOUNDS_INDEX;
+        return this.isCoordInBounds(x, y) ? this.pixelIndexModel[y * this.width + x] : OUT_OF_BOUNDS_INDEX;
     }
 
     public int getWidth() {

@@ -16,8 +16,8 @@ public class TickVolumeCache {
     }
 
     public float[] getTickVolumes(long scoreId) {
-        return idToVolumesMap.computeIfAbsent(scoreId, id -> {
-            try(ScoreDatabase.ScoreRequest rawScoreData = scoreDatabase.requestScore(id)) {
+        return this.idToVolumesMap.computeIfAbsent(scoreId, id -> {
+            try(ScoreDatabase.ScoreRequest rawScoreData = this.scoreDatabase.requestScore(id)) {
                 ByteBuffer buffer = rawScoreData.getData();
 
                 float[] volumeArray = new float[ScoreConstants.MAX_TICKS];

@@ -21,6 +21,6 @@ public class RecorderItemRenderer implements BuiltinItemRendererRegistry.Dynamic
 
     @Override
     public void render(ItemStack itemStack, ItemTransforms.TransformType transformType, PoseStack matrices, MultiBufferSource vertexConsumers, int light, int overlay) {
-        Minecraft.getInstance().getBlockEntityRenderDispatcher().renderItem(renderedInstance, matrices, vertexConsumers, light, overlay);
+        Minecraft.getInstance().getBlockEntityRenderDispatcher().renderItem(this.renderedInstance, matrices, vertexConsumers, light, overlay);
     }
 }

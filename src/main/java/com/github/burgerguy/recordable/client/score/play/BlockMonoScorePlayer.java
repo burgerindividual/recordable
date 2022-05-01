@@ -74,9 +74,9 @@ public class BlockMonoScorePlayer extends ScorePlayer {
                 false, // looping
                 0, // delay
                 SoundInstance.Attenuation.LINEAR,
-                blockPos.getX() + .5,
-                blockPos.getY() + .5,
-                blockPos.getZ() + .5,
+                this.blockPos.getX() + .5,
+                this.blockPos.getY() + .5,
+                this.blockPos.getZ() + .5,
                 false // relative
         );
     }

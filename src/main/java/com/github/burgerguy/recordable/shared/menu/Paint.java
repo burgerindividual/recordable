@@ -20,15 +20,15 @@ public class Paint {
     }
 
     public PaintColor getColor() {
-        return color;
+        return this.color;
     }
 
     public int getMaxCapacity() {
-        return maxCapacity;
+        return this.maxCapacity;
     }
 
     public int getLevel() {
-        return level;
+        return this.level;
     }
 
     public void setCanApply(boolean canApply) {
@@ -63,12 +63,12 @@ public class Paint {
     }
 
     public void decrementLevel() {
-        if (isEmpty()) throw new IllegalStateException("Tried to decrement level when already empty");
+        if (this.isEmpty()) throw new IllegalStateException("Tried to decrement level when already empty");
         this.level--;
     }
 
     public void incrementLevel() {
-        if (isFull()) throw new IllegalStateException("Tried to decrement level when already empty");
+        if (this.isFull()) throw new IllegalStateException("Tried to decrement level when already empty");
         this.level++;
     }
 

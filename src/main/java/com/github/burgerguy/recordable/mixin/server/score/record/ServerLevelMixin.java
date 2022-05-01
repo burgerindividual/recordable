@@ -40,18 +40,18 @@ public abstract class ServerLevelMixin extends Level implements ServerScoreRegis
 
     @Override
     public ScoreRecorderRegistry getScoreRecorderRegistry() {
-        return recorderRegistry;
+        return this.recorderRegistry;
     }
 
     @Override
     public ScoreBroadcasterRegistry getScoreBroadcasterRegistry() {
-        return broadcasterRegistry;
+        return this.broadcasterRegistry;
     }
 
     @Inject(method = "playSound(Lnet/minecraft/world/entity/player/Player;DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V", at = @At("TAIL"))
     private void captureSound(Player player, double x, double y, double z, SoundEvent sound, SoundSource category, float volume, float pitch, CallbackInfo ci) {
         // we probably don't need to deal with dimensions, because dimensions are stored in their own ServerLevel
-        recorderRegistry.captureSound(
+        this.recorderRegistry.captureSound(
                 sound,
                 x,
                 y,
@@ -63,7 +63,7 @@ public abstract class ServerLevelMixin extends Level implements ServerScoreRegis
 
     @Inject(method = "playSound(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V", at = @At("TAIL"))
     private void captureSound(Player player, Entity entity, SoundEvent sound, SoundSource category, float volume, float pitch, CallbackInfo ci) {
-        recorderRegistry.captureSound(
+        this.recorderRegistry.captureSound(
                 sound,
                 entity.getX(),
                 entity.getY(),
@@ -80,7 +80,7 @@ public abstract class ServerLevelMixin extends Level implements ServerScoreRegis
     @Override
     public void playLocalSound(double x, double y, double z, SoundEvent sound, SoundSource category, float volume, float pitch, boolean distanceDelay) {
         super.playLocalSound(x, y, z, sound, category, volume, pitch, distanceDelay);
-        recorderRegistry.captureSound(
+        this.recorderRegistry.captureSound(
                 sound,
                 x,
                 y,

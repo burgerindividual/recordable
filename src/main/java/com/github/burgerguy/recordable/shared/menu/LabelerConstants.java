@@ -51,8 +51,21 @@ public class LabelerConstants {
     };
     public static final int RECORD_PIXEL_MODEL_WIDTH = 5;
 
-    public static final float SMALL_BUTTON_U = 176;
-    public static final float SMALL_BUTTON_V = 16;
+    public static final int LABELER_GUI_TEX_WIDTH = 256;
+    public static final int LABELER_GUI_TEX_HEIGHT = 256;
 
-    public static final int INACTIVE_COLOR = 0x50303030;
+    public static final int SMALL_BUTTON_WIDTH = 12;
+    public static final int SMALL_BUTTON_HEIGHT = 12;
+    public static final float SMALL_BUTTON_U = 176.0f;
+    public static final float SMALL_BUTTON_V = 16.0f;
+
+    public static final int LARGE_BUTTON_WIDTH = 18;
+    public static final int LARGE_BUTTON_HEIGHT = 18;
+    public static final float LARGE_BUTTON_U = 176.0f;
+    public static final float LARGE_BUTTON_V = 76.0f;
+
+    public static final float BUTTON_BORDER_WIDTH = 1.0f;
+    public static final int BUTTON_BORDER_COLOR = 0xFFFFFFFF;
+
+    public static final int INACTIVE_COLOR = 0x60000000;
 }

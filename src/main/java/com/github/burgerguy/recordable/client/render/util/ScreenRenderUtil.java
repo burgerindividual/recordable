@@ -34,6 +34,53 @@ public class ScreenRenderUtil {
         fillBuffer.vertex(matrix, x2, y2, z).color(color2).endVertex();
     }
 
+    public static void innerBorder(BufferBuilder fillBuffer, Matrix4f matrix, float x1, float y1, float x2, float y2, float z, float lineWidth, int color) {
+        // top
+        fill(
+                fillBuffer,
+                matrix,
+                x1,
+                y1,
+                x2 - lineWidth,
+                y1 + lineWidth,
+                z,
+                color
+        );
+        // right
+        fill(
+                fillBuffer,
+                matrix,
+                x2 - lineWidth,
+                y1,
+                x2,
+                y2 - lineWidth,
+                z,
+                color
+        );
+        // bottom
+        fill(
+                fillBuffer,
+                matrix,
+                x1 + lineWidth,
+                y2 - lineWidth,
+                x2,
+                y2,
+                z,
+                color
+        );
+        // left
+        fill(
+                fillBuffer,
+                matrix,
+                x1,
+                y1 + lineWidth,
+                x1 + lineWidth,
+                y2,
+                z,
+                color
+        );
+    }
+
     public static void endAndRenderFills(BufferBuilder fillBuffer) {
         fillBuffer.end();
         RenderSystem.enableBlend();
@@ -47,22 +94,6 @@ public class ScreenRenderUtil {
 
     public static void startBlits(BufferBuilder blitBuffer) {
         blitBuffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-    }
-
-    public static void blit(BufferBuilder blitBuffer, Matrix4f matrix, float x, float y, float z, float u, float v, float size) {
-        blit(
-                blitBuffer,
-                matrix,
-                x,
-                y,
-                z,
-                u,
-                v,
-                size,
-                size,
-                256,
-                256
-        );
     }
 
     public static void blit(BufferBuilder blitBuffer, Matrix4f matrix, float x, float y, float z, float u, float v, float width, float height, int texWidth, int texHeight) {

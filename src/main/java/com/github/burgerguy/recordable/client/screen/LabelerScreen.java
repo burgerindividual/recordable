@@ -146,9 +146,13 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
             }
         });
 
-        this.addRenderableWidget(new SmallToggleButtonWidget(
+        this.addRenderableWidget(new CustomToggleButtonWidget(
                 this.leftPos + 7,
                 this.topPos + 16,
+                LabelerConstants.SMALL_BUTTON_WIDTH,
+                LabelerConstants.SMALL_BUTTON_HEIGHT,
+                LabelerConstants.SMALL_BUTTON_U,
+                LabelerConstants.SMALL_BUTTON_V,
                 176.0f,
                 28.0f,
                 this.clientCanvas.isErasing(),
@@ -162,9 +166,13 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
                 }
         ));
 
-        this.addRenderableWidget(new SmallToggleButtonWidget(
+        this.addRenderableWidget(new CustomToggleButtonWidget(
                 this.leftPos + 21,
                 this.topPos + 16,
+                LabelerConstants.SMALL_BUTTON_WIDTH,
+                LabelerConstants.SMALL_BUTTON_HEIGHT,
+                LabelerConstants.SMALL_BUTTON_U,
+                LabelerConstants.SMALL_BUTTON_V,
                 176.0f,
                 40.0f,
                 this.clientCanvas.isMixing(),
@@ -172,9 +180,13 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
                 this.clientCanvas::setMixing
         ));
 
-        this.undoButton = this.addRenderableWidget(new SmallButtonWidget(
+        this.undoButton = this.addRenderableWidget(new CustomButtonWidget(
                 this.leftPos + 35,
                 this.topPos + 16,
+                LabelerConstants.SMALL_BUTTON_WIDTH,
+                LabelerConstants.SMALL_BUTTON_HEIGHT,
+                LabelerConstants.SMALL_BUTTON_U,
+                LabelerConstants.SMALL_BUTTON_V,
                 176.0f,
                 52.0f,
                 new TranslatableComponent("screen.recordable.labeler.undo"),
@@ -182,9 +194,13 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
         ));
         this.undoButton.active = false;
 
-        this.resetButton = this.addRenderableWidget(new SmallButtonWidget(
+        this.resetButton = this.addRenderableWidget(new CustomButtonWidget(
                 this.leftPos + 49,
                 this.topPos + 16,
+                LabelerConstants.SMALL_BUTTON_WIDTH,
+                LabelerConstants.SMALL_BUTTON_HEIGHT,
+                LabelerConstants.SMALL_BUTTON_U,
+                LabelerConstants.SMALL_BUTTON_V,
                 176.0f,
                 64.0f,
                 new TranslatableComponent("screen.recordable.labeler.reset"),
@@ -192,7 +208,18 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
         ));
         this.resetButton.active = false;
 
-        this.finishButton = this.addRenderableWidget(new Button(this.leftPos + 151, this.topPos + 67, 18, 18, new TranslatableComponent("screen.recordable.labeler.finish"), b -> this.doFinish()));
+        this.finishButton = this.addRenderableWidget(new CustomButtonWidget(
+                this.leftPos + 151,
+                this.topPos + 67,
+                LabelerConstants.LARGE_BUTTON_WIDTH,
+                LabelerConstants.LARGE_BUTTON_HEIGHT,
+                LabelerConstants.LARGE_BUTTON_U,
+                LabelerConstants.LARGE_BUTTON_V,
+                176.0f,
+                94.0f,
+                new TranslatableComponent("screen.recordable.labeler.finish"),
+                b -> this.doFinish()
+        ));
         this.finishButton.active = false; // this turns true when the paper and record are filled
 
         // renders everything that widgets drew using ScreenRenderUtil

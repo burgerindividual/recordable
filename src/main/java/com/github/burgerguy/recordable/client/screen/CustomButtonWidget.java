@@ -8,14 +8,16 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 
 // WARNING: Only use in places with proper ScreenRenderUtil support.
-public class SmallButtonWidget extends Button {
-    public static final int SIZE = 12;
-
+public class CustomButtonWidget extends Button {
+    private final float buttonU;
+    private final float buttonV;
     private final float iconU;
     private final float iconV;
 
-    public SmallButtonWidget(int x, int y, float iconU, float iconV, Component name, OnPress onPress) {
-        super(x, y, SIZE, SIZE, name, onPress);
+    public CustomButtonWidget(int x, int y, int width, int height, float buttonU, float buttonV, float iconU, float iconV, Component name, OnPress onPress) {
+        super(x, y, width, height, name, onPress);
+        this.buttonU = buttonU;
+        this.buttonV = buttonV;
         this.iconU = iconU;
         this.iconV = iconV;
     }
@@ -35,9 +37,12 @@ public class SmallButtonWidget extends Button {
                 x1,
                 y1,
                 0.0f,
-                LabelerConstants.SMALL_BUTTON_U,
-                LabelerConstants.SMALL_BUTTON_V,
-                12.0f
+                this.buttonU,
+                this.buttonV,
+                this.width,
+                this.height,
+                LabelerConstants.LABELER_GUI_TEX_WIDTH,
+                LabelerConstants.LABELER_GUI_TEX_HEIGHT
         );
 
         ScreenRenderUtil.blit(
@@ -48,7 +53,10 @@ public class SmallButtonWidget extends Button {
                 1.0f,
                 this.iconU,
                 this.iconV,
-                12.0f
+                this.width,
+                this.height,
+                LabelerConstants.LABELER_GUI_TEX_WIDTH,
+                LabelerConstants.LABELER_GUI_TEX_HEIGHT
         );
 
         if (!this.active) {
@@ -65,15 +73,16 @@ public class SmallButtonWidget extends Button {
             );
         } else if (this.isHoveredOrFocused()) {
             // draw hover border
-            ScreenRenderUtil.blit(
-                    ScreenRenderUtil.BLIT_BUFFER_1,
+            ScreenRenderUtil.innerBorder(
+                    ScreenRenderUtil.FILL_BUFFER_2,
                     matrix,
                     x1,
                     y1,
+                    x2,
+                    y2,
                     10.0f,
-                    LabelerConstants.SMALL_BUTTON_U + (SIZE * 2),
-                    LabelerConstants.SMALL_BUTTON_V,
-                    12.0f
+                    LabelerConstants.BUTTON_BORDER_WIDTH,
+                    LabelerConstants.BUTTON_BORDER_COLOR
             );
         }
     }

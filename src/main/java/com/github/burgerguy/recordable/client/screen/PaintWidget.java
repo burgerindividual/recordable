@@ -41,48 +41,15 @@ public class PaintWidget extends Button {
 
         Matrix4f matrix = matrixStack.last().pose();
 
-        // top border
-        ScreenRenderUtil.fill(
+        ScreenRenderUtil.innerBorder(
                 ScreenRenderUtil.FILL_BUFFER_1,
                 matrix,
                 x1,
                 y1,
                 x2,
-                y1 + 1,
-                0.0f,
-                borderColor
-        );
-        // left border
-        ScreenRenderUtil.fill(
-                ScreenRenderUtil.FILL_BUFFER_1,
-                matrix,
-                x1,
-                y1,
-                x1 + 1,
                 y2,
                 0.0f,
-                borderColor
-        );
-        // bottom border
-        ScreenRenderUtil.fill(
-                ScreenRenderUtil.FILL_BUFFER_1,
-                matrix,
-                x1,
-                y2 - 1,
-                x2,
-                y2,
-                0.0f,
-                borderColor
-        );
-        // right border
-        ScreenRenderUtil.fill(
-                ScreenRenderUtil.FILL_BUFFER_1,
-                matrix,
-                x2 - 1,
-                y1,
-                x2,
-                y2,
-                0.0f,
+                1.0f,
                 borderColor
         );
 

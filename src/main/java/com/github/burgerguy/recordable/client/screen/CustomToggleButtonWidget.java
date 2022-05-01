@@ -9,21 +9,26 @@ import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
 
 // WARNING: Only use in places with proper ScreenRenderUtil support.
-public class SmallToggleButtonWidget extends AbstractButton {
-    public static final int SIZE = 12;
-
+public class CustomToggleButtonWidget extends AbstractButton {
     private final OnToggle onToggleAction;
+    private final float buttonU;
+    private final float buttonV;
     private final float iconU;
     private final float iconV;
 
     private boolean pressed;
 
-    public SmallToggleButtonWidget(int x, int y, float iconU, float iconV, boolean initialToggled, Component name, OnToggle onToggleAction) {
-        super(x, y, SIZE, SIZE, name);
+    public CustomToggleButtonWidget(int x, int y, int width, int height, float buttonU, float buttonV, float iconU, float iconV, boolean initialToggled, Component name, OnToggle onToggleAction) {
+        super(x, y, width, height, name);
+        this.buttonU = buttonU;
+        this.buttonV = buttonV;
         this.iconU = iconU;
         this.iconV = iconV;
         this.onToggleAction = onToggleAction;
         this.pressed = initialToggled;
+
+        // update with initial
+        onToggleAction.onToggle(initialToggled);
     }
 
     @Override
@@ -52,9 +57,12 @@ public class SmallToggleButtonWidget extends AbstractButton {
                 x1,
                 y1,
                 0.0f,
-                LabelerConstants.SMALL_BUTTON_U + this.getUOffset(),
-                LabelerConstants.SMALL_BUTTON_V,
-                12.0f
+                this.buttonU + this.getUOffset(),
+                this.buttonV,
+                this.width,
+                this.height,
+                LabelerConstants.LABELER_GUI_TEX_WIDTH,
+                LabelerConstants.LABELER_GUI_TEX_HEIGHT
         );
 
         ScreenRenderUtil.blit(
@@ -65,7 +73,10 @@ public class SmallToggleButtonWidget extends AbstractButton {
                 1.0f,
                 this.iconU + this.getUOffset(),
                 this.iconV,
-                12.0f
+                this.width,
+                this.height,
+                LabelerConstants.LABELER_GUI_TEX_WIDTH,
+                LabelerConstants.LABELER_GUI_TEX_HEIGHT
         );
 
         if (!this.active) {
@@ -82,21 +93,22 @@ public class SmallToggleButtonWidget extends AbstractButton {
             );
         } else if (this.isHoveredOrFocused()) {
             // draw hover border
-            ScreenRenderUtil.blit(
-                    ScreenRenderUtil.BLIT_BUFFER_1,
+            ScreenRenderUtil.innerBorder(
+                    ScreenRenderUtil.FILL_BUFFER_2,
                     matrix,
                     x1,
                     y1,
+                    x2,
+                    y2,
                     10.0f,
-                    LabelerConstants.SMALL_BUTTON_U + (SIZE * 2),
-                    LabelerConstants.SMALL_BUTTON_V,
-                    12.0f
+                    LabelerConstants.BUTTON_BORDER_WIDTH,
+                    LabelerConstants.BUTTON_BORDER_COLOR
             );
         }
     }
 
     private float getUOffset() {
-        return this.pressed ? SIZE : 0.0f;
+        return this.pressed ? this.width : 0.0f;
     }
 
     public interface OnToggle {

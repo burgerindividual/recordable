@@ -126,8 +126,8 @@ bring record player closer to recorder and abstract registries
 account for record player block rotation to impact relative sound positions
 
 TODO:
-add dyeing of discs
-add title and author writing
+add dyeing of discs (done)
+add title and author writing (done)
 add animations to recorder (done)
 move playing to jukebox (done)
 display color in recorder/use color provider (nah)
@@ -161,3 +161,5 @@ figure out how to update when record is removed from result slot (maybe just sti
 hold items and color state in labeler block entity NBT?
 
 packet on draw to update dyes and BE levels, reverse when exit? maybe try to just do it on client side?
+
+bug: add dye, don't finish a pattern, save and exit, re-enter and dyes will be used but levels will be reset to last finish.

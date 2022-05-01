@@ -4,7 +4,9 @@ import com.github.burgerguy.recordable.shared.Recordable;
 import com.github.burgerguy.recordable.shared.block.LabelerBlockEntity;
 import com.github.burgerguy.recordable.shared.item.CopperRecordItem;
 import com.github.burgerguy.recordable.shared.util.MenuUtil;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import java.util.Objects;
+import java.util.Set;
 import net.fabricmc.fabric.impl.screenhandler.ExtendedScreenHandlerType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -18,9 +20,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.item.DyeItem;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
+import net.minecraft.world.item.*;
 
 public class LabelerMenu extends AbstractContainerMenu {
     public static final ResourceLocation IDENTIFIER = new ResourceLocation(Recordable.MOD_ID, "labeler");
@@ -37,6 +37,7 @@ public class LabelerMenu extends AbstractContainerMenu {
 
     private final LabelerBlockEntity labelerBlockEntity;
     private final Paint[] paints;
+    private final Set<Item> allowedDyeItems;
 
     private final Container container;
     private final Slot dyeSlot;
@@ -53,6 +54,9 @@ public class LabelerMenu extends AbstractContainerMenu {
 
     public LabelerMenu(int containerId, Inventory playerInventory, LabelerBlockEntity labelerBlockEntity) {
         super(INSTANCE, containerId);
+
+        this.allowedDyeItems = new ObjectOpenHashSet<>(LabelerConstants.COLOR_COUNT);
+        for ()
 
         // create paints from constants
         this.paints = new Paint[LabelerConstants.COLOR_COUNT];
@@ -90,6 +94,7 @@ public class LabelerMenu extends AbstractContainerMenu {
         this.dyeSlot = this.addSlot(new Slot(this.container, DYE_SLOT_ID, 65, 68) {
             @Override
             public boolean mayPlace(ItemStack stack) {
+                // TODO: change restriction, iterate thru dyes and save map on constructor
                 return stack.getItem() instanceof DyeItem;
             }
         });
@@ -187,8 +192,55 @@ public class LabelerMenu extends AbstractContainerMenu {
     }
 
     @Override
+    public void removed(Player player) {
+        super.removed(player);
+        this.clearContainer(player, this.container);
+    }
+
+    @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        System.out.println(index);
-        return ItemStack.EMPTY;
+        ItemStack itemStack = ItemStack.EMPTY;
+        Slot slot = this.slots.get(index);
+        if (slot.hasItem()) {
+            ItemStack itemStack2 = slot.getItem();
+            itemStack = itemStack2.copy();
+            if (index != this.dyeSlot.index && index != this.recordSlot.index && index != this.paperSlot.index) {
+                if (this.dyeSlot.mayPlace(itemStack2)) {
+                    if (!this.moveItemStackTo(itemStack2, this.dyeSlot.index, this.dyeSlot.index + 1, false)) {
+                        return ItemStack.EMPTY;
+                    }
+                } else if (this.recordSlot.mayPlace(itemStack2)) {
+                    if (!this.moveItemStackTo(itemStack2, this.recordSlot.index, this.recordSlot.index + 1, false)) {
+                        return ItemStack.EMPTY;
+                    }
+                } else if (this.paperSlot.mayPlace(itemStack2)) {
+                    if (!this.moveItemStackTo(itemStack2, this.paperSlot.index, this.paperSlot.index + 1, false)) {
+                        return ItemStack.EMPTY;
+                    }
+                } else if (index >= 4 && index < 31) {
+                    if (!this.moveItemStackTo(itemStack2, 31, 40, false)) {
+                        return ItemStack.EMPTY;
+                    }
+                } else if (index >= 31 && index < 40 && !this.moveItemStackTo(itemStack2, 4, 31, false)) {
+                    return ItemStack.EMPTY;
+                }
+            } else if (!this.moveItemStackTo(itemStack2, 4, 40, false)) {
+                return ItemStack.EMPTY;
+            }
+
+            if (itemStack2.isEmpty()) {
+                slot.set(ItemStack.EMPTY);
+            } else {
+                slot.setChanged();
+            }
+
+            if (itemStack2.getCount() == itemStack.getCount()) {
+                return ItemStack.EMPTY;
+            }
+
+            slot.onTake(player, itemStack2);
+        }
+
+        return itemStack;
     }
 }

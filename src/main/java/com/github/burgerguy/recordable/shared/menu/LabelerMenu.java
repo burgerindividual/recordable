@@ -196,6 +196,7 @@ public class LabelerMenu extends AbstractContainerMenu {
     public void removed(Player player) {
         super.removed(player);
         this.clearContainer(player, this.container);
+        this.labelerBlockEntity.setInUse(false);
     }
 
     @Override

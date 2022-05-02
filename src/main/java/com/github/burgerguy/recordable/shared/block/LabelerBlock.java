@@ -45,40 +45,16 @@ public class LabelerBlock extends BaseEntityBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         if (!level.isClientSide) {
-            MenuProvider menuProvider = state.getMenuProvider(level, pos);
+            LabelerBlockEntity labelerBlockEntity = (LabelerBlockEntity) level.getBlockEntity(pos);
+            if (!labelerBlockEntity.isInUse()) {
+                MenuProvider menuProvider = state.getMenuProvider(level, pos);
 
-            if (menuProvider != null) {
-                player.openMenu(menuProvider);
+                if (menuProvider != null) {
+                    player.openMenu(menuProvider);
+                }
             }
         }
         return InteractionResult.SUCCESS;
-    }
-
-
-    @SuppressWarnings("deprecation")
-    @Override
-    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
-        if (!state.is(newState.getBlock())) {
-            BlockEntity blockEntity = level.getBlockEntity(pos);
-            if (blockEntity instanceof Container) {
-                Containers.dropContents(level, pos, (Container)blockEntity);
-                level.updateNeighbourForOutputSignal(pos, this);
-            }
-
-            super.onRemove(state, level, pos, newState, isMoving);
-        }
-    }
-
-    @SuppressWarnings("deprecation")
-    @Override
-    public boolean hasAnalogOutputSignal(BlockState state) {
-        return true;
-    }
-
-    @SuppressWarnings("deprecation")
-    @Override
-    public int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos) {
-        return AbstractContainerMenu.getRedstoneSignalFromBlockEntity(level.getBlockEntity(pos));
     }
 
 }

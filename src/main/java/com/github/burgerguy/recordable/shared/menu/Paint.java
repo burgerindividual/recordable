@@ -68,16 +68,11 @@ public class Paint {
     }
 
     public void incrementLevel() {
-        if (this.isFull()) throw new IllegalStateException("Tried to decrement level when already empty");
         this.level++;
     }
 
     public boolean isEmpty() {
         return this.level == 0;
-    }
-
-    public boolean isFull() {
-        return this.level == this.maxCapacity;
     }
 
 }

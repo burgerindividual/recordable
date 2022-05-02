@@ -4,6 +4,7 @@ import com.github.burgerguy.recordable.shared.Recordable;
 import com.github.burgerguy.recordable.shared.menu.LabelerConstants;
 import com.github.burgerguy.recordable.shared.menu.LabelerMenu;
 import com.github.burgerguy.recordable.shared.util.ImplementedContainer;
+import com.github.burgerguy.recordable.shared.util.MenuUtil;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.minecraft.core.BlockPos;
@@ -33,6 +34,8 @@ public class LabelerBlockEntity extends BlockEntity implements ExtendedScreenHan
     public static final ResourceLocation IDENTIFIER = new ResourceLocation(Recordable.MOD_ID, "labeler");
 
     private final int[] colorLevels;
+    // don't save to nbt, should reset on restart/unload. should be stored when sent to other players.
+    private boolean inUse;
 
     public LabelerBlockEntity(BlockPos blockPos, BlockState blockState) {
         super(INSTANCE, blockPos, blockState);
@@ -42,6 +45,7 @@ public class LabelerBlockEntity extends BlockEntity implements ExtendedScreenHan
     @Nullable
     @Override
     public AbstractContainerMenu createMenu(int containerId, Inventory playerInventory, Player player) {
+        this.setInUse(true);
         return new LabelerMenu(
                 containerId,
                 playerInventory,
@@ -60,6 +64,9 @@ public class LabelerBlockEntity extends BlockEntity implements ExtendedScreenHan
         if (tag.contains("ColorLevels", Tag.TAG_INT_ARRAY)) {
             System.arraycopy(tag.getIntArray("ColorLevels"), 0, this.colorLevels, 0, this.colorLevels.length);
         }
+        if (tag.contains("InUse", Tag.TAG_BYTE)) {
+            this.inUse = tag.getBoolean("InUse");
+        }
     }
 
     @Override
@@ -76,13 +83,26 @@ public class LabelerBlockEntity extends BlockEntity implements ExtendedScreenHan
 
     @Override
     public CompoundTag getUpdateTag() {
-        return this.saveWithoutMetadata();
+        CompoundTag tag = this.saveWithoutMetadata();
+        tag.putBoolean("InUse", this.inUse);
+        return tag;
     }
 
     // server to client
     @Override
     public void writeScreenOpeningData(ServerPlayer player, FriendlyByteBuf buffer) {
         buffer.writeBlockPos(this.getBlockPos());
+    }
+
+    // called from server only
+    public void setInUse(boolean inUse) {
+        this.inUse = inUse;
+        // let other clients know of the change
+        MenuUtil.updateBlockEntity(this);
+    }
+
+    public boolean isInUse() {
+        return this.inUse;
     }
 
     public int[] getColorLevels() {

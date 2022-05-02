@@ -39,24 +39,6 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
 
     public LabelerScreen(LabelerMenu labelerMenu, Inventory inventory, Component component) {
         super(labelerMenu, inventory, component);
-//        labelerMenu.addSlotListener(new ContainerListener() {
-//            @Override
-//            public void slotChanged(AbstractContainerMenu menu, int slotId, ItemStack stack) {
-//                if (menu instanceof LabelerMenu labelerMenuInner) {
-//                    Button finishButton = LabelerScreen.this.finishButton;
-//                    if (finishButton != null) {
-//                        finishButton.active = !labelerMenuInner.getPaperSlot().getItem().isEmpty() &&
-//                                              !labelerMenuInner.getRecordSlot().getItem().isEmpty() &&
-//                                              !LabelerScreen.this.authorEditBox.getValue().isEmpty() &&
-//                                              !LabelerScreen.this.titleEditBox.getValue().isEmpty();
-//                    }
-//                }
-//            }
-//
-//            @Override
-//            public void dataChanged(AbstractContainerMenu menu, int dataSlotIndex, int value) {
-//            }
-//        });
         LabelerBlockEntity labelerBlockEntity = this.menu.getLabelerBlockEntity();
         this.clientCanvas = new ClientCanvas(
                 labelerBlockEntity.getPixelIndexModel(),

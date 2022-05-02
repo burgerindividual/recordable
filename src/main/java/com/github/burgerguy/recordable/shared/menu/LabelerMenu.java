@@ -56,7 +56,9 @@ public class LabelerMenu extends AbstractContainerMenu {
         super(INSTANCE, containerId);
 
         this.allowedDyeItems = new ObjectOpenHashSet<>(LabelerConstants.COLOR_COUNT);
-        for ()
+        for (PaintColor paintColor : LabelerConstants.DEFINED_COLORS) {
+            this.allowedDyeItems.add(paintColor.dyeItem());
+        }
 
         // create paints from constants
         this.paints = new Paint[LabelerConstants.COLOR_COUNT];
@@ -94,8 +96,7 @@ public class LabelerMenu extends AbstractContainerMenu {
         this.dyeSlot = this.addSlot(new Slot(this.container, DYE_SLOT_ID, 65, 68) {
             @Override
             public boolean mayPlace(ItemStack stack) {
-                // TODO: change restriction, iterate thru dyes and save map on constructor
-                return stack.getItem() instanceof DyeItem;
+                return LabelerMenu.this.allowedDyeItems.contains(stack.getItem());
             }
         });
 
@@ -217,14 +218,14 @@ public class LabelerMenu extends AbstractContainerMenu {
                     if (!this.moveItemStackTo(itemStack2, this.paperSlot.index, this.paperSlot.index + 1, false)) {
                         return ItemStack.EMPTY;
                     }
-                } else if (index >= 4 && index < 31) {
-                    if (!this.moveItemStackTo(itemStack2, 31, 40, false)) {
+                } else if (index >= 3 && index < 30) {
+                    if (!this.moveItemStackTo(itemStack2, 30, 39, false)) {
                         return ItemStack.EMPTY;
                     }
-                } else if (index >= 31 && index < 40 && !this.moveItemStackTo(itemStack2, 4, 31, false)) {
+                } else if (index >= 30 && index < 39 && !this.moveItemStackTo(itemStack2, 4, 30, false)) {
                     return ItemStack.EMPTY;
                 }
-            } else if (!this.moveItemStackTo(itemStack2, 4, 40, false)) {
+            } else if (!this.moveItemStackTo(itemStack2, 4, 39, false)) {
                 return ItemStack.EMPTY;
             }
 

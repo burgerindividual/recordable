@@ -98,32 +98,42 @@ public class CopperRecordItem extends Item {
     public void appendHoverText(ItemStack itemStack, @Nullable Level level, List<Component> tooltipComponents, TooltipFlag isAdvanced) {
         super.appendHoverText(itemStack, level, tooltipComponents, isAdvanced);
 
+        if (hasSongInfo(itemStack)) {
+            tooltipComponents.add(getSongTextInner(itemStack).withStyle(ChatFormatting.GRAY));
+        }
+
         boolean isWritten = itemStack.getOrCreateTag().contains("ScoreID", Tag.TAG_LONG);
-        if (isWritten) {
-            tooltipComponents.add(getSongText(itemStack).withStyle(ChatFormatting.GRAY));
-        } else {
+        if (!isWritten) {
             tooltipComponents.add(new TranslatableComponent("item.recordable.copper_record.blank").withStyle(ChatFormatting.GRAY));
         }
     }
 
     public static TranslatableComponent getSongText(ItemStack itemStack) {
-        if (itemStack.getOrCreateTag().contains("SongInfo", Tag.TAG_COMPOUND)) {
-            CompoundTag songInfo = itemStack.getOrCreateTag().getCompound("SongInfo");
-            Component author = songInfo.contains("Author") ?
-                    new TextComponent(songInfo.getString("Author")) :
-                    new TranslatableComponent("item.recordable.copper_record.unknown_author");
-
-            Component title = songInfo.contains("Title") ?
-                    new TextComponent(songInfo.getString("Title")) :
-                    new TranslatableComponent("item.recordable.copper_record.unknown_title");
-
-            return new TranslatableComponent("item.recordable.copper_record.song_info", author, title);
+        if (hasSongInfo(itemStack)) {
+            return getSongTextInner(itemStack);
         } else {
             return new TranslatableComponent("item.recordable.copper_record.song_info",
-                new TranslatableComponent("item.recordable.copper_record.unknown_author"),
-                new TranslatableComponent("item.recordable.copper_record.unknown_title")
+                                             new TranslatableComponent("item.recordable.copper_record.unknown_author"),
+                                             new TranslatableComponent("item.recordable.copper_record.unknown_title")
             );
         }
+    }
+
+    public static boolean hasSongInfo(ItemStack itemStack) {
+        return itemStack.getOrCreateTag().contains("SongInfo", Tag.TAG_COMPOUND);
+    }
+
+    private static TranslatableComponent getSongTextInner(ItemStack itemStack) {
+        CompoundTag songInfo = itemStack.getOrCreateTag().getCompound("SongInfo");
+        Component author = songInfo.contains("Author") ?
+                           new TextComponent(songInfo.getString("Author")) :
+                           new TranslatableComponent("item.recordable.copper_record.unknown_author");
+
+        Component title = songInfo.contains("Title") ?
+                          new TextComponent(songInfo.getString("Title")) :
+                          new TranslatableComponent("item.recordable.copper_record.unknown_title");
+
+        return new TranslatableComponent("item.recordable.copper_record.song_info", author, title);
     }
 
     public static int getColor(ItemStack itemStack, int layerId) {
@@ -151,7 +161,6 @@ public class CopperRecordItem extends Item {
     }
 
     public static boolean isWritten(ItemStack itemStack) {
-        if (!itemStack.is(CopperRecordItem.INSTANCE)) return false;
         return itemStack.getOrCreateTag().contains("ScoreID", Tag.TAG_LONG);
     }
 

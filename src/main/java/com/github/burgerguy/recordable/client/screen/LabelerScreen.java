@@ -258,6 +258,12 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
     }
 
     @Override
+    public void render(PoseStack poseStack, int mouseX, int mouseY, float partialTick) {
+        super.render(poseStack, mouseX, mouseY, partialTick);
+        this.renderTooltip(poseStack, mouseX, mouseY);
+    }
+
+    @Override
     protected void renderBg(PoseStack matrixStack, float partialTick, int mouseX, int mouseY) {
         this.renderBackground(matrixStack);
         RenderSystem.setShader(GameRenderer::getPositionTexShader);

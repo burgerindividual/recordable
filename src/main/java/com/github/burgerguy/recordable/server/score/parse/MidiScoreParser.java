@@ -51,9 +51,9 @@ public class MidiScoreParser {
                                 currentTick,
                                 new PartialSoundInstance(
                                         channelToSoundEventMap.get(sm.getChannel()),
-                                        1.0f,
-                                        1.0f,
-                                        1.0f,
+                                        0.0f,
+                                        0.0f,
+                                        0.0f,
                                         volume,
                                         pitch
                                 )

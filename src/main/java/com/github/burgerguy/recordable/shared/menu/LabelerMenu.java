@@ -35,6 +35,7 @@ public class LabelerMenu extends AbstractContainerMenu {
     private static final int HOTBAR_Y = 158;
 
     private final LabelerBlockEntity labelerBlockEntity;
+    private final PaintPalette paintPalette;
     private final Set<Item> allowedDyeItems;
 
     private final Container container;
@@ -52,8 +53,9 @@ public class LabelerMenu extends AbstractContainerMenu {
 
     public LabelerMenu(int containerId, Inventory playerInventory, LabelerBlockEntity labelerBlockEntity) {
         super(INSTANCE, containerId);
-        this.allowedDyeItems = Recordable.getColorPalette().getAllAcceptedItems();
         this.labelerBlockEntity = labelerBlockEntity;
+        this.allowedDyeItems = Recordable.getColorPalette().getAllAcceptedItems();
+        this.paintPalette = labelerBlockEntity.createPaintPalette();
         this.container = new SimpleContainer(3) {
             @Override
             public void setChanged() {
@@ -62,8 +64,9 @@ public class LabelerMenu extends AbstractContainerMenu {
 
                 if (!dyeItem.isEmpty()) {
                     boolean changed = false;
-                    for (Paint paint : labelerBlockEntity.getRawColorToPaintMap().values()) {
-                        changed |= paint.addLevelFromItem(dyeItem);
+                    PaintPalette paintPalette = LabelerMenu.this.paintPalette;
+                    for (Paint paint : paintPalette.getPaints()) {
+                        changed |= paint.addLevelFromItem(dyeItem, paintPalette.getItemHistory(paint.getColor().getRawColor()));
 
                         if (dyeItem.isEmpty()) {
                             // all item count used

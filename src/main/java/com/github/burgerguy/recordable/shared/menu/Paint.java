@@ -8,7 +8,6 @@ import net.minecraft.world.item.ItemStack;
 public class Paint {
 
     private final PaintColor color;
-    private final Deque<ItemStack> addedItems;
     private final int maxCapacity;
 
     private int level;
@@ -18,7 +17,6 @@ public class Paint {
         this.color = color;
         this.maxCapacity = maxCapacity;
         this.level = initialLevel;
-        this.addedItems = new ArrayDeque<>(8);
     }
 
     public PaintColor getColor() {
@@ -53,20 +51,20 @@ public class Paint {
      * part of the dye.
      * @return if the itemStack was altered
      */
-    public boolean addLevelFromItem(ItemStack itemStack) {
+    public boolean addLevelFromItem(ItemStack itemStack, Deque<ItemStack> paintItemHistory) {
         int level = this.color.getItemLevelOrInvalid(itemStack.getItem());
         if (level != PaintColor.ITEM_INVALID) {
             // integer division truncates, which is what we want
             int consumed = Math.min((this.maxCapacity - this.level) / level, itemStack.getCount());
             this.level += (consumed * level);
 
-            ItemStack lastItemStack = this.addedItems.peekLast();
+            ItemStack lastItemStack = paintItemHistory.peekLast();
             if (lastItemStack != null && lastItemStack.sameItem(itemStack)) {
                 // merge with existing top item in deque
                 itemStack.shrink(consumed);
                 lastItemStack.grow(consumed);
             } else {
-                this.addedItems.addLast(itemStack.split(consumed));
+                paintItemHistory.addLast(itemStack.split(consumed));
             }
             return true;
         }

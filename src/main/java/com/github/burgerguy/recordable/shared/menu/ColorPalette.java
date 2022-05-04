@@ -73,13 +73,11 @@ public class ColorPalette {
         return items;
     }
 
-    public Int2ObjectSortedMap<Paint> createPaints(Int2IntMap rawColorToLevelMap, int maxPaintCapacity) {
-        Int2ObjectSortedMap<Paint> paints = new Int2ObjectLinkedOpenHashMap<>(this.getColorCount());
+    public void createPaints(Int2IntMap rawColorToLevelMap, int maxPaintCapacity, Int2ObjectSortedMap<Paint> rawColorToPaintMap) {
         for (PaintColor paintColor : this.rawColorToPaintColorMap.values()) {
             int rawColor = paintColor.getRawColor();
-            paints.put(rawColor, new Paint(paintColor, rawColorToLevelMap.get(paintColor.getRawColor()), maxPaintCapacity));
+            rawColorToPaintMap.put(rawColor, new Paint(paintColor, rawColorToLevelMap.get(paintColor.getRawColor()), maxPaintCapacity));
         }
-        return paints;
     }
 
 }

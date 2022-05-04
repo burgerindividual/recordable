@@ -4,10 +4,8 @@ import com.github.burgerguy.recordable.shared.Recordable;
 import com.github.burgerguy.recordable.shared.menu.LabelerConstants;
 import com.github.burgerguy.recordable.shared.menu.LabelerMenu;
 import com.github.burgerguy.recordable.shared.menu.Paint;
-import it.unimi.dsi.fastutil.ints.Int2IntMap;
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
+import com.github.burgerguy.recordable.shared.menu.PaintPalette;
+import it.unimi.dsi.fastutil.ints.*;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.minecraft.core.BlockPos;
@@ -32,10 +30,11 @@ public class LabelerBlockEntity extends BlockEntity implements ExtendedScreenHan
     public static final BlockEntityType<LabelerBlockEntity> INSTANCE = FabricBlockEntityTypeBuilder.create(LabelerBlockEntity::new, LabelerBlock.INSTANCE).build(null);
     public static final ResourceLocation IDENTIFIER = new ResourceLocation(Recordable.MOD_ID, "labeler");
 
-    private Int2ObjectSortedMap<Paint> rawColorToPaintMap;
+    private final Int2ObjectSortedMap<Paint> rawColorToPaintMap;
 
     public LabelerBlockEntity(BlockPos blockPos, BlockState blockState) {
         super(INSTANCE, blockPos, blockState);
+        this.rawColorToPaintMap = new Int2ObjectLinkedOpenHashMap<>(Recordable.getColorPalette().getColorCount());
     }
 
     @Nullable
@@ -64,7 +63,11 @@ public class LabelerBlockEntity extends BlockEntity implements ExtendedScreenHan
                 int level = colorLevels[i + 1];
                 rawColorToLevelMap.put(rawColor, level);
             }
-            this.rawColorToPaintMap = Recordable.getColorPalette().createPaints(rawColorToLevelMap, LabelerConstants.PAINT_MAX_CAPACITY);
+            Recordable.getColorPalette().createPaints(
+                    rawColorToLevelMap,
+                    LabelerConstants.PAINT_MAX_CAPACITY,
+                    this.rawColorToPaintMap
+            );
         }
     }
 
@@ -97,8 +100,11 @@ public class LabelerBlockEntity extends BlockEntity implements ExtendedScreenHan
         buffer.writeBlockPos(this.getBlockPos());
     }
 
-    public Int2ObjectSortedMap<Paint> getRawColorToPaintMap() {
-        return this.rawColorToPaintMap;
+    public PaintPalette createPaintPalette() {
+        return new PaintPalette(
+                this.rawColorToPaintMap,
+                new Int2ObjectOpenHashMap<>(this.rawColorToPaintMap.size())
+        );
     }
 
     public int[] getPixelIndexModel() {

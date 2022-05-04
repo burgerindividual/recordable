@@ -45,13 +45,10 @@ public class LabelerBlock extends BaseEntityBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         if (!level.isClientSide) {
-            LabelerBlockEntity labelerBlockEntity = (LabelerBlockEntity) level.getBlockEntity(pos);
-            if (!labelerBlockEntity.isInUse()) {
-                MenuProvider menuProvider = state.getMenuProvider(level, pos);
+            MenuProvider menuProvider = state.getMenuProvider(level, pos);
 
-                if (menuProvider != null) {
-                    player.openMenu(menuProvider);
-                }
+            if (menuProvider != null) {
+                player.openMenu(menuProvider);
             }
         }
         return InteractionResult.SUCCESS;

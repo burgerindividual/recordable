@@ -1,22 +1,24 @@
 package com.github.burgerguy.recordable.shared.menu;
 
 import com.github.burgerguy.recordable.shared.util.ColorUtil;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import net.minecraft.world.item.ItemStack;
 
 public class Paint {
 
     private final PaintColor color;
+    private final Deque<ItemStack> addedItems;
     private final int maxCapacity;
-    private final int levelPerItem;
 
     private int level;
     private boolean canApply;
 
-    public Paint(PaintColor color, int initialLevel, int maxCapacity, int levelPerItem) {
+    public Paint(PaintColor color, int initialLevel, int maxCapacity) {
         this.color = color;
         this.maxCapacity = maxCapacity;
-        this.levelPerItem = levelPerItem;
         this.level = initialLevel;
+        this.addedItems = new ArrayDeque<>(8);
     }
 
     public PaintColor getColor() {
@@ -38,9 +40,9 @@ public class Paint {
     public int applyColor(boolean mix, int otherColor) {
         if (this.canApply) {
             if (mix) {
-                return ColorUtil.mixColors(this.color.rawColor(), otherColor);
+                return ColorUtil.mixColors(this.color.getRawColor(), otherColor);
             } else {
-                return this.color.rawColor();
+                return this.color.getRawColor();
             }
         }
         return otherColor;
@@ -52,11 +54,20 @@ public class Paint {
      * @return if the itemStack was altered
      */
     public boolean addLevelFromItem(ItemStack itemStack) {
-        if (itemStack.is(this.color.dyeItem())) {
+        int level = this.color.getItemLevelOrInvalid(itemStack.getItem());
+        if (level != PaintColor.ITEM_INVALID) {
             // integer division truncates, which is what we want
-            int consumed = Math.min((this.maxCapacity - this.level) / this.levelPerItem, itemStack.getCount());
-            itemStack.shrink(consumed);
-            this.level += (consumed * this.levelPerItem);
+            int consumed = Math.min((this.maxCapacity - this.level) / level, itemStack.getCount());
+            this.level += (consumed * level);
+
+            ItemStack lastItemStack = this.addedItems.peekLast();
+            if (lastItemStack != null && lastItemStack.sameItem(itemStack)) {
+                // merge with existing top item in deque
+                itemStack.shrink(consumed);
+                lastItemStack.grow(consumed);
+            } else {
+                this.addedItems.addLast(itemStack.split(consumed));
+            }
             return true;
         }
         return false;
@@ -68,11 +79,16 @@ public class Paint {
     }
 
     public void incrementLevel() {
+        if (this.isFull()) throw new IllegalStateException("Tried to increment level when already full");
         this.level++;
     }
 
     public boolean isEmpty() {
         return this.level == 0;
+    }
+
+    public boolean isFull() {
+        return this.level == this.maxCapacity;
     }
 
 }

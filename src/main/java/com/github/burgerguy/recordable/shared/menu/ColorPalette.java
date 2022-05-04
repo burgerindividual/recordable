@@ -1,9 +1,7 @@
 package com.github.burgerguy.recordable.shared.menu;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
-import java.util.Collection;
-import java.util.HashSet;
+import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import java.util.Set;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
@@ -12,51 +10,76 @@ import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.Item;
 
 public class ColorPalette {
-    private final Int2ObjectSortedMap<Color> rawColorMap;
+    private final Int2ObjectSortedMap<PaintColor> rawColorToPaintColorMap;
 
     public ColorPalette() {
-        this.rawColorMap = new Int2ObjectLinkedOpenHashMap<>(16);
+        this.rawColorToPaintColorMap = new Int2ObjectLinkedOpenHashMap<>(16);
     }
 
-    public void addColor(int rawColor, Component name) {
-        this.getOrCreateKey(rawColor, name).dyeItems.add(dyeItem);
+    PaintColor addColor(int rawColor, Component name) {
+        PaintColor paintColor = new PaintColor(rawColor, name);
+        this.rawColorToPaintColorMap.put(rawColor, paintColor);
+        return paintColor;
+    }
+
+    void addDye(DyeColor dyeColor) {
+        PaintColor paintColor = this.addColor(dyeColor.getTextColor(), new TextComponent(dyeColor.getName()));
+        paintColor.addItem(DyeItem.byColor(dyeColor), LabelerConstants.PAINT_LEVEL_PER_ITEM);
+    }
+
+    public void setToDefaults() {
+        // ordered by hue because it looks nice
+        this.addDye(DyeColor.WHITE);
+        this.addDye(DyeColor.LIGHT_GRAY);
+        this.addDye(DyeColor.GRAY);
+        this.addDye(DyeColor.BLACK);
+        this.addDye(DyeColor.RED);
+        this.addDye(DyeColor.PINK);
+        this.addDye(DyeColor.MAGENTA);
+        this.addDye(DyeColor.PURPLE);
+        this.addDye(DyeColor.BLUE);
+        this.addDye(DyeColor.LIGHT_BLUE);
+        this.addDye(DyeColor.CYAN);
+        this.addDye(DyeColor.GREEN);
+        this.addDye(DyeColor.LIME);
+        this.addDye(DyeColor.YELLOW);
+        this.addDye(DyeColor.BROWN);
+        this.addDye(DyeColor.ORANGE);
     }
 
     /**
-     * Helper method for {@link ColorPalette#add(int, Component, Item)} to use built in
-     * values from {@link DyeColor}
+     * Adds items to existing entries of the palette
      */
-    public void addFromDyeColor(DyeColor dyeColor) {
-        this.add(dyeColor.getTextColor(), new TextComponent(dyeColor.getName()), DyeItem.byColor(dyeColor));
+    public void addItemToRawColor(int rawColor, Item dyeItem, int level) {
+        this.rawColorToPaintColorMap.get(rawColor).addItem(dyeItem, level);
     }
 
     /**
-     * Adds items to existing DyeColor entries of the palette
+     * Helper method for {@link ColorPalette#addItemToRawColor(int, Item, int)}
      */
-    public void addItemsToDye(DyeColor dyeColor, Set<Item> dyeItems) {
-        this.rawColorMap.get(dyeColor.getTextColor()).dyeItems.addAll(dyeItems);
+    public void addItemToDye(DyeColor dyeColor, Item dyeItem, int level) {
+        this.addItemToRawColor(dyeColor.getTextColor(), dyeItem, level);
     }
 
-    /**
-     * Helper method for {@link ColorPalette#addItemsToDye(DyeColor, Set)}
-     */
-    public void addItemToDye(DyeColor dyeColor, Item dyeItem) {
-        this.rawColorMap.get(dyeColor.getTextColor()).dyeItems.add(dyeItem);
+    public int getColorCount() {
+        return this.rawColorToPaintColorMap.size();
     }
 
-    private Color getOrCreateKey(int rawColor, Component name) {
-        return this.rawColorMap.computeIfAbsent(rawColor, rc -> {
-            Set<Item> itemSet = new HashSet<>();
-            return new Color(rc, name, itemSet);
-        });
+    public Set<Item> getAllAcceptedItems() {
+        Set<Item> items = new ObjectOpenHashSet<>();
+        for (PaintColor paintColor : this.rawColorToPaintColorMap.values()) {
+            items.addAll(paintColor.getAcceptedItems());
+        }
+        return items;
     }
 
-    public Collection<Color> createPaintPalette() {
-
+    public Int2ObjectSortedMap<Paint> createPaints(Int2IntMap rawColorToLevelMap, int maxPaintCapacity) {
+        Int2ObjectSortedMap<Paint> paints = new Int2ObjectLinkedOpenHashMap<>(this.getColorCount());
+        for (PaintColor paintColor : this.rawColorToPaintColorMap.values()) {
+            int rawColor = paintColor.getRawColor();
+            paints.put(rawColor, new Paint(paintColor, rawColorToLevelMap.get(paintColor.getRawColor()), maxPaintCapacity));
+        }
+        return paints;
     }
 
-    public record Color(int rawColor, Component name, Set<Item> colorItems) {}
-    public record ColorItem(Item item, int levelAdd) {
-
-    }
 }

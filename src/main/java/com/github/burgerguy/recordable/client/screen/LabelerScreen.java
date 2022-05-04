@@ -8,6 +8,7 @@ import com.github.burgerguy.recordable.shared.menu.LabelerMenu;
 import com.github.burgerguy.recordable.shared.menu.Paint;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import java.util.Collection;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.client.Minecraft;
@@ -43,7 +44,7 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
         this.clientCanvas = new ClientCanvas(
                 labelerBlockEntity.getPixelIndexModel(),
                 labelerBlockEntity.getPixelModelWidth(),
-                labelerMenu.getPaints()
+                labelerMenu.getLabelerBlockEntity().getRawColorToPaintMap()
         );
 
         // image height adjustment
@@ -77,20 +78,22 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
             ScreenRenderUtil.startBlits(ScreenRenderUtil.BLIT_BUFFER_1);
         });
 
-        Paint[] paints = this.menu.getPaints();
-        this.paintWidgets = new PaintWidget[paints.length];
-        for (int i = 0; i < paints.length; i++) {
-            int xIdx = i / LabelerConstants.PALETTE_COLUMNS_WRAP;
-            int yIdx = i % LabelerConstants.PALETTE_COLUMNS_WRAP;
+        Collection<Paint> paints = this.menu.getLabelerBlockEntity().getRawColorToPaintMap().values();
+        this.paintWidgets = new PaintWidget[paints.size()];
+        int idx = 0;
+        for (Paint paint : paints) {
+            int xIdx = idx / LabelerConstants.PALETTE_COLUMNS_WRAP;
+            int yIdx = idx % LabelerConstants.PALETTE_COLUMNS_WRAP;
             PaintWidget paintWidget = new PaintWidget(
                     this.leftPos + LabelerConstants.PALETTE_X + xIdx * (LabelerConstants.COLOR_WIDTH + LabelerConstants.COLOR_MARGIN_X),
                     this.topPos + LabelerConstants.PALETTE_Y + yIdx * (LabelerConstants.COLOR_HEIGHT + LabelerConstants.COLOR_MARGIN_Y),
                     LabelerConstants.COLOR_WIDTH,
                     LabelerConstants.COLOR_HEIGHT,
-                    this.menu.getPaints()[i]
+                    paint
             );
-            this.paintWidgets[i] = paintWidget;
+            this.paintWidgets[idx] = paintWidget;
             this.addRenderableWidget(paintWidget);
+            idx++;
         }
 
         this.addRenderableWidget(new CanvasWidget(

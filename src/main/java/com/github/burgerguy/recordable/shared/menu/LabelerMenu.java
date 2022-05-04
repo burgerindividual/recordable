@@ -4,7 +4,6 @@ import com.github.burgerguy.recordable.shared.Recordable;
 import com.github.burgerguy.recordable.shared.block.LabelerBlockEntity;
 import com.github.burgerguy.recordable.shared.item.CopperRecordItem;
 import com.github.burgerguy.recordable.shared.util.MenuUtil;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import java.util.Objects;
 import java.util.Set;
 import net.fabricmc.fabric.impl.screenhandler.ExtendedScreenHandlerType;
@@ -36,7 +35,6 @@ public class LabelerMenu extends AbstractContainerMenu {
     private static final int HOTBAR_Y = 158;
 
     private final LabelerBlockEntity labelerBlockEntity;
-    private final Paint[] paints;
     private final Set<Item> allowedDyeItems;
 
     private final Container container;
@@ -54,22 +52,7 @@ public class LabelerMenu extends AbstractContainerMenu {
 
     public LabelerMenu(int containerId, Inventory playerInventory, LabelerBlockEntity labelerBlockEntity) {
         super(INSTANCE, containerId);
-
-        this.allowedDyeItems = new ObjectOpenHashSet<>(LabelerConstants.COLOR_COUNT);
-        for (PaintColor paintColor : LabelerConstants.DEFINED_COLORS) {
-            this.allowedDyeItems.add(paintColor.dyeItem());
-        }
-
-        // create paints from constants
-        this.paints = new Paint[LabelerConstants.COLOR_COUNT];
-        for (int i = 0; i < this.paints.length; i++) {
-            this.paints[i] = new Paint(
-                    LabelerConstants.DEFINED_COLORS[i],
-                    labelerBlockEntity.getColorLevels()[i],
-                    LabelerConstants.COLOR_MAX_CAPACITY,
-                    LabelerConstants.COLOR_LEVEL_PER_ITEM
-            );
-        }
+        this.allowedDyeItems = Recordable.getColorPalette().getAllAcceptedItems();
         this.labelerBlockEntity = labelerBlockEntity;
         this.container = new SimpleContainer(3) {
             @Override
@@ -78,17 +61,24 @@ public class LabelerMenu extends AbstractContainerMenu {
                 ItemStack dyeItem = this.getItem(DYE_SLOT_ID);
 
                 if (!dyeItem.isEmpty()) {
-                    for (int i = 0; i < LabelerMenu.this.paints.length; i++) {
-                        Paint paint = LabelerMenu.this.paints[i];
-                        paint.addLevelFromItem(dyeItem);
-                        LabelerMenu.this.getLabelerBlockEntity().getColorLevels()[i] = paint.getLevel();
-                        // all item count used
-                        if (dyeItem.isEmpty()) break;
+                    boolean changed = false;
+                    for (Paint paint : labelerBlockEntity.getRawColorToPaintMap().values()) {
+                        changed |= paint.addLevelFromItem(dyeItem);
+
+                        if (dyeItem.isEmpty()) {
+                            // all item count used
+                            break;
+                        }
+                    }
+
+                    if (changed) {
+                        // broadcast changes to clients
+                        MenuUtil.updateBlockEntity(labelerBlockEntity);
+                        // broadcast changes to client screens
+                        LabelerMenu.this.slotsChanged(this);
                     }
                 }
                 super.setChanged();
-                // broadcast changes to client
-                LabelerMenu.this.slotsChanged(this);
             }
         };
 
@@ -146,7 +136,6 @@ public class LabelerMenu extends AbstractContainerMenu {
         Canvas recreatedCanvas = Canvas.fromBuffer(
                 labeler.getPixelIndexModel(),
                 labeler.getPixelModelWidth(),
-                labeler.getColorLevels(),
                 buffer
         );
 
@@ -165,10 +154,6 @@ public class LabelerMenu extends AbstractContainerMenu {
 
     public LabelerBlockEntity getLabelerBlockEntity() {
         return this.labelerBlockEntity;
-    }
-
-    public Paint[] getPaints() {
-        return this.paints;
     }
 
     public Slot getDyeSlot() {
@@ -196,7 +181,6 @@ public class LabelerMenu extends AbstractContainerMenu {
     public void removed(Player player) {
         super.removed(player);
         this.clearContainer(player, this.container);
-        this.labelerBlockEntity.setInUse(false);
     }
 
     @Override

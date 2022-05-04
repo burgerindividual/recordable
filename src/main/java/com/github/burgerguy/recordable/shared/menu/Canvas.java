@@ -2,6 +2,7 @@ package com.github.burgerguy.recordable.shared.menu;
 
 import com.github.burgerguy.recordable.shared.Recordable;
 import com.github.burgerguy.recordable.shared.util.ColorUtil;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import java.util.Arrays;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -41,23 +42,17 @@ public class Canvas {
     /**
      * This also reflects the side effects on the color levels from coloring.
      */
-    public static Canvas fromBuffer(int[] pixelIndexModel, int width, int[] colorLevels, FriendlyByteBuf buffer) {
+    public static Canvas fromBuffer(int[] pixelIndexModel, int width, FriendlyByteBuf buffer) {
         Canvas canvas = new Canvas(pixelIndexModel, width);
         while (buffer.isReadable() && buffer.readableBytes() >= PER_PAINT_EVENT_BYTES) {
-            int colorIdx = buffer.readInt();
+            int rawColor = buffer.readInt();
             int pixelIdx = buffer.readInt();
             boolean isMixed = buffer.readBoolean();
-            if (0 > colorIdx || colorIdx >= LabelerConstants.COLOR_COUNT) {
-                Recordable.LOGGER.warn("Color index out of bounds: " + colorIdx);
-            } else if (colorLevels[colorIdx] == 0) {
-                Recordable.LOGGER.warn("Tried to use color which is already at 0 level (idx: " + colorIdx + ")");
-            } else if (!canvas.isIndexValid(pixelIdx)) {
+            if (!canvas.isIndexValid(pixelIdx)) {
                 Recordable.LOGGER.warn("Pixel index out of bounds: " + pixelIdx);
             } else {
-                int resolvedColor = LabelerConstants.DEFINED_COLORS[colorIdx].rawColor();
-                int newColor = isMixed ? ColorUtil.mixColors(canvas.getColor(pixelIdx), resolvedColor) : resolvedColor;
+                int newColor = isMixed ? ColorUtil.mixColors(canvas.getColor(pixelIdx), rawColor) : rawColor;
                 canvas.setColor(pixelIdx, newColor);
-                colorLevels[colorIdx] -= 1;
             }
         }
         return canvas;

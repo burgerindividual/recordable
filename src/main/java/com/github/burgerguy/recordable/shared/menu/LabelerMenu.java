@@ -6,8 +6,6 @@ import com.github.burgerguy.recordable.shared.item.CopperRecordItem;
 import com.github.burgerguy.recordable.shared.util.MenuUtil;
 import java.util.Objects;
 import java.util.Set;
-import net.fabricmc.fabric.api.transfer.v1.item.PlayerInventoryStorage;
-import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.impl.screenhandler.ExtendedScreenHandlerType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -165,19 +163,15 @@ public class LabelerMenu extends AbstractContainerMenu {
     }
 
     // c -> (s)
-    @SuppressWarnings("UnstableApiUsage")
     public void handleCanvasLevelChange(FriendlyByteBuf buffer) {
-        PlayerInventoryStorage playerInventoryStorage = PlayerInventoryStorage.of(this.playerInventory);
-        try (Transaction transaction = Transaction.openOuter()) {
-            while (buffer.readableBytes() >= (Integer.BYTES * 2)) {
-                int rawColor = buffer.readInt();
-                int amount = buffer.readInt();
-                Paint paint = this.paintPalette.getPaint(rawColor);
-                if (paint == null) {
-                    Recordable.LOGGER.warn("Tried to change level for unknown paint: " + rawColor);
-                } else if (!this.paintPalette.tryReceiveCanvasLevelChange(paint, amount, playerInventoryStorage, transaction)) {
-                    Recordable.LOGGER.warn("Tried to change level out of bounds. level: " + paint.getLevel() + ", change: " + amount);
-                }
+        while (buffer.readableBytes() >= (Integer.BYTES * 2)) {
+            int rawColor = buffer.readInt();
+            int amount = buffer.readInt();
+            Paint paint = this.paintPalette.getPaint(rawColor);
+            if (paint == null) {
+                Recordable.LOGGER.warn("Tried to change level for unknown paint: " + rawColor);
+            } else if (!this.paintPalette.tryReceiveCanvasLevelChange(paint, amount, this.playerInventory)) {
+                Recordable.LOGGER.warn("Tried to change level out of bounds. level: " + paint.getLevel() + ", change: " + amount);
             }
         }
         // update and broadcast color levels

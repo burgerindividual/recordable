@@ -10,18 +10,11 @@ import java.util.Collection;
 import java.util.Deque;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
-import net.fabricmc.fabric.api.transfer.v1.item.PlayerInventoryStorage;
-import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
-import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
-// We use the new fabric transaction api here, which is considered unstable.
-// I honestly couldn't care less as long as quilt has support for it.
-@SuppressWarnings("UnstableApiUsage")
 public final class PaintPalette {
     private final Int2ObjectSortedMap<Paint> rawColorToPaintMap;
     private final Int2ObjectMap<Deque<ItemHistoryElement>> rawColorToItemHistory;
@@ -105,7 +98,7 @@ public final class PaintPalette {
     /**
      * Called when labeler menu closes on both client and server
      */
-    public boolean returnExcess(Paint paint, PlayerInventoryStorage playerInventoryStorage, TransactionContext transactionContext) {
+    public boolean returnExcess(Paint paint, Inventory playerInventory) {
         if (paint.getLevel() > paint.getMaxCapacity()) {
             Deque<ItemHistoryElement> itemHistory = this.rawColorToItemHistory.get(paint.getColor().getRawColor());
             if (itemHistory == null) return false;
@@ -138,8 +131,7 @@ public final class PaintPalette {
                         // also, we have our own checks in this method
                         paint.changeLevelNoOverflow(-returnedItemCount * itemLevel);
 
-                        playerInventoryStorage.offerOrDrop(ItemVariant.of(itemStack.getItem()), returnedItemCount, transactionContext);
-                        itemStack.shrink(returnedItemCount);
+                        playerInventory.placeItemBackInInventory(itemStack.split(returnedItemCount));
 
                         if (itemStack.isEmpty()) {
                             itemHistory.remove();
@@ -157,9 +149,9 @@ public final class PaintPalette {
     }
 
     // (c) -> s
-    public void sendCanvasLevelChange(Paint paint, int amount, PlayerInventoryStorage playerInventoryStorage, TransactionContext transactionContext) {
+    public void sendCanvasLevelChange(Paint paint, int amount, Inventory playerInventory) {
         if (paint.tryChangeLevelCanvas(amount)) {
-            this.returnExcess(paint, playerInventoryStorage, transactionContext);
+            this.returnExcess(paint, playerInventory);
             FriendlyByteBuf buffer = PacketByteBufs.create();
             buffer.resetWriterIndex();
             buffer.writeInt(paint.getColor().getRawColor());
@@ -170,23 +162,12 @@ public final class PaintPalette {
         }
     }
 
-    public void sendCanvasLevelChange(Paint paint, int amount, Inventory playerInventory) {
-        try (Transaction transaction = Transaction.openOuter()) {
-            this.sendCanvasLevelChange(
-                    paint,
-                    amount,
-                    PlayerInventoryStorage.of(playerInventory),
-                    transaction
-            );
-        }
-    }
-
     // c -> (s)
-    public boolean tryReceiveCanvasLevelChange(Paint paint, int amount, PlayerInventoryStorage playerInventoryStorage, TransactionContext transactionContext) {
+    public boolean tryReceiveCanvasLevelChange(Paint paint, int amount, Inventory playerInventory) {
         boolean isChangeValid = paint.tryChangeLevelCanvas(amount);
 
         if (isChangeValid) {
-            this.returnExcess(paint, playerInventoryStorage, transactionContext);
+            this.returnExcess(paint, playerInventory);
         }
 
         return isChangeValid;
@@ -194,12 +175,10 @@ public final class PaintPalette {
 
     public boolean onMenuExit(Inventory playerInventory) {
         boolean changed = false;
-        PlayerInventoryStorage playerInventoryStorage = PlayerInventoryStorage.of(playerInventory);
-        try (Transaction transaction = Transaction.openOuter()) {
-            for (Paint paint : this.getPaints()) {
-                paint.removeCanvasLevelChange();
-                changed |= this.returnExcess(paint, playerInventoryStorage, transaction);
-            }
+
+        for (Paint paint : this.getPaints()) {
+            paint.removeCanvasLevelChange();
+            changed |= this.returnExcess(paint, playerInventory);
         }
 
         for (Deque<ItemHistoryElement> itemHistory : this.rawColorToItemHistory.values()) {

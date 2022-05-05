@@ -2,6 +2,8 @@ package com.github.burgerguy.recordable.shared.menu;
 
 import com.github.burgerguy.recordable.shared.Recordable;
 import com.github.burgerguy.recordable.shared.util.ColorUtil;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import java.util.Arrays;
 import net.minecraft.nbt.CompoundTag;
@@ -39,9 +41,6 @@ public class Canvas {
         Arrays.fill(this.colors, CLEAR_COLOR);
     }
 
-    /**
-     * This also reflects the side effects on the color levels from coloring.
-     */
     public static Canvas fromBuffer(int[] pixelIndexModel, int width, FriendlyByteBuf buffer) {
         Canvas canvas = new Canvas(pixelIndexModel, width);
         while (buffer.isReadable() && buffer.readableBytes() >= PER_PAINT_EVENT_BYTES) {
@@ -54,6 +53,30 @@ public class Canvas {
                 int newColor = isMixed ? ColorUtil.mixColors(canvas.getColor(pixelIdx), rawColor) : rawColor;
                 canvas.setColor(pixelIdx, newColor);
             }
+        }
+        return canvas;
+    }
+
+    public static Canvas fromBufferVerified(int[] pixelIndexModel, int width, FriendlyByteBuf buffer, Int2IntOpenHashMap levelsSnapshot, PaintPalette paintPalette) {
+        Int2IntMap levelsSnapshotCopy = levelsSnapshot.clone();
+        Canvas canvas = new Canvas(pixelIndexModel, width);
+        while (buffer.isReadable() && buffer.readableBytes() >= PER_PAINT_EVENT_BYTES) {
+            int rawColor = buffer.readInt();
+            int pixelIdx = buffer.readInt();
+            boolean isMixed = buffer.readBoolean();
+            if (!canvas.isIndexValid(pixelIdx)) {
+                Recordable.LOGGER.warn("Pixel index out of bounds: " + pixelIdx);
+            } else {
+                int newColor = isMixed ? ColorUtil.mixColors(canvas.getColor(pixelIdx), rawColor) : rawColor;
+                canvas.setColor(pixelIdx, newColor);
+                // decrement the existing level by one
+                levelsSnapshotCopy.computeIfPresent(rawColor, (rc, lvl) -> lvl -= 1);
+            }
+        }
+        if (!paintPalette.compareWithSnapshot(levelsSnapshotCopy)) {
+            // validation failed
+            canvas.clear();
+            Recordable.LOGGER.warn("Canvas validation failed");
         }
         return canvas;
     }

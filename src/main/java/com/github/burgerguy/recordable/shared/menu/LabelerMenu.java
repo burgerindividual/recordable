@@ -19,7 +19,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.item.*;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 public class LabelerMenu extends AbstractContainerMenu {
     public static final ResourceLocation IDENTIFIER = new ResourceLocation(Recordable.MOD_ID, "labeler");
@@ -43,6 +45,9 @@ public class LabelerMenu extends AbstractContainerMenu {
     private final Slot recordSlot;
     private final Slot paperSlot;
 
+    // FIXME: this strategy does not work if another user edits at the same time
+//    private Int2IntOpenHashMap levelsSnapshot;
+
     public LabelerMenu(int containerId, Inventory playerInventory, FriendlyByteBuf buffer) {
         this(
                 containerId,
@@ -56,30 +61,22 @@ public class LabelerMenu extends AbstractContainerMenu {
         this.labelerBlockEntity = labelerBlockEntity;
         this.allowedDyeItems = Recordable.getColorPalette().getAllAcceptedItems();
         this.paintPalette = labelerBlockEntity.createPaintPalette();
+//        if (!playerInventory.player.getLevel().isClientSide) {
+//            // server side only
+//            this.levelsSnapshot = this.paintPalette.createLevelsSnapshot();
+//        }
         this.container = new SimpleContainer(3) {
             @Override
             public void setChanged() {
                 // handle dyes
                 ItemStack dyeItem = this.getItem(DYE_SLOT_ID);
 
-                if (!dyeItem.isEmpty()) {
-                    boolean changed = false;
-                    PaintPalette paintPalette = LabelerMenu.this.paintPalette;
-                    for (Paint paint : paintPalette.getPaints()) {
-                        changed |= paint.addLevelFromItem(dyeItem, paintPalette.getItemHistory(paint.getColor().getRawColor()));
-
-                        if (dyeItem.isEmpty()) {
-                            // all item count used
-                            break;
-                        }
-                    }
-
-                    if (changed) {
-                        // broadcast changes to clients
-                        MenuUtil.updateBlockEntity(labelerBlockEntity);
-                        // broadcast changes to client screens
-                        LabelerMenu.this.slotsChanged(this);
-                    }
+                boolean stackChanged = LabelerMenu.this.paintPalette.acceptItemStack(dyeItem);
+                if (stackChanged) {
+                    // update and broadcast changes to clients
+                    MenuUtil.updateBlockEntity(LabelerMenu.this.labelerBlockEntity);
+                    // broadcast changes to client screens
+                    LabelerMenu.this.slotsChanged(this);
                 }
                 super.setChanged();
             }
@@ -122,7 +119,7 @@ public class LabelerMenu extends AbstractContainerMenu {
         }
     }
 
-    // only called on server
+    // client -> server
     public void handleFinish(FriendlyByteBuf buffer) {
         LabelerBlockEntity labeler = this.labelerBlockEntity;
 
@@ -136,6 +133,16 @@ public class LabelerMenu extends AbstractContainerMenu {
         String author = buffer.readUtf();
         String title = buffer.readUtf();
         // this will modify the colors of the labeler BE, so we need to sync with the clients
+//        Canvas recreatedCanvas = Canvas.fromBufferVerified(
+//                labeler.getPixelIndexModel(),
+//                labeler.getPixelModelWidth(),
+//                buffer,
+//                this.levelsSnapshot,
+//                this.paintPalette
+//        );
+//
+//        this.levelsSnapshot = this.paintPalette.createLevelsSnapshot();
+
         Canvas recreatedCanvas = Canvas.fromBuffer(
                 labeler.getPixelIndexModel(),
                 labeler.getPixelModelWidth(),
@@ -149,14 +156,32 @@ public class LabelerMenu extends AbstractContainerMenu {
         songInfoTag.putString("Title", title);
         itemTag.put("SongInfo", songInfoTag);
 
-        // update color levels
-        MenuUtil.updateBlockEntity(labeler);
         // update record slot
         this.slotsChanged(this.container);
     }
 
+    // client -> server
+    public void handleCanvasLevelChange(FriendlyByteBuf buffer) {
+        while (buffer.readableBytes() >= (Integer.BYTES * 2)) {
+            int rawColor = buffer.readInt();
+            int amount = buffer.readInt();
+            Paint paint = this.paintPalette.getPaint(rawColor);
+            if (paint == null) {
+                Recordable.LOGGER.warn("Tried to change level for unknown paint: " + rawColor);
+            } else if (!paint.receiveCanvasLevelChange(amount)) {
+                Recordable.LOGGER.warn("Tried to change level out of bounds. level: " + paint.getLevel() + ", change: " + amount);
+            }
+        }
+        // update and broadcast color levels
+        MenuUtil.updateBlockEntity(this.labelerBlockEntity);
+    }
+
     public LabelerBlockEntity getLabelerBlockEntity() {
         return this.labelerBlockEntity;
+    }
+
+    public PaintPalette getPaintPalette() {
+        return this.paintPalette;
     }
 
     public Slot getDyeSlot() {
@@ -184,6 +209,11 @@ public class LabelerMenu extends AbstractContainerMenu {
     public void removed(Player player) {
         super.removed(player);
         this.clearContainer(player, this.container);
+        this.paintPalette.returnExcess(player.getInventory());
+        this.paintPalette.clearAllCanvasLevelChanges();
+        this.paintPalette.clearAllItemHistory();
+        // update and broadcast color levels
+        MenuUtil.updateBlockEntity(this.labelerBlockEntity);
     }
 
     @Override

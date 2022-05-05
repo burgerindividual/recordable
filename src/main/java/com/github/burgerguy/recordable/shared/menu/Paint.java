@@ -1,9 +1,8 @@
 package com.github.burgerguy.recordable.shared.menu;
 
 import com.github.burgerguy.recordable.shared.util.ColorUtil;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import net.minecraft.world.item.ItemStack;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.minecraft.network.FriendlyByteBuf;
 
 public class Paint {
 
@@ -11,6 +10,10 @@ public class Paint {
     private final int maxCapacity;
 
     private int level;
+    /**
+     * The net change in level caused by canvas edits since the menu was opened, or since the last finalize.
+     */
+    private int canvasLevelChange;
     private boolean canApply;
 
     public Paint(PaintColor color, int initialLevel, int maxCapacity) {
@@ -47,46 +50,57 @@ public class Paint {
     }
 
     /**
-     * This accepts whatever is in the dye slot to check if it should add to this, and if so, adds to this and removes
-     * part of the dye.
-     * @return if the itemStack was altered
+     * @return false if the level change is not possible
      */
-    public boolean addLevelFromItem(ItemStack itemStack, Deque<ItemStack> paintItemHistory) {
-        int level = this.color.getItemLevelOrInvalid(itemStack.getItem());
-        if (level != PaintColor.ITEM_INVALID) {
-            // integer division truncates, which is what we want
-            int consumed = Math.min((this.maxCapacity - this.level) / level, itemStack.getCount());
-            this.level += (consumed * level);
+    public boolean tryChangeLevel(int amount) {
+        int newLevel = this.level + amount;
 
-            ItemStack lastItemStack = paintItemHistory.peekLast();
-            if (lastItemStack != null && lastItemStack.sameItem(itemStack)) {
-                // merge with existing top item in deque
-                itemStack.shrink(consumed);
-                lastItemStack.grow(consumed);
-            } else {
-                paintItemHistory.addLast(itemStack.split(consumed));
-            }
+        if (newLevel > this.maxCapacity || newLevel < 0) {
+            return false;
+        } else {
+            this.level = newLevel;
             return true;
         }
-        return false;
     }
 
-    public void decrementLevel() {
-        if (this.isEmpty()) throw new IllegalStateException("Tried to decrement level when already empty");
-        this.level--;
+    public void changeLevel(int amount) {
+        if (!this.tryChangeLevel(amount)) {
+            throw new IllegalStateException("Tried to change level out of bounds. level: " + this.level + ", change: " + amount);
+        }
     }
 
-    public void incrementLevel() {
-        if (this.isFull()) throw new IllegalStateException("Tried to increment level when already full");
-        this.level++;
+    // client only c -> s
+    public void sendCanvasLevelChange(int amount) {
+        if (this.tryChangeLevel(amount)) {
+            this.canvasLevelChange += amount;
+            FriendlyByteBuf buffer = PacketByteBufs.create();
+            buffer.resetWriterIndex();
+            buffer.writeInt(this.color.getRawColor());
+            buffer.writeInt(amount);
+        } else {
+            throw new IllegalStateException("Tried to change level out of bounds. level: " + this.level + ", change: " + amount);
+        }
+    }
+
+    // server only c -> s
+    public boolean receiveCanvasLevelChange(int amount) {
+        boolean levelChangeValid = this.tryChangeLevel(amount);
+        if (levelChangeValid) {
+            this.canvasLevelChange += amount;
+        }
+        return levelChangeValid;
+    }
+
+    public void resetCanvasLevelChange() {
+        this.canvasLevelChange = 0;
+    }
+
+    public int getCanvasLevelChange() {
+        return this.canvasLevelChange;
     }
 
     public boolean isEmpty() {
         return this.level == 0;
-    }
-
-    public boolean isFull() {
-        return this.level == this.maxCapacity;
     }
 
 }

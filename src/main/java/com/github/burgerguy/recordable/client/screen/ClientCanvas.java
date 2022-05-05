@@ -2,7 +2,7 @@ package com.github.burgerguy.recordable.client.screen;
 
 import com.github.burgerguy.recordable.shared.menu.Canvas;
 import com.github.burgerguy.recordable.shared.menu.Paint;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import com.github.burgerguy.recordable.shared.menu.PaintPalette;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -14,18 +14,18 @@ import net.minecraft.network.FriendlyByteBuf;
 public class ClientCanvas extends Canvas {
 
     private final IntList[] pixelPaintStepIdxs;
-    private final Int2ObjectMap<Paint> rawColorToPaintMap;
+    private final PaintPalette paintPalette;
     private PaintStep[] paintSteps;
 
     private int lastPaintStepIdx = EMPTY_INDEX;
     private boolean erasing = false;
     private boolean mixing = false;
 
-    public ClientCanvas(int[] pixelIndexModel, int width, Int2ObjectMap<Paint> rawColorToPaintMap) {
+    public ClientCanvas(int[] pixelIndexModel, int width, PaintPalette paintPalette) {
         super(pixelIndexModel, width);
-        this.rawColorToPaintMap = rawColorToPaintMap;
+        this.paintPalette = paintPalette;
         // this isn't the true maximum because dyes can be refilled as you're drawing, but it's a good starting point
-        int maximumSteps = rawColorToPaintMap.values().stream().mapToInt(Paint::getMaxCapacity).sum();
+        int maximumSteps = paintPalette.getPaints().stream().mapToInt(Paint::getMaxCapacity).sum();
         this.paintSteps = new PaintStep[maximumSteps];
         this.pixelPaintStepIdxs = new IntList[this.colors.length];
         // 16 seems like a reasonable amount of edits before a resize is needed
@@ -50,7 +50,7 @@ public class ClientCanvas extends Canvas {
         int oldColor = this.getColor(pixelIdx);
         int currentColor = oldColor;
 
-        for (Paint paint : this.rawColorToPaintMap.values()) {
+        for (Paint paint : this.paintPalette.getPaints()) {
             int newColor = paint.applyColor(mix, currentColor);
             if (currentColor != newColor) {
                 currentColor = newColor;
@@ -64,8 +64,8 @@ public class ClientCanvas extends Canvas {
             this.setColor(pixelIdx, currentColor);
             // actually decrement applied colors now
             for (PixelPaintEvent event : events) {
-                Paint paint = this.rawColorToPaintMap.get(event.rawColor);
-                paint.decrementLevel();
+                Paint paint = this.paintPalette.getPaint(event.rawColor);
+                paint.sendCanvasLevelChange(-1);
                 anyPaintEmpty |= paint.isEmpty();
             }
 
@@ -85,8 +85,8 @@ public class ClientCanvas extends Canvas {
             PaintStep paintStep = this.paintSteps[stepIdx];
             this.paintSteps[stepIdx] = null;
             for (PixelPaintEvent event : paintStep.events) {
-                Paint paint = this.rawColorToPaintMap.get(event.rawColor);
-                if (!paint.isFull()) paint.incrementLevel();
+                Paint paint = this.paintPalette.getPaint(event.rawColor);
+                paint.sendCanvasLevelChange(1);
             }
         }
         this.updateLastIdx();
@@ -104,7 +104,10 @@ public class ClientCanvas extends Canvas {
         stepIndices.removeInt(stepIndices.size() - 1);
         // actually set back variables for user
         this.setColor(lastStep.pixelIndex, lastStep.previousColorState);
-        for (PixelPaintEvent event : lastStep.events) this.rawColorToPaintMap.get(event.rawColor).incrementLevel();
+        for (PixelPaintEvent event : lastStep.events) {
+            Paint paint = this.paintPalette.getPaint(event.rawColor);
+            paint.sendCanvasLevelChange(1);
+        }
     }
 
     public boolean canUndo() {

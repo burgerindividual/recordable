@@ -9,7 +9,7 @@ public class MenuUtil {
     public static void updateBlockEntity(BlockEntity blockEntity) {
         blockEntity.setChanged();
         BlockState blockState = blockEntity.getBlockState();
-        blockEntity.getLevel().sendBlockUpdated(blockEntity.getBlockPos(), blockState, blockState, 2); // or the flag with 1 to cause a block update
+        blockEntity.getLevel().sendBlockUpdated(blockEntity.getBlockPos(), blockState, blockState, 2); // bitwise OR the flag with 1 to cause a block update
     }
 
 }

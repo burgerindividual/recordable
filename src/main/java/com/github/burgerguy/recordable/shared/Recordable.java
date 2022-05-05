@@ -11,7 +11,6 @@ import com.github.burgerguy.recordable.shared.entrypoint.RecordableApi;
 import com.github.burgerguy.recordable.shared.item.CopperRecordItem;
 import com.github.burgerguy.recordable.shared.menu.ColorPalette;
 import com.github.burgerguy.recordable.shared.menu.LabelerMenu;
-import com.github.burgerguy.recordable.shared.menu.PaintColor;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.file.FileSystem;
@@ -30,7 +29,6 @@ import net.minecraft.core.Registry;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.storage.LevelResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +47,7 @@ public class Recordable implements ModInitializer {
 	public static final ResourceLocation REQUEST_SCORE_ID = new ResourceLocation(MOD_ID, "request_score");
 	public static final ResourceLocation SEND_SCORE_ID = new ResourceLocation(MOD_ID, "send_score");
 	public static final ResourceLocation FINALIZE_LABEL_ID = new ResourceLocation(MOD_ID, "finalize_label");
+	public static final ResourceLocation CANVAS_LEVEL_CHANGE_ID = new ResourceLocation(MOD_ID, "canvas_level_change");
 
 	public static ColorPalette COLOR_PALETTE;
 
@@ -142,6 +141,12 @@ public class Recordable implements ModInitializer {
 		ServerPlayNetworking.registerGlobalReceiver(FINALIZE_LABEL_ID, (server, player, handler, buffer, responseSender) -> {
 			if (player.containerMenu instanceof LabelerMenu labelerMenu) {
 				labelerMenu.handleFinish(buffer);
+			}
+		});
+
+		ServerPlayNetworking.registerGlobalReceiver(CANVAS_LEVEL_CHANGE_ID, (server, player, handler, buffer, responseSender) -> {
+			if (player.containerMenu instanceof LabelerMenu labelerMenu) {
+				labelerMenu.handleCanvasLevelChange(buffer);
 			}
 		});
 	}

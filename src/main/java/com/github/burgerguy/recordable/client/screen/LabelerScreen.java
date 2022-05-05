@@ -44,7 +44,7 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
         this.clientCanvas = new ClientCanvas(
                 labelerBlockEntity.getPixelIndexModel(),
                 labelerBlockEntity.getPixelModelWidth(),
-                labelerMenu.getLabelerBlockEntity().getRawColorToPaintMap()
+                labelerMenu.getPaintPalette()
         );
 
         // image height adjustment
@@ -78,7 +78,7 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
             ScreenRenderUtil.startBlits(ScreenRenderUtil.BLIT_BUFFER_1);
         });
 
-        Collection<Paint> paints = this.menu.getLabelerBlockEntity().getRawColorToPaintMap().values();
+        Collection<Paint> paints = this.menu.getPaintPalette().getPaints();
         this.paintWidgets = new PaintWidget[paints.size()];
         int idx = 0;
         for (Paint paint : paints) {
@@ -291,7 +291,7 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
         if (parentClicked) {
             GuiEventListener currentFocused = this.getFocused();
             if (lastFocused != null && !lastFocused.equals(currentFocused)) {
-                while (lastFocused.changeFocus(true)) ; // removes focus from the previous element
+                while (lastFocused.changeFocus(true)); // removes focus from the previous element
             }
         }
         return parentClicked;

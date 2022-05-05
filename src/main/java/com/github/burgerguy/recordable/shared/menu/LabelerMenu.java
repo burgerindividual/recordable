@@ -6,6 +6,8 @@ import com.github.burgerguy.recordable.shared.item.CopperRecordItem;
 import com.github.burgerguy.recordable.shared.util.MenuUtil;
 import java.util.Objects;
 import java.util.Set;
+import net.fabricmc.fabric.api.transfer.v1.item.PlayerInventoryStorage;
+import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.impl.screenhandler.ExtendedScreenHandlerType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -36,6 +38,7 @@ public class LabelerMenu extends AbstractContainerMenu {
     private static final int HOTBAR_X = 8;
     private static final int HOTBAR_Y = 158;
 
+    private final Inventory playerInventory;
     private final LabelerBlockEntity labelerBlockEntity;
     private final PaintPalette paintPalette;
     private final Set<Item> allowedDyeItems;
@@ -58,6 +61,7 @@ public class LabelerMenu extends AbstractContainerMenu {
 
     public LabelerMenu(int containerId, Inventory playerInventory, LabelerBlockEntity labelerBlockEntity) {
         super(INSTANCE, containerId);
+        this.playerInventory = playerInventory;
         this.labelerBlockEntity = labelerBlockEntity;
         this.allowedDyeItems = Recordable.getColorPalette().getAllAcceptedItems();
         this.paintPalette = labelerBlockEntity.createPaintPalette();
@@ -160,16 +164,20 @@ public class LabelerMenu extends AbstractContainerMenu {
         this.slotsChanged(this.container);
     }
 
-    // client -> server
+    // c -> (s)
+    @SuppressWarnings("UnstableApiUsage")
     public void handleCanvasLevelChange(FriendlyByteBuf buffer) {
-        while (buffer.readableBytes() >= (Integer.BYTES * 2)) {
-            int rawColor = buffer.readInt();
-            int amount = buffer.readInt();
-            Paint paint = this.paintPalette.getPaint(rawColor);
-            if (paint == null) {
-                Recordable.LOGGER.warn("Tried to change level for unknown paint: " + rawColor);
-            } else if (!paint.receiveCanvasLevelChange(amount)) {
-                Recordable.LOGGER.warn("Tried to change level out of bounds. level: " + paint.getLevel() + ", change: " + amount);
+        PlayerInventoryStorage playerInventoryStorage = PlayerInventoryStorage.of(this.playerInventory);
+        try (Transaction transaction = Transaction.openOuter()) {
+            while (buffer.readableBytes() >= (Integer.BYTES * 2)) {
+                int rawColor = buffer.readInt();
+                int amount = buffer.readInt();
+                Paint paint = this.paintPalette.getPaint(rawColor);
+                if (paint == null) {
+                    Recordable.LOGGER.warn("Tried to change level for unknown paint: " + rawColor);
+                } else if (!this.paintPalette.tryReceiveCanvasLevelChange(paint, amount, playerInventoryStorage, transaction)) {
+                    Recordable.LOGGER.warn("Tried to change level out of bounds. level: " + paint.getLevel() + ", change: " + amount);
+                }
             }
         }
         // update and broadcast color levels
@@ -209,11 +217,11 @@ public class LabelerMenu extends AbstractContainerMenu {
     public void removed(Player player) {
         super.removed(player);
         this.clearContainer(player, this.container);
-        this.paintPalette.returnExcess(player.getInventory());
-        this.paintPalette.clearAllCanvasLevelChanges();
-        this.paintPalette.clearAllItemHistory();
-        // update and broadcast color levels
-        MenuUtil.updateBlockEntity(this.labelerBlockEntity);
+        boolean changed = this.paintPalette.onMenuExit(player.getInventory());
+        if (changed) {
+            // update and broadcast color levels
+            MenuUtil.updateBlockEntity(this.labelerBlockEntity);
+        }
     }
 
     @Override

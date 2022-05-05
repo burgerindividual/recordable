@@ -10,20 +10,23 @@ import it.unimi.dsi.fastutil.objects.ObjectArrays;
 import java.util.Arrays;
 import java.util.List;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.entity.player.Inventory;
 
 public class ClientCanvas extends Canvas {
 
     private final IntList[] pixelPaintStepIdxs;
     private final PaintPalette paintPalette;
+    private final Inventory playerInventory;
     private PaintStep[] paintSteps;
 
     private int lastPaintStepIdx = EMPTY_INDEX;
     private boolean erasing = false;
     private boolean mixing = false;
 
-    public ClientCanvas(int[] pixelIndexModel, int width, PaintPalette paintPalette) {
+    public ClientCanvas(int[] pixelIndexModel, int width, PaintPalette paintPalette, Inventory playerInventory) {
         super(pixelIndexModel, width);
         this.paintPalette = paintPalette;
+        this.playerInventory = playerInventory;
         // this isn't the true maximum because dyes can be refilled as you're drawing, but it's a good starting point
         int maximumSteps = paintPalette.getPaints().stream().mapToInt(Paint::getMaxCapacity).sum();
         this.paintSteps = new PaintStep[maximumSteps];
@@ -65,7 +68,7 @@ public class ClientCanvas extends Canvas {
             // actually decrement applied colors now
             for (PixelPaintEvent event : events) {
                 Paint paint = this.paintPalette.getPaint(event.rawColor);
-                paint.sendCanvasLevelChange(-1);
+                this.paintPalette.sendCanvasLevelChange(paint, -1, this.playerInventory);
                 anyPaintEmpty |= paint.isEmpty();
             }
 
@@ -86,7 +89,7 @@ public class ClientCanvas extends Canvas {
             this.paintSteps[stepIdx] = null;
             for (PixelPaintEvent event : paintStep.events) {
                 Paint paint = this.paintPalette.getPaint(event.rawColor);
-                paint.sendCanvasLevelChange(1);
+                this.paintPalette.sendCanvasLevelChange(paint, 1, this.playerInventory);
             }
         }
         this.updateLastIdx();
@@ -106,7 +109,7 @@ public class ClientCanvas extends Canvas {
         this.setColor(lastStep.pixelIndex, lastStep.previousColorState);
         for (PixelPaintEvent event : lastStep.events) {
             Paint paint = this.paintPalette.getPaint(event.rawColor);
-            paint.sendCanvasLevelChange(1);
+            this.paintPalette.sendCanvasLevelChange(paint, 1, this.playerInventory);
         }
     }
 

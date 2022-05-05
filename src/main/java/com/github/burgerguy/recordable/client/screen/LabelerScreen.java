@@ -38,13 +38,14 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
     private Button resetButton;
     private Button finishButton;
 
-    public LabelerScreen(LabelerMenu labelerMenu, Inventory inventory, Component component) {
-        super(labelerMenu, inventory, component);
+    public LabelerScreen(LabelerMenu labelerMenu, Inventory playerInventory, Component component) {
+        super(labelerMenu, playerInventory, component);
         LabelerBlockEntity labelerBlockEntity = this.menu.getLabelerBlockEntity();
         this.clientCanvas = new ClientCanvas(
                 labelerBlockEntity.getPixelIndexModel(),
                 labelerBlockEntity.getPixelModelWidth(),
-                labelerMenu.getPaintPalette()
+                labelerMenu.getPaintPalette(),
+                playerInventory
         );
 
         // image height adjustment

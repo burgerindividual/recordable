@@ -1,14 +1,11 @@
 package com.github.burgerguy.recordable.shared.menu;
 
 import com.github.burgerguy.recordable.shared.util.ColorUtil;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.minecraft.network.FriendlyByteBuf;
 
 public class Paint {
 
     private final PaintColor color;
-    private final int maxCapacity;
-
+    private int maxCapacity;
     private int level;
     /**
      * The net change in level caused by canvas edits since the menu was opened, or since the last finalize.
@@ -50,7 +47,7 @@ public class Paint {
     }
 
     /**
-     * @return false if the level change is not possible
+     * @return false if the level change would cause an overflow or underflow
      */
     public boolean tryChangeLevel(int amount) {
         int newLevel = this.level + amount;
@@ -69,30 +66,49 @@ public class Paint {
         }
     }
 
-    public boolean tryChangeLevelCanvas(int amount) {
-        boolean isLevelChangeValid = this.tryChangeLevel(amount);
-        if (isLevelChangeValid) {
-            this.canvasLevelChange += amount;
+    public boolean tryChangeLevelNoOverflow(int amount) {
+        int newLevel = this.level + amount;
+
+        if (newLevel < 0) {
+            return false;
+        } else {
+            this.level = newLevel;
+            return true;
         }
-        return isLevelChangeValid;
     }
 
-    public void changeLevelCanvas(int amount) {
-        if (!this.tryChangeLevelCanvas(amount)) {
+    public void changeLevelNoOverflow(int amount) {
+        if (!this.tryChangeLevelNoOverflow(amount)) {
             throw new IllegalStateException("Tried to change level out of bounds. level: " + this.level + ", change: " + amount);
         }
     }
 
-    public void resetCanvasLevelChange() {
-        this.canvasLevelChange = 0;
+    /**
+     * @return false if the level change would cause an underflow
+     */
+    public boolean tryChangeLevelCanvas(int amount) {
+        boolean isChangeValid = this.tryChangeLevelNoOverflow(amount);
+
+        if (isChangeValid) {
+            this.canvasLevelChange += amount;
+        }
+
+        return isChangeValid;
     }
 
-    public int getCanvasLevelChange() {
-        return this.canvasLevelChange;
+    public void removeCanvasLevelChange() {
+        this.level -= this.canvasLevelChange;
+        this.canvasLevelChange = 0;
     }
 
     public boolean isEmpty() {
         return this.level == 0;
+    }
+
+    // only use for loading from NBT
+    public void update(int level, int maxCapacity) {
+        this.level = level;
+        this.maxCapacity = maxCapacity;
     }
 
 }

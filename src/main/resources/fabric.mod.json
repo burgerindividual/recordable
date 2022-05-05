@@ -18,9 +18,6 @@
 
   "environment": "*",
   "entrypoints": {
-    "preLaunch": [
-      "com.github.burgerguy.recordable.client.PreLaunch"
-    ],
     "main": [
       "com.github.burgerguy.recordable.shared.Recordable"
     ],

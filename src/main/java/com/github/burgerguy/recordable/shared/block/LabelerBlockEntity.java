@@ -63,7 +63,7 @@ public class LabelerBlockEntity extends BlockEntity implements ExtendedScreenHan
                 int level = colorLevels[i + 1];
                 rawColorToLevelMap.put(rawColor, level);
             }
-            Recordable.getColorPalette().createPaints(
+            Recordable.getColorPalette().updatePaints(
                     rawColorToLevelMap,
                     LabelerConstants.PAINT_MAX_CAPACITY,
                     this.rawColorToPaintMap

@@ -1,18 +1,27 @@
 package com.github.burgerguy.recordable.shared.menu;
 
 import com.github.burgerguy.recordable.shared.Recordable;
-import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.item.PlayerInventoryStorage;
+import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
+import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
+// We use the new fabric transaction api here, which is considered unstable.
+// I honestly couldn't care less as long as quilt has support for it.
+@SuppressWarnings("UnstableApiUsage")
 public final class PaintPalette {
     private final Int2ObjectSortedMap<Paint> rawColorToPaintMap;
     private final Int2ObjectMap<Deque<ItemHistoryElement>> rawColorToItemHistory;
@@ -96,12 +105,17 @@ public final class PaintPalette {
     /**
      * Called when labeler menu closes on both client and server
      */
-    public void returnExcess(Paint paint, Inventory playerInventory) {
+    public boolean returnExcess(Paint paint, PlayerInventoryStorage playerInventoryStorage, TransactionContext transactionContext) {
         if (paint.getLevel() > paint.getMaxCapacity()) {
             Deque<ItemHistoryElement> itemHistory = this.rawColorToItemHistory.get(paint.getColor().getRawColor());
+            if (itemHistory == null) return false;
 
+            boolean changed = false;
+
+            // this is a do while because we want to obtain the item history on only the first iteration
             do {
                 ItemHistoryElement lastHistoryElement = itemHistory.peekLast();
+                if (lastHistoryElement == null) return changed;
                 ItemStack itemStack = lastHistoryElement.itemStack;
                 int itemLevel = lastHistoryElement.itemLevel;
 
@@ -120,28 +134,32 @@ public final class PaintPalette {
                     );
 
                     if (returnedItemCount != 0) {
-                        paint.changeLevelCanvas(returnedItemCount * itemLevel);
+                        // it needs to have no overflow checks because we can be out of bounds still if we need to go through multiple item stacks.
+                        // also, we have our own checks in this method
+                        paint.changeLevelNoOverflow(-returnedItemCount * itemLevel);
 
-                        if (itemStack.sameItem(itemStack)) {
-                            // merge with existing top item in deque
-                            itemStack.shrink(returnedItemCount);
-                            itemStack.grow(returnedItemCount);
-                            PlayerInventoryStorage.of(playerInventory).offerOrDrop(itemStack.split(returnedItemCount));
-                        }
+                        playerInventoryStorage.offerOrDrop(ItemVariant.of(itemStack.getItem()), returnedItemCount, transactionContext);
+                        itemStack.shrink(returnedItemCount);
 
                         if (itemStack.isEmpty()) {
                             itemHistory.remove();
                         }
+
+                        changed = true;
                     }
                 }
             } while (paint.getLevel() > paint.getMaxCapacity());
+
+            return changed;
         }
+
+        return false;
     }
 
     // (c) -> s
-    // TODO: make boolean and handle error there
-    public void sendCanvasLevelChange(Paint paint, int amount, Inventory playerInventory) {
+    public void sendCanvasLevelChange(Paint paint, int amount, PlayerInventoryStorage playerInventoryStorage, TransactionContext transactionContext) {
         if (paint.tryChangeLevelCanvas(amount)) {
+            this.returnExcess(paint, playerInventoryStorage, transactionContext);
             FriendlyByteBuf buffer = PacketByteBufs.create();
             buffer.resetWriterIndex();
             buffer.writeInt(paint.getColor().getRawColor());
@@ -152,16 +170,43 @@ public final class PaintPalette {
         }
     }
 
-    public void clearAllItemHistory() {
-        for (Deque<ItemHistoryElement> itemHistory : this.rawColorToItemHistory.values()) {
-            itemHistory.clear();
+    public void sendCanvasLevelChange(Paint paint, int amount, Inventory playerInventory) {
+        try (Transaction transaction = Transaction.openOuter()) {
+            this.sendCanvasLevelChange(
+                    paint,
+                    amount,
+                    PlayerInventoryStorage.of(playerInventory),
+                    transaction
+            );
         }
     }
 
-    public void clearAllCanvasLevelChanges() {
-        for (Paint paint : this.getPaints()) {
-            paint.resetCanvasLevelChange();
+    // c -> (s)
+    public boolean tryReceiveCanvasLevelChange(Paint paint, int amount, PlayerInventoryStorage playerInventoryStorage, TransactionContext transactionContext) {
+        boolean isChangeValid = paint.tryChangeLevelCanvas(amount);
+
+        if (isChangeValid) {
+            this.returnExcess(paint, playerInventoryStorage, transactionContext);
         }
+
+        return isChangeValid;
+    }
+
+    public boolean onMenuExit(Inventory playerInventory) {
+        boolean changed = false;
+        PlayerInventoryStorage playerInventoryStorage = PlayerInventoryStorage.of(playerInventory);
+        try (Transaction transaction = Transaction.openOuter()) {
+            for (Paint paint : this.getPaints()) {
+                paint.removeCanvasLevelChange();
+                changed |= this.returnExcess(paint, playerInventoryStorage, transaction);
+            }
+        }
+
+        for (Deque<ItemHistoryElement> itemHistory : this.rawColorToItemHistory.values()) {
+            itemHistory.clear();
+        }
+
+        return changed;
     }
 
     public record ItemHistoryElement(ItemStack itemStack, int itemLevel) {}

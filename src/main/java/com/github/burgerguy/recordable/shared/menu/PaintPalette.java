@@ -1,9 +1,15 @@
 package com.github.burgerguy.recordable.shared.menu;
 
+import com.github.burgerguy.recordable.shared.Recordable;
 import it.unimi.dsi.fastutil.ints.*;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.fabricmc.fabric.api.transfer.v1.item.PlayerInventoryStorage;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
@@ -57,11 +63,13 @@ public final class PaintPalette {
             int itemLevel = paint.getColor().getItemLevelOrInvalid(itemStack.getItem());
             if (itemLevel != PaintColor.ITEM_INVALID) {
                 // integer division truncates, which is what we want
-                int consumedItemCount = Math.min((paint.getMaxCapacity() - paint.getLevel()) / itemLevel, itemStack.getCount());
+                int consumedItemCount = Math.min(
+                        (paint.getMaxCapacity() - paint.getLevel()) / itemLevel,
+                        itemStack.getCount()
+                );
 
                 if (consumedItemCount != 0) {
-                    int levelAmount = consumedItemCount * itemLevel;
-                    paint.changeLevel(levelAmount);
+                    paint.changeLevel(consumedItemCount * itemLevel);
 
                     ItemHistoryElement lastHistory = itemHistory.peekLast();
                     if (lastHistory != null && lastHistory.itemStack.sameItem(itemStack)) {
@@ -69,7 +77,7 @@ public final class PaintPalette {
                         itemStack.shrink(consumedItemCount);
                         lastHistory.itemStack.grow(consumedItemCount);
                     } else {
-                        itemHistory.addLast(new ItemHistoryElement(itemStack.split(consumedItemCount), levelAmount));
+                        itemHistory.addLast(new ItemHistoryElement(itemStack.split(consumedItemCount), itemLevel));
                     }
 
                     stackChanged = true;
@@ -88,29 +96,59 @@ public final class PaintPalette {
     /**
      * Called when labeler menu closes on both client and server
      */
-    public void returnExcess(Inventory playerInventory) {
-        for (Paint paint : this.getPaints()) {
-            while (paint.getLevel())
+    public void returnExcess(Paint paint, Inventory playerInventory) {
+        if (paint.getLevel() > paint.getMaxCapacity()) {
             Deque<ItemHistoryElement> itemHistory = this.rawColorToItemHistory.get(paint.getColor().getRawColor());
 
-            // integer division truncates, which is what we want
-            int consumedItemCount = Math.min((paint.getMaxCapacity() - paint.getLevel()) / itemLevel, itemStack.getCount());
+            do {
+                ItemHistoryElement lastHistoryElement = itemHistory.peekLast();
+                ItemStack itemStack = lastHistoryElement.itemStack;
+                int itemLevel = lastHistoryElement.itemLevel;
 
-            if (consumedItemCount != 0) {
-                paint.changeLevel(consumedItemCount * itemLevel);
+                int maxReturnedItemCount = Mth.positiveCeilDiv(
+                        paint.getLevel() - paint.getMaxCapacity(),
+                        itemLevel
+                );
 
-                ItemStack lastItemStack = itemHistory.peekLast();
-                if (lastItemStack != null && lastItemStack.sameItem(itemStack)) {
-                    // merge with existing top item in deque
-                    itemStack.shrink(consumedItemCount);
-                    lastItemStack.grow(consumedItemCount);
+                if (maxReturnedItemCount > 0) {
+                    int returnedItemCount = Math.min(
+                            Mth.positiveCeilDiv(
+                                    paint.getLevel() - paint.getMaxCapacity(),
+                                    itemLevel
+                            ),
+                            itemStack.getCount()
+                    );
+
+                    if (returnedItemCount != 0) {
+                        paint.changeLevelCanvas(returnedItemCount * itemLevel);
+
+                        if (itemStack.sameItem(itemStack)) {
+                            // merge with existing top item in deque
+                            itemStack.shrink(returnedItemCount);
+                            itemStack.grow(returnedItemCount);
+                            PlayerInventoryStorage.of(playerInventory).offerOrDrop(itemStack.split(returnedItemCount));
+                        }
+
+                        if (itemStack.isEmpty()) {
+                            itemHistory.remove();
+                        }
+                    }
                 }
-            }
+            } while (paint.getLevel() > paint.getMaxCapacity());
+        }
+    }
 
-            if (itemStack.isEmpty()) {
-                // all item count used
-                break;
-            }
+    // (c) -> s
+    // TODO: make boolean and handle error there
+    public void sendCanvasLevelChange(Paint paint, int amount, Inventory playerInventory) {
+        if (paint.tryChangeLevelCanvas(amount)) {
+            FriendlyByteBuf buffer = PacketByteBufs.create();
+            buffer.resetWriterIndex();
+            buffer.writeInt(paint.getColor().getRawColor());
+            buffer.writeInt(amount);
+            ClientPlayNetworking.send(Recordable.CANVAS_LEVEL_CHANGE_ID, buffer);
+        } else {
+            throw new IllegalStateException("Tried to change level out of bounds. level: " + paint.getLevel() + ", change: " + amount);
         }
     }
 
@@ -126,6 +164,6 @@ public final class PaintPalette {
         }
     }
 
-    public record ItemHistoryElement(ItemStack itemStack, int levelAmount) {}
+    public record ItemHistoryElement(ItemStack itemStack, int itemLevel) {}
 
 }

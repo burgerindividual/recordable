@@ -69,26 +69,18 @@ public class Paint {
         }
     }
 
-    // client only c -> s
-    public void sendCanvasLevelChange(int amount) {
-        if (this.tryChangeLevel(amount)) {
+    public boolean tryChangeLevelCanvas(int amount) {
+        boolean isLevelChangeValid = this.tryChangeLevel(amount);
+        if (isLevelChangeValid) {
             this.canvasLevelChange += amount;
-            FriendlyByteBuf buffer = PacketByteBufs.create();
-            buffer.resetWriterIndex();
-            buffer.writeInt(this.color.getRawColor());
-            buffer.writeInt(amount);
-        } else {
-            throw new IllegalStateException("Tried to change level out of bounds. level: " + this.level + ", change: " + amount);
         }
+        return isLevelChangeValid;
     }
 
-    // server only c -> s
-    public boolean receiveCanvasLevelChange(int amount) {
-        boolean levelChangeValid = this.tryChangeLevel(amount);
-        if (levelChangeValid) {
-            this.canvasLevelChange += amount;
+    public void changeLevelCanvas(int amount) {
+        if (!this.tryChangeLevelCanvas(amount)) {
+            throw new IllegalStateException("Tried to change level out of bounds. level: " + this.level + ", change: " + amount);
         }
-        return levelChangeValid;
     }
 
     public void resetCanvasLevelChange() {

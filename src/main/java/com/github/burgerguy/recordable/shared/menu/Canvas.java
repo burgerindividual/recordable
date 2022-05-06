@@ -4,7 +4,6 @@ import com.github.burgerguy.recordable.shared.Recordable;
 import com.github.burgerguy.recordable.shared.util.ColorUtil;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import java.util.Arrays;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -15,7 +14,7 @@ public class Canvas {
     public static final int EMPTY_INDEX = -1;
     public static final int OUT_OF_BOUNDS_INDEX = -2;
     public static final int CLEAR_COLOR = 0xFFFFFFFF;
-    protected static final int PER_PAINT_EVENT_BYTES = Integer.BYTES + Integer.BYTES + Byte.BYTES;
+    protected static final int PAINT_STEP_HEADER_BYTES = Integer.BYTES + Integer.BYTES + Byte.BYTES;
 
     private final int width;
     private final int height;
@@ -43,16 +42,27 @@ public class Canvas {
 
     public static Canvas fromBuffer(int[] pixelIndexModel, int width, FriendlyByteBuf buffer) {
         Canvas canvas = new Canvas(pixelIndexModel, width);
-        while (buffer.isReadable() && buffer.readableBytes() >= PER_PAINT_EVENT_BYTES) {
-            int rawColor = buffer.readInt();
+        while (buffer.isReadable() && buffer.readableBytes() >= PAINT_STEP_HEADER_BYTES) {
             int pixelIdx = buffer.readInt();
             boolean isMixed = buffer.readBoolean();
+            int rawColorCount = buffer.readInt();
+
             if (!canvas.isIndexValid(pixelIdx)) {
                 Recordable.LOGGER.warn("Pixel index out of bounds: " + pixelIdx);
-            } else {
-                int newColor = isMixed ? ColorUtil.mixColors(canvas.getColor(pixelIdx), rawColor) : rawColor;
-                canvas.setColor(pixelIdx, newColor);
+                break;
+            } else if (buffer.readableBytes() < rawColorCount * Integer.BYTES) {
+                Recordable.LOGGER.warn("Color count too large for buffer: " + rawColorCount);
             }
+
+            int[] rawColors = new int[rawColorCount];
+            for (int i = 0; i < rawColorCount; i++) {
+                rawColors[i] = buffer.readInt();
+            }
+
+            int oldColor = canvas.getColor(pixelIdx);
+            int blendedColor = ColorUtil.blendColorsDirect(rawColors);
+            int newColor = isMixed ? ColorUtil.blendColorsDirect(oldColor, blendedColor) : blendedColor;
+            canvas.setColor(pixelIdx, newColor);
         }
         return canvas;
     }
@@ -60,16 +70,29 @@ public class Canvas {
     public static Canvas fromBufferVerified(int[] pixelIndexModel, int width, FriendlyByteBuf buffer, Int2IntOpenHashMap levelsSnapshot, PaintPalette paintPalette) {
         Int2IntMap levelsSnapshotCopy = levelsSnapshot.clone();
         Canvas canvas = new Canvas(pixelIndexModel, width);
-        while (buffer.isReadable() && buffer.readableBytes() >= PER_PAINT_EVENT_BYTES) {
-            int rawColor = buffer.readInt();
+        while (buffer.isReadable() && buffer.readableBytes() >= PAINT_STEP_HEADER_BYTES) {
             int pixelIdx = buffer.readInt();
             boolean isMixed = buffer.readBoolean();
+            int rawColorCount = buffer.readInt();
+
             if (!canvas.isIndexValid(pixelIdx)) {
                 Recordable.LOGGER.warn("Pixel index out of bounds: " + pixelIdx);
-            } else {
-                int newColor = isMixed ? ColorUtil.mixColors(canvas.getColor(pixelIdx), rawColor) : rawColor;
-                canvas.setColor(pixelIdx, newColor);
-                // decrement the existing level by one
+                break;
+            } else if (buffer.readableBytes() < rawColorCount * Integer.BYTES) {
+                Recordable.LOGGER.warn("Color count too large for buffer: " + rawColorCount);
+            }
+
+            int[] rawColors = new int[rawColorCount];
+            for (int i = 0; i < rawColorCount; i++) {
+                rawColors[i] = buffer.readInt();
+            }
+
+            int oldColor = canvas.getColor(pixelIdx);
+            int blendedColor = ColorUtil.blendColorsDirect(rawColors);
+            int newColor = isMixed ? ColorUtil.blendColorsDirect(oldColor, blendedColor) : blendedColor;
+            canvas.setColor(pixelIdx, newColor);
+            // decrement the existing level for each color by one
+            for (int rawColor : rawColors) {
                 levelsSnapshotCopy.computeIfPresent(rawColor, (rc, lvl) -> lvl -= 1);
             }
         }

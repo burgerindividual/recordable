@@ -21,6 +21,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -100,10 +101,12 @@ public class LabelerBlockEntity extends BlockEntity implements ExtendedScreenHan
         buffer.writeBlockPos(this.getBlockPos());
     }
 
-    public PaintPalette createPaintPalette() {
+    public PaintPalette createPaintPalette(Inventory playerInventory, Slot dyeSlot) {
         return new PaintPalette(
                 this.rawColorToPaintMap,
-                new Int2ObjectOpenHashMap<>(this.rawColorToPaintMap.size())
+                new Int2ObjectOpenHashMap<>(this.rawColorToPaintMap.size()),
+                playerInventory,
+                dyeSlot
         );
     }
 

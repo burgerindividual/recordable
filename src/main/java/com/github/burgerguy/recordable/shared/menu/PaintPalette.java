@@ -13,15 +13,20 @@ import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 public final class PaintPalette {
     private final Int2ObjectSortedMap<Paint> rawColorToPaintMap;
     private final Int2ObjectMap<Deque<ItemHistoryElement>> rawColorToItemHistory;
+    private final Inventory playerInventory;
+    private final Slot dyeSlot;
 
-    public PaintPalette(Int2ObjectSortedMap<Paint> rawColorToPaintMap, Int2ObjectMap<Deque<ItemHistoryElement>> rawColorToItemHistory) {
+    public PaintPalette(Int2ObjectSortedMap<Paint> rawColorToPaintMap, Int2ObjectMap<Deque<ItemHistoryElement>> rawColorToItemHistory, Inventory playerInventory, Slot dyeSlot) {
         this.rawColorToPaintMap = rawColorToPaintMap;
         this.rawColorToItemHistory = rawColorToItemHistory;
+        this.playerInventory = playerInventory;
+        this.dyeSlot = dyeSlot;
     }
 
     public Paint getPaint(int rawColor) {
@@ -98,7 +103,7 @@ public final class PaintPalette {
     /**
      * Called when labeler menu closes on both client and server
      */
-    public boolean returnExcess(Paint paint, Inventory playerInventory) {
+    public boolean returnExcess(Paint paint) {
         if (paint.getLevel() > paint.getMaxCapacity()) {
             Deque<ItemHistoryElement> itemHistory = this.rawColorToItemHistory.get(paint.getColor().getRawColor());
             if (itemHistory == null) return false;
@@ -131,7 +136,11 @@ public final class PaintPalette {
                         // also, we have our own checks in this method
                         paint.changeLevelNoOverflow(-returnedItemCount * itemLevel);
 
-                        playerInventory.placeItemBackInInventory(itemStack.split(returnedItemCount));
+                        ItemStack returnItemStack = itemStack.split(returnedItemCount);
+                        returnItemStack = this.dyeSlot.safeInsert(returnItemStack);
+                        if (!returnItemStack.isEmpty()) {
+                            this.playerInventory.placeItemBackInInventory(returnItemStack);
+                        }
 
                         if (itemStack.isEmpty()) {
                             itemHistory.remove();
@@ -149,9 +158,10 @@ public final class PaintPalette {
     }
 
     // (c) -> s
-    public void sendCanvasLevelChange(Paint paint, int amount, Inventory playerInventory) {
+    public void sendCanvasLevelChange(Paint paint, int amount) {
         if (paint.tryChangeLevelCanvas(amount)) {
-            this.returnExcess(paint, playerInventory);
+            this.returnExcess(paint);
+            this.dyeSlot.setChanged();
             FriendlyByteBuf buffer = PacketByteBufs.create();
             buffer.resetWriterIndex();
             buffer.writeInt(paint.getColor().getRawColor());
@@ -163,22 +173,23 @@ public final class PaintPalette {
     }
 
     // c -> (s)
-    public boolean tryReceiveCanvasLevelChange(Paint paint, int amount, Inventory playerInventory) {
+    public boolean tryReceiveCanvasLevelChange(Paint paint, int amount) {
         boolean isChangeValid = paint.tryChangeLevelCanvas(amount);
 
         if (isChangeValid) {
-            this.returnExcess(paint, playerInventory);
+            this.returnExcess(paint);
+            this.dyeSlot.setChanged();
         }
 
         return isChangeValid;
     }
 
-    public boolean onMenuExit(Inventory playerInventory) {
+    public boolean onMenuExit() {
         boolean changed = false;
 
         for (Paint paint : this.getPaints()) {
             paint.removeCanvasLevelChange();
-            changed |= this.returnExcess(paint, playerInventory);
+            changed |= this.returnExcess(paint);
         }
 
         for (Deque<ItemHistoryElement> itemHistory : this.rawColorToItemHistory.values()) {

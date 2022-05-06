@@ -35,15 +35,8 @@ public class Paint {
         this.canApply = canApply;
     }
 
-    public int applyColor(boolean mix, int otherColor) {
-        if (this.canApply) {
-            if (mix) {
-                return ColorUtil.mixColors(this.color.getRawColor(), otherColor);
-            } else {
-                return this.color.getRawColor();
-            }
-        }
-        return otherColor;
+    public boolean canApply() {
+        return this.canApply;
     }
 
     /**

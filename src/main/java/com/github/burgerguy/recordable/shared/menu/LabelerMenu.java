@@ -62,7 +62,6 @@ public class LabelerMenu extends AbstractContainerMenu {
         this.playerInventory = playerInventory;
         this.labelerBlockEntity = labelerBlockEntity;
         this.allowedDyeItems = Recordable.getColorPalette().getAllAcceptedItems();
-        this.paintPalette = labelerBlockEntity.createPaintPalette();
 //        if (!playerInventory.player.getLevel().isClientSide) {
 //            // server side only
 //            this.levelsSnapshot = this.paintPalette.createLevelsSnapshot();
@@ -78,7 +77,7 @@ public class LabelerMenu extends AbstractContainerMenu {
                     // update and broadcast changes to clients
                     MenuUtil.updateBlockEntity(LabelerMenu.this.labelerBlockEntity);
                     // broadcast changes to client screens
-                    LabelerMenu.this.slotsChanged(this);
+//                    LabelerMenu.this.slotsChanged(this);
                 }
                 super.setChanged();
             }
@@ -107,6 +106,8 @@ public class LabelerMenu extends AbstractContainerMenu {
                 return stack.is(CopperRecordItem.INSTANCE) && (!stack.hasTag() || !stack.getTag().contains("Colors", Tag.TAG_BYTE_ARRAY));
             }
         });
+
+        this.paintPalette = labelerBlockEntity.createPaintPalette(playerInventory, this.dyeSlot);
 
         int i;
         // add player inventory
@@ -170,7 +171,7 @@ public class LabelerMenu extends AbstractContainerMenu {
             Paint paint = this.paintPalette.getPaint(rawColor);
             if (paint == null) {
                 Recordable.LOGGER.warn("Tried to change level for unknown paint: " + rawColor);
-            } else if (!this.paintPalette.tryReceiveCanvasLevelChange(paint, amount, this.playerInventory)) {
+            } else if (!this.paintPalette.tryReceiveCanvasLevelChange(paint, amount)) {
                 Recordable.LOGGER.warn("Tried to change level out of bounds. level: " + paint.getLevel() + ", change: " + amount);
             }
         }
@@ -210,8 +211,8 @@ public class LabelerMenu extends AbstractContainerMenu {
     @Override
     public void removed(Player player) {
         super.removed(player);
+        boolean changed = this.paintPalette.onMenuExit();
         this.clearContainer(player, this.container);
-        boolean changed = this.paintPalette.onMenuExit(player.getInventory());
         if (changed) {
             // update and broadcast color levels
             MenuUtil.updateBlockEntity(this.labelerBlockEntity);

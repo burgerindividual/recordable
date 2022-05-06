@@ -171,3 +171,4 @@ TODO: save given paint items, then give those back?
 have undo and erase return an itemstack so we can add to the player (s & c or just s), then we can also call the packet to increase level (maybe just do this in ClientCanvas lol)
 packet gets picked up by server and calls same method client did before the client sent the packet (they both end up running the same method)
 reverse uncommitted changes on exit and clear added item history
+

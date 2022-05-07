@@ -1,7 +1,5 @@
 package com.github.burgerguy.recordable.shared.menu;
 
-import com.github.burgerguy.recordable.shared.util.ColorUtil;
-
 public class Paint {
 
     private final PaintColor color;
@@ -17,6 +15,11 @@ public class Paint {
         this.color = color;
         this.maxCapacity = maxCapacity;
         this.level = initialLevel;
+    }
+
+    public Paint(PaintColor color, int maxCapacity) {
+        this.color = color;
+        this.maxCapacity = maxCapacity;
     }
 
     public PaintColor getColor() {

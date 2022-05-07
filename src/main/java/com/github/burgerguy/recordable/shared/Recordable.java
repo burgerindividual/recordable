@@ -16,19 +16,26 @@ import java.nio.ByteBuffer;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.fabricmc.fabric.api.networking.v1.PacketSender;
+import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.impl.launch.FabricLauncherBase;
 import net.minecraft.core.Registry;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.storage.LevelResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -131,7 +138,7 @@ public class Recordable implements ModInitializer {
 				if (scoreData != null) {
 					newPacketBuffer.writeBytes(scoreData);
 				} else {
-					LOGGER.info("Player " + player + " requested invalid score id " + scoreId);
+					LOGGER.warn("Player " + player + " requested invalid score id " + scoreId);
 				}
 
 				responseSender.sendPacket(Recordable.SEND_SCORE_ID, newPacketBuffer);
@@ -146,7 +153,27 @@ public class Recordable implements ModInitializer {
 
 		ServerPlayNetworking.registerGlobalReceiver(CANVAS_LEVEL_CHANGE_ID, (server, player, handler, buffer, responseSender) -> {
 			if (player.containerMenu instanceof LabelerMenu labelerMenu) {
-				labelerMenu.handleCanvasLevelChange(buffer);
+				if (buffer.readableBytes() % (Integer.BYTES * 2) != 0) {
+					LOGGER.warn("Player " + player + " requested canvas level change with bad byte multiple: " + buffer.readableBytes());
+				}
+
+				int[] levelChanges = new int[buffer.readableBytes() / Integer.BYTES];
+
+				for (int i = 0; i < levelChanges.length; i++) {
+					levelChanges[i] = buffer.readInt();
+				}
+
+				// update sender's menu server copy
+				labelerMenu.handleCanvasLevelChange(levelChanges);
+
+				// update other users who have a menu associated with the same labeler
+				LabelerBlockEntity labelerBlockEntity = labelerMenu.getLabelerBlockEntity();
+				List<ServerPlayer> trackingPlayers = ((ServerLevel) labelerBlockEntity.getLevel()).getChunkSource().chunkMap.getPlayers(new ChunkPos(labelerBlockEntity.getBlockPos()), false);
+				for (ServerPlayer trackingPlayer : trackingPlayers) {
+					if (!trackingPlayer.equals(player) && trackingPlayer.containerMenu instanceof LabelerMenu trackingLabelerMenu) {
+						trackingLabelerMenu.handleSnapshotLevelChange(levelChanges);
+					}
+				}
 			}
 		});
 	}

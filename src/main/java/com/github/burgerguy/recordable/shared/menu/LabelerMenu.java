@@ -4,9 +4,10 @@ import com.github.burgerguy.recordable.shared.Recordable;
 import com.github.burgerguy.recordable.shared.block.LabelerBlockEntity;
 import com.github.burgerguy.recordable.shared.item.CopperRecordItem;
 import com.github.burgerguy.recordable.shared.util.MenuUtil;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import java.util.Objects;
 import java.util.Set;
-import net.fabricmc.fabric.impl.screenhandler.ExtendedScreenHandlerType;
+import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -46,8 +47,8 @@ public class LabelerMenu extends AbstractContainerMenu {
     private final Slot recordSlot;
     private final Slot paperSlot;
 
-    // FIXME: this strategy does not work if another user edits at the same time
-//    private Int2IntOpenHashMap levelsSnapshot;
+    // server only
+    private Int2IntOpenHashMap levelsSnapshot;
 
     public LabelerMenu(int containerId, Inventory playerInventory, FriendlyByteBuf buffer) {
         this(
@@ -62,10 +63,6 @@ public class LabelerMenu extends AbstractContainerMenu {
         this.playerInventory = playerInventory;
         this.labelerBlockEntity = labelerBlockEntity;
         this.allowedDyeItems = Recordable.getColorPalette().getAllAcceptedItems();
-//        if (!playerInventory.player.getLevel().isClientSide) {
-//            // server side only
-//            this.levelsSnapshot = this.paintPalette.createLevelsSnapshot();
-//        }
         this.container = new SimpleContainer(3) {
             @Override
             public void setChanged() {
@@ -109,6 +106,10 @@ public class LabelerMenu extends AbstractContainerMenu {
 
         this.paintPalette = labelerBlockEntity.createPaintPalette(playerInventory, this.dyeSlot);
 
+        if (!playerInventory.player.getLevel().isClientSide) {
+            this.levelsSnapshot = this.paintPalette.createLevelsSnapshot();
+        }
+
         int i;
         // add player inventory
         for (i = 0; i < 3; ++i) {
@@ -122,7 +123,7 @@ public class LabelerMenu extends AbstractContainerMenu {
         }
     }
 
-    // client -> server
+    // c -> (s)
     public void handleFinish(FriendlyByteBuf buffer) {
         LabelerBlockEntity labeler = this.labelerBlockEntity;
 
@@ -136,21 +137,15 @@ public class LabelerMenu extends AbstractContainerMenu {
         String author = buffer.readUtf();
         String title = buffer.readUtf();
         // this will modify the colors of the labeler BE, so we need to sync with the clients
-//        Canvas recreatedCanvas = Canvas.fromBufferVerified(
-//                labeler.getPixelIndexModel(),
-//                labeler.getPixelModelWidth(),
-//                buffer,
-//                this.levelsSnapshot,
-//                this.paintPalette
-//        );
-//
-//        this.levelsSnapshot = this.paintPalette.createLevelsSnapshot();
-
-        Canvas recreatedCanvas = Canvas.fromBuffer(
+        Canvas recreatedCanvas = Canvas.fromBufferVerified(
                 labeler.getPixelIndexModel(),
                 labeler.getPixelModelWidth(),
-                buffer
+                buffer,
+                this.levelsSnapshot,
+                this.paintPalette
         );
+
+        this.levelsSnapshot = this.paintPalette.createLevelsSnapshot();
 
         CompoundTag itemTag = record.getOrCreateTag();
         recreatedCanvas.applyToTagNoAlpha(itemTag);
@@ -164,10 +159,10 @@ public class LabelerMenu extends AbstractContainerMenu {
     }
 
     // c -> (s)
-    public void handleCanvasLevelChange(FriendlyByteBuf buffer) {
-        while (buffer.readableBytes() >= (Integer.BYTES * 2)) {
-            int rawColor = buffer.readInt();
-            int amount = buffer.readInt();
+    public void handleCanvasLevelChange(int[] levelChanges) {
+        for (int i = 0; i < levelChanges.length; i += 2) {
+            int rawColor = levelChanges[i];
+            int amount = levelChanges[i + 1];
             Paint paint = this.paintPalette.getPaint(rawColor);
             if (paint == null) {
                 Recordable.LOGGER.warn("Tried to change level for unknown paint: " + rawColor);
@@ -177,6 +172,15 @@ public class LabelerMenu extends AbstractContainerMenu {
         }
         // update and broadcast color levels
         MenuUtil.updateBlockEntity(this.labelerBlockEntity);
+    }
+
+    // c -> (s)
+    public void handleSnapshotLevelChange(int[] levelChanges) {
+        for (int i = 0; i < levelChanges.length; i += 2) {
+            int rawColor = levelChanges[i];
+            int amount = levelChanges[i + 1];
+            this.levelsSnapshot.computeIfPresent(rawColor, (rc, lvl) -> lvl -= amount);
+        }
     }
 
     public LabelerBlockEntity getLabelerBlockEntity() {

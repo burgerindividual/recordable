@@ -35,7 +35,7 @@ public class LabelerBlockEntity extends BlockEntity implements ExtendedScreenHan
 
     public LabelerBlockEntity(BlockPos blockPos, BlockState blockState) {
         super(INSTANCE, blockPos, blockState);
-        this.rawColorToPaintMap = new Int2ObjectLinkedOpenHashMap<>(Recordable.getColorPalette().getColorCount());
+        this.rawColorToPaintMap = Recordable.getColorPalette().createPaintMap(LabelerConstants.PAINT_MAX_CAPACITY);
     }
 
     @Nullable
@@ -75,13 +75,15 @@ public class LabelerBlockEntity extends BlockEntity implements ExtendedScreenHan
     @Override
     public void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        int[] colorLevels = new int[this.rawColorToPaintMap.size() * 2];
-        int idx = 0;
-        for (Int2ObjectMap.Entry<Paint> entry : this.rawColorToPaintMap.int2ObjectEntrySet()) {
-            colorLevels[idx++] = entry.getIntKey();
-            colorLevels[idx++] = entry.getValue().getLevel();
+        if (this.rawColorToPaintMap.size() > 0) {
+            int[] colorLevels = new int[this.rawColorToPaintMap.size() * 2];
+            int idx = 0;
+            for (Int2ObjectMap.Entry<Paint> entry : this.rawColorToPaintMap.int2ObjectEntrySet()) {
+                colorLevels[idx++] = entry.getIntKey();
+                colorLevels[idx++] = entry.getValue().getLevel();
+            }
+            tag.putIntArray("ColorLevels", colorLevels);
         }
-        tag.putIntArray("ColorLevels", colorLevels);
     }
 
     @Nullable

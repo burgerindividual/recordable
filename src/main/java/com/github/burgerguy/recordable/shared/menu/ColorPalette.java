@@ -1,5 +1,6 @@
 package com.github.burgerguy.recordable.shared.menu;
 
+import com.github.burgerguy.recordable.shared.Recordable;
 import it.unimi.dsi.fastutil.ints.*;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import java.util.Set;
@@ -84,6 +85,15 @@ public class ColorPalette {
                 rawColorToPaintMap.put(rawColor, new Paint(paintColor, newLevel, maxPaintCapacity));
             }
         }
+    }
+
+    public Int2ObjectSortedMap<Paint> createPaintMap(int maxPaintCapacity) {
+        Int2ObjectSortedMap<Paint> rawColorToPaintMap = new Int2ObjectLinkedOpenHashMap<>(this.getColorCount());
+        for (PaintColor paintColor : this.rawColorToPaintColorMap.values()) {
+            int rawColor = paintColor.getRawColor();
+            rawColorToPaintMap.put(rawColor, new Paint(paintColor, maxPaintCapacity));
+        }
+        return rawColorToPaintMap;
     }
 
 }

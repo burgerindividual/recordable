@@ -2,29 +2,31 @@ package com.github.burgerguy.recordable.client.screen;
 
 import com.github.burgerguy.recordable.shared.menu.Canvas;
 import com.github.burgerguy.recordable.shared.menu.Paint;
+import com.github.burgerguy.recordable.shared.menu.PaintPalette;
+import com.github.burgerguy.recordable.shared.util.ColorUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArrays;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
 import net.minecraft.network.FriendlyByteBuf;
 
 public class ClientCanvas extends Canvas {
 
     private final IntList[] pixelPaintStepIdxs;
-    private final Paint[] paints;
+    private final PaintPalette paintPalette;
     private PaintStep[] paintSteps;
 
     private int lastPaintStepIdx = EMPTY_INDEX;
     private boolean erasing = false;
     private boolean mixing = false;
 
-    public ClientCanvas(int[] pixelIndexModel, int width, Paint[] paints) {
+    public ClientCanvas(int[] pixelIndexModel, int width, PaintPalette paintPalette) {
         super(pixelIndexModel, width);
-        this.paints = paints;
-        int maximumSteps = Arrays.stream(paints).mapToInt(Paint::getMaxCapacity).sum();
+        this.paintPalette = paintPalette;
         // this isn't the true maximum because dyes can be refilled as you're drawing, but it's a good starting point
+        int maximumSteps = paintPalette.getPaints().stream().mapToInt(Paint::getMaxCapacity).sum();
         this.paintSteps = new PaintStep[maximumSteps];
         this.pixelPaintStepIdxs = new IntList[this.colors.length];
         // 16 seems like a reasonable amount of edits before a resize is needed
@@ -36,42 +38,45 @@ public class ClientCanvas extends Canvas {
             this.erase(pixelIdx);
             return false;
         } else {
-            return this.paint(pixelIdx, this.mixing);
+            return this.paint(pixelIdx);
         }
     }
 
     /**
      * Returns true if any paint color runs out.
      */
-    public boolean paint(int pixelIdx, boolean mix) {
-        List<PixelPaintEvent> events = new ObjectArrayList<>();
+    public boolean paint(int pixelIdx) {
         boolean anyPaintEmpty = false;
+        boolean mix = this.mixing;
         int oldColor = this.getColor(pixelIdx);
-        int currentColor = oldColor;
 
-        for (int colorIdx = 0; colorIdx < this.paints.length; colorIdx++) {
-            Paint paints = this.paints[colorIdx];
-            int newColor = paints.applyColor(mix, currentColor);
-            if (currentColor != newColor) {
-                currentColor = newColor;
-                events.add(new PixelPaintEvent(colorIdx, mix));
-                // the input mix variable should only apply to the first applied color, after it should always be true
-                mix = true;
+        Collection<Paint> paints = this.paintPalette.getPaints();
+        int[] rawColors = new int[paints.size()];
+        int nextColorIdx = 0;
+        for (Paint paint : paints) {
+            if (paint.canApply()) {
+                rawColors[nextColorIdx] = paint.getColor().getRawColor();
+                nextColorIdx++;
             }
         }
 
-        if (oldColor != currentColor) {
-            this.setColor(pixelIdx, currentColor);
+        if (nextColorIdx == 0) return false;
+        rawColors = IntArrays.trim(rawColors, nextColorIdx);
+        int blendedColor = ColorUtil.blendColorsDirect(rawColors);
+        int newColor = mix ? ColorUtil.blendColorsDirect(oldColor, blendedColor) : blendedColor;
+
+        if (oldColor != newColor) {
+            this.setColor(pixelIdx, newColor);
             // actually decrement applied colors now
-            for (PixelPaintEvent event : events) {
-                Paint paints = this.paints[event.colorIndex];
-                paints.decrementLevel();
-                anyPaintEmpty |= paints.isEmpty();
+            for (int rawColor : rawColors) {
+                Paint paint = this.paintPalette.getPaint(rawColor);
+                this.paintPalette.sendCanvasLevelChange(paint, -1);
+                anyPaintEmpty |= paint.isEmpty();
             }
 
             this.ensureStepsCapacity();
             int newStepIdx = ++this.lastPaintStepIdx;
-            this.paintSteps[newStepIdx] = new PaintStep(oldColor, pixelIdx, events);
+            this.paintSteps[newStepIdx] = new PaintStep(oldColor, pixelIdx, rawColors, mix);
             IntList stepIndices = this.pixelPaintStepIdxs[pixelIdx];
             stepIndices.add(newStepIdx);
         }
@@ -84,9 +89,9 @@ public class ClientCanvas extends Canvas {
         for (int stepIdx : stepIndices) {
             PaintStep paintStep = this.paintSteps[stepIdx];
             this.paintSteps[stepIdx] = null;
-            for (PixelPaintEvent event : paintStep.events) {
-                Paint paint = this.paints[event.colorIndex];
-                if (!paint.isFull()) paint.incrementLevel();
+            for (int rawColor : paintStep.rawColors) {
+                Paint paint = this.paintPalette.getPaint(rawColor);
+                this.paintPalette.sendCanvasLevelChange(paint, 1);
             }
         }
         this.updateLastIdx();
@@ -104,7 +109,10 @@ public class ClientCanvas extends Canvas {
         stepIndices.removeInt(stepIndices.size() - 1);
         // actually set back variables for user
         this.setColor(lastStep.pixelIndex, lastStep.previousColorState);
-        for (PixelPaintEvent event : lastStep.events) this.paints[event.colorIndex].incrementLevel();
+        for (int rawColor : lastStep.rawColors) {
+            Paint paint = this.paintPalette.getPaint(rawColor);
+            this.paintPalette.sendCanvasLevelChange(paint, 1);
+        }
     }
 
     public boolean canUndo() {
@@ -184,15 +192,17 @@ public class ClientCanvas extends Canvas {
     public void writeToPacket(FriendlyByteBuf buffer) {
         for (PaintStep step : this.paintSteps) {
             if (step != null) {
-                for (PixelPaintEvent event : step.events) {
-                    buffer.writeInt(event.colorIndex);
-                    buffer.writeInt(step.pixelIndex);
-                    buffer.writeBoolean(event.isMixed);
+                buffer.writeInt(step.pixelIndex);
+                buffer.writeBoolean(step.isMixed);
+
+                int[] rawColors = step.rawColors;
+                buffer.writeInt(rawColors.length);
+                for (int color : rawColors) {
+                    buffer.writeInt(color);
                 }
             }
         }
     }
 
-    private record PixelPaintEvent(int colorIndex, boolean isMixed) {}
-    private record PaintStep(int previousColorState, int pixelIndex, List<PixelPaintEvent> events) {}
+    private record PaintStep(int previousColorState, int pixelIndex, int[] rawColors, boolean isMixed) {}
 }

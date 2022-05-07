@@ -18,9 +18,9 @@ public class PaintWidget extends Button {
     private boolean forceInactive;
 
     public PaintWidget(int x, int y, int width, int height, Paint paint) {
-        super(x, y, width, height, paint.getColor().name(), PaintWidget::onPressedAction);
+        super(x, y, width, height, paint.getColor().getName(), PaintWidget::onPressedAction);
         this.paint = paint;
-        this.rawColor = paint.getColor().rawColor();
+        this.rawColor = paint.getColor().getRawColor();
         this.rawColorGrad = new Color(this.rawColor).darker().getRGB();
     }
 

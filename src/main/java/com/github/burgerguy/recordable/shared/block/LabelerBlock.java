@@ -54,31 +54,4 @@ public class LabelerBlock extends BaseEntityBlock {
         return InteractionResult.SUCCESS;
     }
 
-
-    @SuppressWarnings("deprecation")
-    @Override
-    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
-        if (!state.is(newState.getBlock())) {
-            BlockEntity blockEntity = level.getBlockEntity(pos);
-            if (blockEntity instanceof Container) {
-                Containers.dropContents(level, pos, (Container)blockEntity);
-                level.updateNeighbourForOutputSignal(pos, this);
-            }
-
-            super.onRemove(state, level, pos, newState, isMoving);
-        }
-    }
-
-    @SuppressWarnings("deprecation")
-    @Override
-    public boolean hasAnalogOutputSignal(BlockState state) {
-        return true;
-    }
-
-    @SuppressWarnings("deprecation")
-    @Override
-    public int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos) {
-        return AbstractContainerMenu.getRedstoneSignalFromBlockEntity(level.getBlockEntity(pos));
-    }
-
 }

@@ -1,22 +1,25 @@
 package com.github.burgerguy.recordable.shared.menu;
 
-import com.github.burgerguy.recordable.shared.util.ColorUtil;
-import net.minecraft.world.item.ItemStack;
-
 public class Paint {
 
     private final PaintColor color;
-    private final int maxCapacity;
-    private final int levelPerItem;
-
+    private int maxCapacity;
     private int level;
+    /**
+     * The net change in level caused by canvas edits since the menu was opened, or since the last finalize.
+     */
+    private int canvasLevelChange;
     private boolean canApply;
 
-    public Paint(PaintColor color, int initialLevel, int maxCapacity, int levelPerItem) {
+    public Paint(PaintColor color, int initialLevel, int maxCapacity) {
         this.color = color;
         this.maxCapacity = maxCapacity;
-        this.levelPerItem = levelPerItem;
         this.level = initialLevel;
+    }
+
+    public Paint(PaintColor color, int maxCapacity) {
+        this.color = color;
+        this.maxCapacity = maxCapacity;
     }
 
     public PaintColor getColor() {
@@ -35,49 +38,73 @@ public class Paint {
         this.canApply = canApply;
     }
 
-    public int applyColor(boolean mix, int otherColor) {
-        if (this.canApply) {
-            if (mix) {
-                return ColorUtil.mixColors(this.color.rawColor(), otherColor);
-            } else {
-                return this.color.rawColor();
-            }
-        }
-        return otherColor;
+    public boolean canApply() {
+        return this.canApply;
     }
 
     /**
-     * This accepts whatever is in the dye slot to check if it should add to this, and if so, adds to this and removes
-     * part of the dye.
-     * @return if the itemStack was altered
+     * @return false if the level change would cause an overflow or underflow
      */
-    public boolean addLevelFromItem(ItemStack itemStack) {
-        if (itemStack.is(this.color.dyeItem())) {
-            // integer division truncates, which is what we want
-            int consumed = Math.min((this.maxCapacity - this.level) / this.levelPerItem, itemStack.getCount());
-            itemStack.shrink(consumed);
-            this.level += (consumed * this.levelPerItem);
+    public boolean tryChangeLevel(int amount) {
+        int newLevel = this.level + amount;
+
+        if (newLevel > this.maxCapacity || newLevel < 0) {
+            return false;
+        } else {
+            this.level = newLevel;
             return true;
         }
-        return false;
     }
 
-    public void decrementLevel() {
-        if (this.isEmpty()) throw new IllegalStateException("Tried to decrement level when already empty");
-        this.level--;
+    public void changeLevel(int amount) {
+        if (!this.tryChangeLevel(amount)) {
+            throw new IllegalStateException("Tried to change level out of bounds. level: " + this.level + ", change: " + amount);
+        }
     }
 
-    public void incrementLevel() {
-        if (this.isFull()) throw new IllegalStateException("Tried to decrement level when already empty");
-        this.level++;
+    public boolean tryChangeLevelNoOverflow(int amount) {
+        int newLevel = this.level + amount;
+
+        if (newLevel < 0) {
+            return false;
+        } else {
+            this.level = newLevel;
+            return true;
+        }
+    }
+
+    public void changeLevelNoOverflow(int amount) {
+        if (!this.tryChangeLevelNoOverflow(amount)) {
+            throw new IllegalStateException("Tried to change level out of bounds. level: " + this.level + ", change: " + amount);
+        }
+    }
+
+    /**
+     * @return false if the level change would cause an underflow
+     */
+    public boolean tryChangeLevelCanvas(int amount) {
+        boolean isChangeValid = this.tryChangeLevelNoOverflow(amount);
+
+        if (isChangeValid) {
+            this.canvasLevelChange += amount;
+        }
+
+        return isChangeValid;
+    }
+
+    public void removeCanvasLevelChange() {
+        this.level -= this.canvasLevelChange;
+        this.canvasLevelChange = 0;
     }
 
     public boolean isEmpty() {
         return this.level == 0;
     }
 
-    public boolean isFull() {
-        return this.level == this.maxCapacity;
+    // only use for loading from NBT
+    public void update(int level, int maxCapacity) {
+        this.level = level;
+        this.maxCapacity = maxCapacity;
     }
 
 }

@@ -8,6 +8,7 @@ import com.github.burgerguy.recordable.shared.menu.LabelerMenu;
 import com.github.burgerguy.recordable.shared.menu.Paint;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import java.util.Collection;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.client.Minecraft;
@@ -30,6 +31,7 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
 
     private final ClientCanvas clientCanvas;
 
+    private CanvasWidget canvasWidget;
     private PaintWidget[] paintWidgets;
     private EditBox authorEditBox;
     private EditBox titleEditBox;
@@ -37,13 +39,13 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
     private Button resetButton;
     private Button finishButton;
 
-    public LabelerScreen(LabelerMenu labelerMenu, Inventory inventory, Component component) {
-        super(labelerMenu, inventory, component);
+    public LabelerScreen(LabelerMenu labelerMenu, Inventory playerInventory, Component component) {
+        super(labelerMenu, playerInventory, component);
         LabelerBlockEntity labelerBlockEntity = this.menu.getLabelerBlockEntity();
         this.clientCanvas = new ClientCanvas(
                 labelerBlockEntity.getPixelIndexModel(),
                 labelerBlockEntity.getPixelModelWidth(),
-                labelerMenu.getPaints()
+                labelerMenu.getPaintPalette()
         );
 
         // image height adjustment
@@ -77,23 +79,25 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
             ScreenRenderUtil.startBlits(ScreenRenderUtil.BLIT_BUFFER_1);
         });
 
-        Paint[] paints = this.menu.getPaints();
-        this.paintWidgets = new PaintWidget[paints.length];
-        for (int i = 0; i < paints.length; i++) {
-            int xIdx = i / LabelerConstants.PALETTE_COLUMNS_WRAP;
-            int yIdx = i % LabelerConstants.PALETTE_COLUMNS_WRAP;
+        Collection<Paint> paints = this.menu.getPaintPalette().getPaints();
+        this.paintWidgets = new PaintWidget[paints.size()];
+        int idx = 0;
+        for (Paint paint : paints) {
+            int xIdx = idx / LabelerConstants.PALETTE_COLUMNS_WRAP;
+            int yIdx = idx % LabelerConstants.PALETTE_COLUMNS_WRAP;
             PaintWidget paintWidget = new PaintWidget(
                     this.leftPos + LabelerConstants.PALETTE_X + xIdx * (LabelerConstants.COLOR_WIDTH + LabelerConstants.COLOR_MARGIN_X),
                     this.topPos + LabelerConstants.PALETTE_Y + yIdx * (LabelerConstants.COLOR_HEIGHT + LabelerConstants.COLOR_MARGIN_Y),
                     LabelerConstants.COLOR_WIDTH,
                     LabelerConstants.COLOR_HEIGHT,
-                    this.menu.getPaints()[i]
+                    paint
             );
-            this.paintWidgets[i] = paintWidget;
+            this.paintWidgets[idx] = paintWidget;
             this.addRenderableWidget(paintWidget);
+            idx++;
         }
 
-        this.addRenderableWidget(new CanvasWidget(
+        this.canvasWidget = this.addRenderableWidget(new CanvasWidget(
                 this.leftPos + 76,
                 this.topPos + 29,
                 LabelerConstants.PIXEL_SIZE,
@@ -214,26 +218,40 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
 
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
-        // from ContainerEventHandler
-        boolean superDuperMouseDragged = this.getFocused() != null && this.isDragging() && button == 0 && this.getFocused().mouseDragged(mouseX, mouseY, button, dragX, dragY);
-        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY) || superDuperMouseDragged;
+        // adapted from ContainerEventHandler
+        boolean canvasDragged = this.canvasWidget.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+        // we don't want to run the canvas drag code twice
+        boolean superDuperMouseDragged = this.getFocused() != null &&
+                                 this.getFocused() != this.canvasWidget &&
+                                 this.isDragging() &&
+                                 button == 0 &&
+                                 this.getFocused().mouseDragged(mouseX, mouseY, button, dragX, dragY);
+        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY) || canvasDragged || superDuperMouseDragged;
     }
 
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        // from ContainerEventHandler
+        // adapted from ContainerEventHandler
         this.setDragging(false);
-        boolean superDuperMouseReleased = this.getChildAt(mouseX, mouseY).filter(guiEventListener -> guiEventListener.mouseReleased(mouseX, mouseY, button)).isPresent();
+        this.canvasWidget.onRelease(mouseX, mouseY);
+        // we don't want to re-run the mouse released code, so we take extra precautions when filtering
+        boolean superDuperMouseReleased = this.getChildAt(mouseX, mouseY)
+                                              .filter(guiEventListener -> guiEventListener.equals(this.canvasWidget) ?
+                                                                      this.canvasWidget.isValidClickButton(button) :
+                                                                      guiEventListener.mouseReleased(mouseX, mouseY, button))
+                                              .isPresent();
         return super.mouseReleased(mouseX, mouseY, button) || superDuperMouseReleased;
     }
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+        if (keyCode == GLFW.GLFW_KEY_ESCAPE && this.shouldCloseOnEsc()) {
             this.minecraft.player.closeContainer();
         } else if (this.authorEditBox.keyPressed(keyCode, scanCode, modifiers) || this.authorEditBox.canConsumeInput()) {
             return true;
         } else if (this.titleEditBox.keyPressed(keyCode, scanCode, modifiers) || this.titleEditBox.canConsumeInput()) {
+            return true;
+        } else if (this.canvasWidget.keyPressed(keyCode, scanCode, modifiers)) {
             return true;
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
@@ -288,7 +306,7 @@ public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
         if (parentClicked) {
             GuiEventListener currentFocused = this.getFocused();
             if (lastFocused != null && !lastFocused.equals(currentFocused)) {
-                while (lastFocused.changeFocus(true)) ; // removes focus from the previous element
+                while (lastFocused.changeFocus(true)); // removes focus from the previous element
             }
         }
         return parentClicked;

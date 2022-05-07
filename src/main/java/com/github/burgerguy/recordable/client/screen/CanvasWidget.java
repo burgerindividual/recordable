@@ -2,7 +2,6 @@ package com.github.burgerguy.recordable.client.screen;
 
 import com.github.burgerguy.recordable.client.render.util.ScreenRenderUtil;
 import com.github.burgerguy.recordable.shared.menu.Canvas;
-import com.github.burgerguy.recordable.shared.menu.LabelerConstants;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Matrix4f;
 import net.minecraft.client.Minecraft;
@@ -84,13 +83,20 @@ public class CanvasWidget extends AbstractWidget {
     @Override
     protected boolean clicked(double mouseX, double mouseY) {
         boolean parentClicked = super.clicked(mouseX, mouseY);
-        if (parentClicked) {
-            int x = (int) ((mouseX - this.x) / this.pixelSize);
-            int y = (int) ((mouseY - this.y) / this.pixelSize);
-            int pixelIdx = this.clientCanvas.coordsToIndex(x, y);
-            return pixelIdx != Canvas.EMPTY_INDEX && pixelIdx != Canvas.OUT_OF_BOUNDS_INDEX;
-        }
-        return false;
+        return parentClicked && this.mouseOverValidPixel(mouseX, mouseY);
+    }
+
+    @Override
+    public boolean isMouseOver(double mouseX, double mouseY) {
+        boolean parentMouseOver = super.isMouseOver(mouseX, mouseY);
+        return parentMouseOver && this.mouseOverValidPixel(mouseX, mouseY);
+    }
+
+    private boolean mouseOverValidPixel(double mouseX, double mouseY) {
+        int x = (int) ((mouseX - this.x) / this.pixelSize);
+        int y = (int) ((mouseY - this.y) / this.pixelSize);
+        int pixelIdx = this.clientCanvas.coordsToIndex(x, y);
+        return pixelIdx != Canvas.EMPTY_INDEX && pixelIdx != Canvas.OUT_OF_BOUNDS_INDEX;
     }
 
     @Override
@@ -174,6 +180,12 @@ public class CanvasWidget extends AbstractWidget {
                 }
             }
         }
+    }
+
+    // loosen access
+    @Override
+    public boolean isValidClickButton(int button) {
+        return super.isValidClickButton(button);
     }
 
     @Override

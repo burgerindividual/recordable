@@ -28,9 +28,22 @@ repositories {
 		name = 'GeckoLib'
 		url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
 	}
+//	maven {
+//		name = 'Fabric'
+//		url = 'https://maven.fabricmc.net/'
+//	}
+}
+
+// add a new configuration for a transitive `include`
+configurations {
+	includeTransitive {
+		transitive = true
+	}
 }
 
 dependencies {
+//	runtimeOnly "net.fabricmc:fabric-loom:0.11-SNAPSHOT"
+
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 
@@ -83,18 +96,28 @@ dependencies {
 
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-	// for some reason the native and normal jffi clash, so we have to just use the native for some stupid reason
-	modImplementation ("org.lmdbjava:lmdbjava:0.8.2") {
+	// for some reason the native and main jffi clash, so we have to exclude them.
+	// we also exclude ASM because loader already bundles it.
+	includeTransitive(implementation("org.lmdbjava:lmdbjava:0.8.2")) {
 		exclude group: "com.github.jnr", module: "jffi"
+		exclude group: "org.ow2.asm"
 	}
-	modImplementation "com.github.jnr:jffi:1.3.9"
-	runtimeOnly "com.github.jnr:jffi:1.3.9:native"
-	include "org.lmdbjava:lmdbjava:0.8.2"
+	// this is set to runtimeOnly because it will otherwise conflict with the main module
+	include(runtimeOnly("com.github.jnr:jffi:1.3.9:native"))
+	include(implementation("com.github.jnr:jffi:1.3.9"))
 
 	modImplementation "software.bernie.geckolib:geckolib-fabric-1.18:3.0.36"
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+}
+
+// resolve dependencies and add to `include`
+// original by Hexafice
+afterEvaluate {
+	configurations.getByName("includeTransitive").resolvedConfiguration.resolvedArtifacts.forEach(dep -> {
+		dependencies.add("include", dep.id.componentIdentifier.displayName)
+	})
 }
 
 processResources {

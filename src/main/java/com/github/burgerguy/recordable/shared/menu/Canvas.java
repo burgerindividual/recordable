@@ -2,6 +2,8 @@ package com.github.burgerguy.recordable.shared.menu;
 
 import com.github.burgerguy.recordable.shared.Recordable;
 import com.github.burgerguy.recordable.shared.util.ColorUtil;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import java.util.Arrays;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -12,7 +14,7 @@ public class Canvas {
     public static final int EMPTY_INDEX = -1;
     public static final int OUT_OF_BOUNDS_INDEX = -2;
     public static final int CLEAR_COLOR = 0xFFFFFFFF;
-    protected static final int PER_PAINT_EVENT_BYTES = Integer.BYTES + Integer.BYTES + Byte.BYTES;
+    protected static final int PAINT_STEP_HEADER_BYTES = Integer.BYTES + Integer.BYTES + Byte.BYTES;
 
     private final int width;
     private final int height;
@@ -38,27 +40,66 @@ public class Canvas {
         Arrays.fill(this.colors, CLEAR_COLOR);
     }
 
-    /**
-     * This also reflects the side effects on the color levels from coloring.
-     */
-    public static Canvas fromBuffer(int[] pixelIndexModel, int width, int[] colorLevels, FriendlyByteBuf buffer) {
+    public static Canvas fromBuffer(int[] pixelIndexModel, int width, FriendlyByteBuf buffer) {
         Canvas canvas = new Canvas(pixelIndexModel, width);
-        while (buffer.isReadable() && buffer.readableBytes() >= PER_PAINT_EVENT_BYTES) {
-            int colorIdx = buffer.readInt();
+        while (buffer.isReadable() && buffer.readableBytes() >= PAINT_STEP_HEADER_BYTES) {
             int pixelIdx = buffer.readInt();
             boolean isMixed = buffer.readBoolean();
-            if (0 > colorIdx || colorIdx >= LabelerConstants.COLOR_COUNT) {
-                Recordable.LOGGER.warn("Color index out of bounds: " + colorIdx);
-            } else if (colorLevels[colorIdx] == 0) {
-                Recordable.LOGGER.warn("Tried to use color which is already at 0 level (idx: " + colorIdx + ")");
-            } else if (!canvas.isIndexValid(pixelIdx)) {
+            int rawColorCount = buffer.readInt();
+
+            if (!canvas.isIndexValid(pixelIdx)) {
                 Recordable.LOGGER.warn("Pixel index out of bounds: " + pixelIdx);
-            } else {
-                int resolvedColor = LabelerConstants.DEFINED_COLORS[colorIdx].rawColor();
-                int newColor = isMixed ? ColorUtil.mixColors(canvas.getColor(pixelIdx), resolvedColor) : resolvedColor;
-                canvas.setColor(pixelIdx, newColor);
-                colorLevels[colorIdx] -= 1;
+                break;
+            } else if (buffer.readableBytes() < rawColorCount * Integer.BYTES) {
+                Recordable.LOGGER.warn("Color count too large for buffer: " + rawColorCount);
             }
+
+            int[] rawColors = new int[rawColorCount];
+            for (int i = 0; i < rawColorCount; i++) {
+                rawColors[i] = buffer.readInt();
+            }
+
+            int oldColor = canvas.getColor(pixelIdx);
+            int blendedColor = ColorUtil.blendColorsDirect(rawColors);
+            int newColor = isMixed ? ColorUtil.blendColorsDirect(oldColor, blendedColor) : blendedColor;
+            canvas.setColor(pixelIdx, newColor);
+        }
+        return canvas;
+    }
+
+    public static Canvas fromBufferVerified(int[] pixelIndexModel, int width, FriendlyByteBuf buffer, Int2IntOpenHashMap levelsSnapshot, PaintPalette paintPalette) {
+        Int2IntMap levelsSnapshotCopy = levelsSnapshot.clone();
+        Canvas canvas = new Canvas(pixelIndexModel, width);
+        while (buffer.isReadable() && buffer.readableBytes() >= PAINT_STEP_HEADER_BYTES) {
+            int pixelIdx = buffer.readInt();
+            boolean isMixed = buffer.readBoolean();
+            int rawColorCount = buffer.readInt();
+
+            if (!canvas.isIndexValid(pixelIdx)) {
+                Recordable.LOGGER.warn("Pixel index out of bounds: " + pixelIdx);
+                break;
+            } else if (buffer.readableBytes() < rawColorCount * Integer.BYTES) {
+                Recordable.LOGGER.warn("Color count too large for buffer: " + rawColorCount);
+            }
+
+            int[] rawColors = new int[rawColorCount];
+            for (int i = 0; i < rawColorCount; i++) {
+                rawColors[i] = buffer.readInt();
+            }
+
+            int oldColor = canvas.getColor(pixelIdx);
+            int blendedColor = ColorUtil.blendColorsDirect(rawColors);
+            int newColor = isMixed ? ColorUtil.blendColorsDirect(oldColor, blendedColor) : blendedColor;
+            canvas.setColor(pixelIdx, newColor);
+            // decrement the existing level for each color by one
+            for (int rawColor : rawColors) {
+                levelsSnapshotCopy.computeIfPresent(rawColor, (rc, lvl) -> lvl -= 1);
+            }
+        }
+        if (!paintPalette.compareWithSnapshot(levelsSnapshotCopy)) {
+            // validation failed
+            canvas.clear();
+            Recordable.LOGGER.warn("Canvas validation failed");
         }
         return canvas;
     }

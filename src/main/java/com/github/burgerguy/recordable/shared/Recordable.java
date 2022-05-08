@@ -13,9 +13,7 @@ import com.github.burgerguy.recordable.shared.menu.ColorPalette;
 import com.github.burgerguy.recordable.shared.menu.LabelerMenu;
 import java.net.URI;
 import java.nio.ByteBuffer;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.List;
 import java.util.Map;
 import net.fabricmc.loader.launch.common.FabricLauncherBase;
@@ -61,10 +59,24 @@ public class Recordable implements ModInitializer {
 			// add the entire LMDB code source to the path, so all subsequent classes are loaded by Knot
 			// and all assigned mixins are applied to them
 			URI lmdbJarUri = this.getClass().getClassLoader().getResource("org/lmdbjava").toURI();
-			try (FileSystem fs = FileSystems.newFileSystem(lmdbJarUri, Map.of("create", "true"))) {
-				for (Path jarRootDir : fs.getRootDirectories()) {
-					FabricLauncherBase.getLauncher().addToClassPath(jarRootDir);
+
+			boolean fsNeedsCreation = false;
+			FileSystem fs = null;
+			try {
+				fs = FileSystems.getFileSystem(lmdbJarUri);
+				if (fs == null || !fs.isOpen()) {
+					fsNeedsCreation = true;
 				}
+			} catch (FileSystemNotFoundException e) {
+				fsNeedsCreation = true;
+			}
+			if (fsNeedsCreation) {
+				fs = FileSystems.newFileSystem(lmdbJarUri, Map.of("create", "true"));
+			}
+
+			for (Path jarRootDir : fs.getRootDirectories()) {
+				FabricLauncherBase.getLauncher().addToClassPath(jarRootDir);
+				LOGGER.info("Loaded LMDB dir " + fs + jarRootDir.toAbsolutePath() + " into Knot");
 			}
 		} catch (Throwable t) {
 			LOGGER.error("Unable to force load LMDB into Knot", t);

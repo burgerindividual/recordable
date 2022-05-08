@@ -4,17 +4,17 @@ import com.github.burgerguy.recordable.shared.Recordable;
 import com.github.burgerguy.recordable.shared.block.RecorderBlockEntity;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import software.bernie.geckolib3q.model.AnimatedGeoModel;
+import software.bernie.geckolib3.model.AnimatedGeoModel;
 
 public class RecorderModel extends AnimatedGeoModel<RecorderBlockEntity> {
 
     @Override
-    public ResourceLocation getModelResource(RecorderBlockEntity recorderBlockEntity) {
+    public ResourceLocation getModelLocation(RecorderBlockEntity recorderBlockEntity) {
         return new ResourceLocation(Recordable.MOD_ID, "geo/recorder.geo.json");
     }
 
     @Override
-    public ResourceLocation getTextureResource(RecorderBlockEntity recorderBlockEntity) {
+    public ResourceLocation getTextureLocation(RecorderBlockEntity recorderBlockEntity) {
         ItemStack record = recorderBlockEntity.getRecordItem();
         if (record != null) {
             return new ResourceLocation(Recordable.MOD_ID, "textures/block/recorder_model_written.png");
@@ -24,7 +24,7 @@ public class RecorderModel extends AnimatedGeoModel<RecorderBlockEntity> {
     }
 
     @Override
-    public ResourceLocation getAnimationResource(RecorderBlockEntity recorderBlockEntity) {
+    public ResourceLocation getAnimationFileLocation(RecorderBlockEntity recorderBlockEntity) {
         return new ResourceLocation(Recordable.MOD_ID, "animations/recorder.animation.json");
     }
 }

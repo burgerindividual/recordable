@@ -36,7 +36,7 @@ import org.quiltmc.qsl.networking.api.PacketByteBufs;
 import org.quiltmc.qsl.networking.api.ServerPlayNetworking;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import software.bernie.geckolib3q.GeckoLib;
+import software.bernie.geckolib3.GeckoLib;
 
 public class Recordable implements ModInitializer {
 	public static final String MOD_ID = "recordable";

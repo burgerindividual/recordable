@@ -4,7 +4,7 @@ import com.github.burgerguy.recordable.shared.block.RecorderBlockEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
 import software.bernie.geckolib3.core.processor.IBone;
-import software.bernie.geckolib3q.renderers.geo.GeoBlockRenderer;
+import software.bernie.geckolib3.renderers.geo.GeoBlockRenderer;
 
 public class RecorderBlockRenderer extends GeoBlockRenderer<RecorderBlockEntity> {
 

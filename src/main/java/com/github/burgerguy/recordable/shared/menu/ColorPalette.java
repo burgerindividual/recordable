@@ -1,6 +1,5 @@
 package com.github.burgerguy.recordable.shared.menu;
 
-import com.github.burgerguy.recordable.shared.Recordable;
 import it.unimi.dsi.fastutil.ints.*;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import java.util.Set;

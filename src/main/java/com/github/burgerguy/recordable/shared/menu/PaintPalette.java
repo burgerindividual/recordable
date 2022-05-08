@@ -8,13 +8,13 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import org.quiltmc.qsl.networking.api.PacketByteBufs;
+import org.quiltmc.qsl.networking.api.client.ClientPlayNetworking;
 
 public final class PaintPalette {
     private final Int2ObjectSortedMap<Paint> rawColorToPaintMap;

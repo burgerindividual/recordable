@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "quilt_loader": {
+    "group": "com.github.burgerguy",
+    "id": "recordable",
+    "version": "${version}",
+    "metadata": {
+      "name": "Recordable",
+      "description": "Adds recording and playback of custom records.",
+      "contributors": {
+        "burgerdude": "Owner"
+      },
+      "license": "MIT",
+      "contact": {
+        "homepage": "https://github.com/burgerguy/recordable",
+        "sources": "https://github.com/burgerguy/recordable",
+        "issues": "https://github.com/burgerguy/recordable/issues"
+      },
+      "icon": "assets/recordable/icon.png"
+    },
+    "intermediate_mappings": "net.fabricmc:intermediary",
+    "entrypoints": {
+      "init": "com.github.burgerguy.recordable.shared.Recordable",
+      "client_init": "com.github.burgerguy.recordable.client.RecordableClient"
+    },
+    "depends": [
+      {
+        "id": "quilt_loader",
+        "versions": ">=0.16.0-"
+      },
+      {
+        "id": "quilted_fabric_api",
+        "versions": ">=1.0.0-"
+      },
+      {
+        "id": "minecraft",
+        "versions": ">=1.18.2"
+      },
+      {
+        "id": "geckolib3q",
+        "versions": ">=3.0.1"
+      }
+    ]
+  },
+  "mixin": "recordable.mixins.json"
+}

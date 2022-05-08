@@ -2,16 +2,12 @@ package com.github.burgerguy.recordable.client.score.play;
 
 import com.github.burgerguy.recordable.client.score.FutureScore;
 import com.github.burgerguy.recordable.client.score.PartialSoundInstance;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.resources.sounds.Sound;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.client.sounds.WeighedSoundEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.phys.Vec3;
 
 public class BlockMonoScorePlayer extends ScorePlayer {
 

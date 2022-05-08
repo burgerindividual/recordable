@@ -9,8 +9,8 @@ import com.github.burgerguy.recordable.client.score.play.ScorePlayerRegistryCont
 import com.github.burgerguy.recordable.shared.Recordable;
 import com.github.burgerguy.recordable.shared.score.PlayerConstants;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.fabricmc.fabric.api.networking.v1.PacketSender;
+import org.quiltmc.qsl.networking.api.PacketByteBufs;
+import org.quiltmc.qsl.networking.api.PacketSender;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.core.BlockPos;

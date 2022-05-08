@@ -11,20 +11,21 @@ import com.github.burgerguy.recordable.shared.block.RecorderBlockEntity;
 import com.github.burgerguy.recordable.shared.item.CopperRecordItem;
 import com.github.burgerguy.recordable.shared.menu.LabelerMenu;
 import com.github.burgerguy.recordable.client.screen.LabelerScreen;
-import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.BlockEntityRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
-import net.fabricmc.fabric.api.client.screenhandler.v1.ScreenRegistry;
+import net.minecraft.client.gui.screens.MenuScreens;
+import org.quiltmc.qsl.lifecycle.api.client.event.ClientWorldTickEvents;
+import org.quiltmc.qsl.networking.api.client.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import org.quiltmc.loader.api.ModContainer;
+import org.quiltmc.qsl.base.api.entrypoint.client.ClientModInitializer;
 
 public class RecordableClient implements ClientModInitializer {
 
     @Override
-    public void onInitializeClient() {
+    public void onInitializeClient(ModContainer modContainer) {
         //// networking registry
         ClientPlayNetworking.registerGlobalReceiver(Recordable.PLAY_SCORE_INSTANCE_AT_POS_ID, ClientPacketHandler::receivePlayScoreInstancePosPacket);
         ClientPlayNetworking.registerGlobalReceiver(Recordable.STOP_SCORE_INSTANCE_ID, ClientPacketHandler::receiveStopScoreInstancePacket);
@@ -33,7 +34,7 @@ public class RecordableClient implements ClientModInitializer {
 
         //// event registry
         // TODO: should this be end world tick or end client tick?
-        ClientTickEvents.END_WORLD_TICK.register(cl -> {
+        ClientWorldTickEvents.END.register((client, level) -> {
             // this probably will never be null. in a single player world the connection still exists, but it's just local
             @SuppressWarnings("ConstantConditions")
             ScorePlayerRegistry scorePlayerRegistry = ((ScorePlayerRegistryContainer) Minecraft.getInstance().getConnection()).getScorePlayerRegistry();
@@ -48,6 +49,6 @@ public class RecordableClient implements ClientModInitializer {
         BuiltinItemRendererRegistry.INSTANCE.register(RecorderBlock.ITEM_INSTANCE, new RecorderItemRenderer());
 
         //// screen registry
-        ScreenRegistry.register(LabelerMenu.INSTANCE, LabelerScreen::new);
+        MenuScreens.register(LabelerMenu.INSTANCE, LabelerScreen::new);
     }
 }

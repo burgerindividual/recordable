@@ -2,8 +2,6 @@ package com.github.burgerguy.recordable.shared.block;
 
 import com.github.burgerguy.recordable.server.score.record.BlockEntityScoreRecorder;
 import com.github.burgerguy.recordable.shared.Recordable;
-import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
-import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -28,11 +26,13 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
+import org.quiltmc.qsl.block.extensions.api.QuiltBlockSettings;
+import org.quiltmc.qsl.item.setting.api.QuiltItemSettings;
 
 public class RecorderBlock extends BaseEntityBlock {
     public static final ResourceLocation IDENTIFIER = new ResourceLocation(Recordable.MOD_ID, "recorder");
-    public static final Block INSTANCE = new RecorderBlock(FabricBlockSettings.of(Material.METAL).strength(4.0f));
-    public static final Item ITEM_INSTANCE = new BlockItem(INSTANCE, new FabricItemSettings().group(CreativeModeTab.TAB_MISC));
+    public static final Block INSTANCE = new RecorderBlock(QuiltBlockSettings.of(Material.METAL).strength(4.0f));
+    public static final Item ITEM_INSTANCE = new BlockItem(INSTANCE, new QuiltItemSettings().group(CreativeModeTab.TAB_MISC));
 
     private static final VoxelShape AABB_SOUTH = Shapes.or(
             Shapes.box(0, 0, 0, 1, 0.375, 0.9375),

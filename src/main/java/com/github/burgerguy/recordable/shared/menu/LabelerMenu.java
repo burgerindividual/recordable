@@ -37,7 +37,6 @@ public class LabelerMenu extends AbstractContainerMenu {
     private static final int HOTBAR_X = 8;
     private static final int HOTBAR_Y = 158;
 
-    private final Inventory playerInventory;
     private final LabelerBlockEntity labelerBlockEntity;
     private final PaintPalette paintPalette;
     private final Set<Item> allowedDyeItems;
@@ -60,7 +59,6 @@ public class LabelerMenu extends AbstractContainerMenu {
 
     public LabelerMenu(int containerId, Inventory playerInventory, LabelerBlockEntity labelerBlockEntity) {
         super(INSTANCE, containerId);
-        this.playerInventory = playerInventory;
         this.labelerBlockEntity = labelerBlockEntity;
         this.allowedDyeItems = Recordable.getColorPalette().getAllAcceptedItems();
         this.container = new SimpleContainer(3) {

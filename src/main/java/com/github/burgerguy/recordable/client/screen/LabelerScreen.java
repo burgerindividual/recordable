@@ -9,8 +9,6 @@ import com.github.burgerguy.recordable.shared.menu.Paint;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import java.util.Collection;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.Button;
@@ -25,6 +23,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import org.lwjgl.glfw.GLFW;
+import org.quiltmc.qsl.networking.api.PacketByteBufs;
+import org.quiltmc.qsl.networking.api.client.ClientPlayNetworking;
 
 public class LabelerScreen extends AbstractContainerScreen<LabelerMenu> {
     private static final ResourceLocation BG_LOCATION = new ResourceLocation(Recordable.MOD_ID, "textures/gui/labeler.png");

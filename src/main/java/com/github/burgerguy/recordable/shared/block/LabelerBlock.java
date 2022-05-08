@@ -1,13 +1,12 @@
 package com.github.burgerguy.recordable.shared.block;
 
 import com.github.burgerguy.recordable.shared.Recordable;
-import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
-import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.*;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
@@ -20,11 +19,13 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
+import org.quiltmc.qsl.block.extensions.api.QuiltBlockSettings;
+import org.quiltmc.qsl.item.setting.api.QuiltItemSettings;
 
 public class LabelerBlock extends BaseEntityBlock {
     public static final ResourceLocation IDENTIFIER = new ResourceLocation(Recordable.MOD_ID, "labeler");
-    public static final Block INSTANCE = new LabelerBlock(FabricBlockSettings.of(Material.METAL).strength(4.0f));
-    public static final Item ITEM_INSTANCE = new BlockItem(INSTANCE, new FabricItemSettings().group(CreativeModeTab.TAB_MISC));
+    public static final Block INSTANCE = new LabelerBlock(QuiltBlockSettings.of(Material.METAL).strength(4.0f));
+    public static final Item ITEM_INSTANCE = new BlockItem(INSTANCE, new QuiltItemSettings().group(CreativeModeTab.TAB_MISC));
 
     protected LabelerBlock(Properties properties) {
         super(properties);

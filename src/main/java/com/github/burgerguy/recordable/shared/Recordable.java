@@ -18,28 +18,25 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.fabricmc.fabric.api.networking.v1.PacketSender;
-import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.impl.launch.FabricLauncherBase;
+import net.fabricmc.loader.launch.common.FabricLauncherBase;
 import net.minecraft.core.Registry;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.storage.LevelResource;
+import org.quiltmc.loader.api.ModContainer;
+import org.quiltmc.loader.api.QuiltLoader;
+import org.quiltmc.qsl.base.api.entrypoint.ModInitializer;
+import org.quiltmc.qsl.lifecycle.api.event.ServerLifecycleEvents;
+import org.quiltmc.qsl.lifecycle.api.event.ServerTickEvents;
+import org.quiltmc.qsl.lifecycle.api.event.ServerWorldLoadEvents;
+import org.quiltmc.qsl.networking.api.PacketByteBufs;
+import org.quiltmc.qsl.networking.api.ServerPlayNetworking;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import software.bernie.geckolib3.GeckoLib;
+import software.bernie.geckolib3q.GeckoLib;
 
 public class Recordable implements ModInitializer {
 	public static final String MOD_ID = "recordable";
@@ -59,7 +56,7 @@ public class Recordable implements ModInitializer {
 	public static ColorPalette COLOR_PALETTE;
 
 	@Override
-	public void onInitialize() {
+	public void onInitialize(ModContainer modContainer) {
 		try {
 			// add the entire LMDB code source to the path, so all subsequent classes are loaded by Knot
 			// and all assigned mixins are applied to them
@@ -78,9 +75,7 @@ public class Recordable implements ModInitializer {
 		ColorPalette colorPalette = new ColorPalette();
 		colorPalette.setToDefaults();
 
-		FabricLoader.getInstance().getEntrypointContainers(MOD_ID, RecordableApi.class).forEach(apiImpl -> {
-			apiImpl.getEntrypoint().modifyColorPalette(colorPalette);
-		});
+		QuiltLoader.getEntrypointContainers(MOD_ID, RecordableApi.class).forEach(apiImpl -> apiImpl.getEntrypoint().modifyColorPalette(colorPalette));
 
 		COLOR_PALETTE = colorPalette;
 
@@ -101,22 +96,18 @@ public class Recordable implements ModInitializer {
 		Registry.register(Registry.MENU, LabelerMenu.IDENTIFIER, LabelerMenu.INSTANCE);
 
 		//// event registry
-		ServerLifecycleEvents.SERVER_STARTING.register(server -> {
+		ServerLifecycleEvents.STARTING.register(server -> {
 			// kinda conc, but should be fine for now
 			((ScoreDatabaseContainer) server).setScoreDatabase(new ScoreDatabase(server.getWorldPath(LevelResource.ROOT).resolve(SCORE_DATABASE_FILE_NAME)));
 		});
-		ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
-			((ScoreDatabaseContainer) server).getScoreDatabase().close();
-		});
+		ServerLifecycleEvents.STOPPING.register(server -> ((ScoreDatabaseContainer) server).getScoreDatabase().close());
 
 		// force stop all recorders, fixing block state
-		ServerWorldEvents.UNLOAD.register((server, serverLevel) -> {
-			((ServerScoreRegistriesContainer) serverLevel).getScoreRecorderRegistry().removeAndCloseAll();
-		});
+		ServerWorldLoadEvents.UNLOAD.register((server, serverLevel) -> ((ServerScoreRegistriesContainer) serverLevel).getScoreRecorderRegistry().removeAndCloseAll());
 
 		// these are in the server tick because some packet handling is done outside the world tick
 		// (irr)
-		ServerTickEvents.START_SERVER_TICK.register(server -> {
+		ServerTickEvents.START.register(server -> {
 			for (ServerLevel serverLevel : server.getAllLevels()) {
 				((ServerScoreRegistriesContainer) serverLevel).getScoreRecorderRegistry().tick();
 				((ServerScoreRegistriesContainer) serverLevel).getScoreBroadcasterRegistry().tick(serverLevel);

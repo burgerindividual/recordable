@@ -6,7 +6,6 @@ import com.github.burgerguy.recordable.server.score.record.BlockEntityScoreRecor
 import com.github.burgerguy.recordable.shared.Recordable;
 import com.github.burgerguy.recordable.shared.block.RecorderBlockEntity;
 import java.util.List;
-import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -30,10 +29,11 @@ import net.minecraft.world.level.block.JukeboxBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
+import org.quiltmc.qsl.item.setting.api.QuiltItemSettings;
 
 public class CopperRecordItem extends Item {
     public static final Item INSTANCE = new CopperRecordItem(
-            new FabricItemSettings()
+            new QuiltItemSettings()
                     .group(CreativeModeTab.TAB_MISC)
                     .maxCount(1)
     );

@@ -7,16 +7,12 @@ import net.fabricmc.mappingio.MappingVisitor
 import net.fabricmc.mappingio.tree.MemoryMappingTree
 
 plugins {
-	id 'fabric-loom' version '0.11-SNAPSHOT'
 	id 'maven-publish'
-	id 'io.github.juuxel.loom-quiltflower' version '1.6.0'
+	alias(libs.plugins.quilt.loom)
 }
 
-sourceCompatibility = JavaVersion.VERSION_17
-targetCompatibility = JavaVersion.VERSION_17
-
 archivesBaseName = project.archives_base_name
-version = project.mod_version
+version = project.version
 group = project.maven_group
 
 repositories {
@@ -28,10 +24,6 @@ repositories {
 		name = 'GeckoLib'
 		url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
 	}
-//	maven {
-//		name = 'Fabric'
-//		url = 'https://maven.fabricmc.net/'
-//	}
 }
 
 // add a new configuration for a transitive `include`
@@ -42,15 +34,12 @@ configurations {
 }
 
 dependencies {
-//	runtimeOnly "net.fabricmc:fabric-loom:0.11-SNAPSHOT"
-
-	// To change the versions see the gradle.properties file
-	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	minecraft libs.minecraft
 
 	// auto-generate mappings to stop mojmap conflicts with geckolib
-	mappings loom.layered() {
+	mappings loom.layered {
 		officialMojangMappings()
-		parchment("org.parchmentmc.data:${project.parchment_mappings}@zip")
+		parchment("org.parchmentmc.data:parchment-1.18.2:2022.03.13@zip") // couldn't get this to work with libs.versions.toml :irr:
 		// don't convert this to a dynamic instantiation, otherwise java won't see the overridden hashCode
 		addLayer(new MappingsSpec<MappingLayer>() {
 			final Map<String, String> METHOD_NAME_MAP = Map.of(
@@ -94,7 +83,8 @@ dependencies {
 		})
 	}
 
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	modImplementation libs.quilt.loader
+	modImplementation libs.quilted.fabric.api
 
 	// for some reason the native and main jffi clash, so we have to exclude them.
 	// we also exclude ASM because loader already bundles it.
@@ -106,10 +96,10 @@ dependencies {
 	include(runtimeOnly("com.github.jnr:jffi:1.3.9:native"))
 	include(implementation("com.github.jnr:jffi:1.3.9"))
 
-	modImplementation "software.bernie.geckolib:geckolib-fabric-1.18:3.0.36"
-
-	// Fabric API. This is technically optional, but you probably want it anyway.
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+	modImplementation("software.bernie.geckolib:geckolib-quilt-1.18:3.0.1") {
+		// we already include it ourselves, and we don't want to conflict
+		exclude group: "org.quiltmc.qsl"
+	}
 }
 
 // resolve dependencies and add to `include`
@@ -121,19 +111,24 @@ afterEvaluate {
 }
 
 processResources {
-	inputs.property "version", project.version
+	inputs.property "version", version
 
-	filesMatching("fabric.mod.json") {
-		expand "version": project.version
+	filesMatching('quilt.mod.json') {
+		expand "version": version
 	}
 }
 
 tasks.withType(JavaCompile).configureEach {
+	it.options.encoding = "UTF-8"
 	// Minecraft 1.18 (1.18-pre2) upwards uses Java 17.
 	it.options.release = 17
 }
 
 java {
+	// Still required by IDEs such as Eclipse and Visual Studio Code
+	sourceCompatibility = JavaVersion.VERSION_17
+	targetCompatibility = JavaVersion.VERSION_17
+
 	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
 	// if it is present.
 	// If you remove this line, sources will not be generated.

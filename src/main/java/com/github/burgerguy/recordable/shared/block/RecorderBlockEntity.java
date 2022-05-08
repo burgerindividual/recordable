@@ -8,8 +8,6 @@ import com.mojang.math.Quaternion;
 import com.mojang.math.Vector3f;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -41,7 +39,7 @@ public class RecorderBlockEntity extends BlockEntity implements IAnimatable {
 
     private ItemStack recordItem; // the record has to be blank
 
-    @Environment(EnvType.SERVER)
+    // server side only
     private BlockEntityScoreRecorder scoreRecorder;
 
 //    @Environment(EnvType.CLIENT)

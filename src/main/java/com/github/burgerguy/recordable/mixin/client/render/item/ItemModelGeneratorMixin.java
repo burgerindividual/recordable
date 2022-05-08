@@ -1,6 +1,5 @@
 package com.github.burgerguy.recordable.mixin.client.render.item;
 
-import com.google.common.collect.Lists;
 import java.util.List;
 import net.minecraft.client.renderer.block.model.ItemModelGenerator;
 import org.spongepowered.asm.mixin.Final;

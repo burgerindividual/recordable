@@ -2,14 +2,8 @@ package com.github.burgerguy.recordable.server.score.record;
 
 import com.github.burgerguy.recordable.server.database.ScoreDatabase;
 import com.mojang.math.Quaternion;
-import com.mojang.math.Vector3f;
 import java.util.function.Supplier;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
 public class BlockEntityScoreRecorder extends ScoreRecorder {
     private final BlockEntity blockEntity;

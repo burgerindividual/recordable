@@ -2,7 +2,7 @@ package com.github.burgerguy.recordable.mixin.client.score.cache;
 
 import com.github.burgerguy.recordable.client.score.FutureScore;
 import com.github.burgerguy.recordable.client.score.cache.ScoreCacheContainer;
-import com.github.burgerguy.recordable.server.score.parse.MidiScoreParser;
+import com.github.burgerguy.recordable.shared.score.parse.MidiScoreParser;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.client.multiplayer.ClientPacketListener;

@@ -9,6 +9,7 @@ import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
@@ -162,6 +163,25 @@ public class CopperRecordItem extends Item {
 
     public static boolean isWritten(ItemStack itemStack) {
         return itemStack.getOrCreateTag().contains("ScoreID", Tag.TAG_LONG);
+    }
+
+    @Override
+    public void fillItemCategory(CreativeModeTab category, NonNullList<ItemStack> items) {
+        if (this.allowdedIn(category)) {
+            items.add(new ItemStack(this));
+            // TODO: make an actual built in record registry, take care of this in external file
+            // also, maybe allow server to supply its own custom records? atleast import midi.
+            // also again, maybe make these tag names into constant fields?
+            ItemStack builtInRecord1 = new ItemStack(this);
+            CompoundTag tag = builtInRecord1.getOrCreateTag();
+            tag.putByteArray("Colors", new byte[] { -102, -64, -51, -102, -64, -51, -102, -64, -51, -52, -33, -26, -1, -1, 127, -1, -1, 127, -52, -33, -26, -102, -64, -51, -102, -64, -51, -102, -64, -51 });
+            CompoundTag songInfoTag = new CompoundTag();
+            songInfoTag.putString("Title", "Block Notes");
+            songInfoTag.putString("Author", "Petra Pantonala");
+            tag.put("SongInfo", songInfoTag);
+            tag.putLong("ScoreID", 43434343L);
+            items.add(builtInRecord1);
+        }
     }
 
 }

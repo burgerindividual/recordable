@@ -1,12 +1,15 @@
 package com.github.burgerguy.recordable.mixin.server.score.database;
 
+import com.github.burgerguy.recordable.shared.util.SCMemUtil;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
-import org.lwjgl.system.MemoryUtil;
+import org.lmdbjava.ByteBufferProxy;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
+
+import static org.lmdbjava.Env.SHOULD_CHECK;
 
 /**
  * Workaround to LMDBJava crash when launching without --add-opens command line argument.
@@ -29,6 +32,10 @@ public class AbstractByteBufferProxyMixin {
      */
     @Overwrite(remap = false)
     protected final long address(final ByteBuffer buffer) {
-        return MemoryUtil.memAddress(buffer);
+        if (SHOULD_CHECK && !buffer.isDirect()) {
+            throw new ByteBufferProxy.BufferMustBeDirectException();
+        }
+
+        return SCMemUtil.address(buffer);
     }
 }

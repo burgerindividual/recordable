@@ -16,6 +16,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.*;
 import java.util.List;
 import java.util.Map;
+import net.fabricmc.fabric.api.tag.convention.v1.ConventionalItemTags;
 import net.fabricmc.loader.launch.common.FabricLauncherBase;
 import net.minecraft.core.Registry;
 import net.minecraft.network.FriendlyByteBuf;
@@ -86,9 +87,7 @@ public class Recordable implements ModInitializer {
 
 		ColorPalette colorPalette = new ColorPalette();
 		colorPalette.setToDefaults();
-
 		QuiltLoader.getEntrypointContainers(MOD_ID, RecordableApi.class).forEach(apiImpl -> apiImpl.getEntrypoint().modifyColorPalette(colorPalette));
-
 		COLOR_PALETTE = colorPalette;
 
 		//// block registry

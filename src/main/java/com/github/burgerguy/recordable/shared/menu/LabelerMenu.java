@@ -3,7 +3,7 @@ package com.github.burgerguy.recordable.shared.menu;
 import com.github.burgerguy.recordable.shared.Recordable;
 import com.github.burgerguy.recordable.shared.block.LabelerBlockEntity;
 import com.github.burgerguy.recordable.shared.item.CopperRecordItem;
-import com.github.burgerguy.recordable.shared.util.MenuUtil;
+import com.github.burgerguy.recordable.shared.util.BlockEntityUtil;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import java.util.Objects;
 import java.util.Set;
@@ -70,7 +70,7 @@ public class LabelerMenu extends AbstractContainerMenu {
                 boolean stackChanged = LabelerMenu.this.paintPalette.acceptItemStack(dyeItem);
                 if (stackChanged) {
                     // update and broadcast changes to clients
-                    MenuUtil.updateBlockEntity(LabelerMenu.this.labelerBlockEntity);
+                    BlockEntityUtil.updateBlockEntity(LabelerMenu.this.labelerBlockEntity);
                     // broadcast changes to client screens
 //                    LabelerMenu.this.slotsChanged(this);
                 }
@@ -169,7 +169,7 @@ public class LabelerMenu extends AbstractContainerMenu {
             }
         }
         // update and broadcast color levels
-        MenuUtil.updateBlockEntity(this.labelerBlockEntity);
+        BlockEntityUtil.updateBlockEntity(this.labelerBlockEntity);
     }
 
     // c -> (s)
@@ -217,7 +217,7 @@ public class LabelerMenu extends AbstractContainerMenu {
         this.clearContainer(player, this.container);
         if (changed) {
             // update and broadcast color levels
-            MenuUtil.updateBlockEntity(this.labelerBlockEntity);
+            BlockEntityUtil.updateBlockEntity(this.labelerBlockEntity);
         }
     }
 

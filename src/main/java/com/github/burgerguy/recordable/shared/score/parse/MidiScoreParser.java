@@ -1,4 +1,4 @@
-package com.github.burgerguy.recordable.server.score.parse;
+package com.github.burgerguy.recordable.shared.score.parse;
 
 import com.github.burgerguy.recordable.client.score.FutureScore;
 import com.github.burgerguy.recordable.client.score.PartialSoundInstance;

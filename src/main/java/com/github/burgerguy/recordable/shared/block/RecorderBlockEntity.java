@@ -4,6 +4,7 @@ import com.github.burgerguy.recordable.server.database.ScoreDatabaseContainer;
 import com.github.burgerguy.recordable.server.score.ServerScoreRegistriesContainer;
 import com.github.burgerguy.recordable.server.score.record.BlockEntityScoreRecorder;
 import com.github.burgerguy.recordable.shared.Recordable;
+import com.github.burgerguy.recordable.shared.util.BlockEntityUtil;
 import com.mojang.math.Quaternion;
 import com.mojang.math.Vector3f;
 import java.util.function.Supplier;
@@ -13,6 +14,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.LongTag;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -81,16 +85,16 @@ public class RecorderBlockEntity extends BlockEntity implements IAnimatable {
         super.saveAdditional(tag);
     }
 
-//    @Nullable
-//    @Override
-//    public Packet<ClientGamePacketListener> getUpdatePacket() {
-//        return ClientboundBlockEntityDataPacket.create(this);
-//    }
-//
-//    @Override
-//    public CompoundTag getUpdateTag() {
-//        return saveWithoutMetadata();
-//    }
+    @Nullable
+    @Override
+    public Packet<ClientGamePacketListener> getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public CompoundTag getUpdateTag() {
+        return this.saveWithoutMetadata();
+    }
 
     public boolean hasRecord() {
         return this.recordItem != null;
@@ -102,7 +106,10 @@ public class RecorderBlockEntity extends BlockEntity implements IAnimatable {
     }
 
     public void setRecordItem(ItemStack recordItem) {
-        this.recordItem = recordItem;
+        if (this.recordItem == null || !this.recordItem.equals(recordItem)) {
+            this.recordItem = recordItem;
+            BlockEntityUtil.updateBlockEntity(this);
+        }
     }
 
     @Override

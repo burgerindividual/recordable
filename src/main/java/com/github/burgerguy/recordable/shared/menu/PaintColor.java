@@ -12,13 +12,13 @@ public final class PaintColor {
 
     private final int rawColor;
     private final Component name;
-    private final Object2IntMap<Item> colorItemsToLevels;
+    private final Object2IntMap<Item> itemsToLevels;
 
     public PaintColor(int rawColor, Component name) {
         this.rawColor = rawColor;
         this.name = name;
-        this.colorItemsToLevels = new Object2IntOpenHashMap<>(4);
-        this.colorItemsToLevels.defaultReturnValue(ITEM_INVALID);
+        this.itemsToLevels = new Object2IntOpenHashMap<>(4);
+        this.itemsToLevels.defaultReturnValue(ITEM_INVALID);
     }
 
     public int getRawColor() {
@@ -34,19 +34,19 @@ public final class PaintColor {
      * @param level The amount of uses the paint should increase by.
      */
     public void addItem(Item item, int level) {
-        if (this.colorItemsToLevels.containsKey(item)) {
+        if (this.itemsToLevels.containsKey(item)) {
             Recordable.LOGGER.info("Level for item " + item.toString() + " overwritten to " + level);
         }
 
-        this.colorItemsToLevels.put(item, level);
+        this.itemsToLevels.put(item, level);
     }
 
     public int getItemLevelOrInvalid(Item item) {
-        return this.colorItemsToLevels.getInt(item);
+        return this.itemsToLevels.getInt(item);
     }
 
     public Collection<Item> getAcceptedItems() {
-        return this.colorItemsToLevels.keySet();
+        return this.itemsToLevels.keySet();
     }
 
 }

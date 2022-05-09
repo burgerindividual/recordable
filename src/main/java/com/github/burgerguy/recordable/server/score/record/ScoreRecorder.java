@@ -2,6 +2,7 @@ package com.github.burgerguy.recordable.server.score.record;
 
 import com.github.burgerguy.recordable.server.database.ScoreDatabase;
 import com.github.burgerguy.recordable.shared.score.ScoreConstants;
+import com.github.burgerguy.recordable.shared.util.SCMemUtil;
 import com.mojang.math.Quaternion;
 import com.mojang.math.Vector3f;
 import java.io.Closeable;
@@ -9,7 +10,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import net.minecraft.core.Registry;
 import net.minecraft.sounds.SoundEvent;
-import org.lwjgl.system.MemoryUtil;
 
 /**
  * byte format:
@@ -80,7 +80,7 @@ public abstract class ScoreRecorder implements Closeable {
 
         // free after storing in DB
         // order is big endian because LMDB likes it
-        this.rawScoreBuffer = MemoryUtil.memAlloc(ScoreConstants.MAX_RECORD_SIZE_BYTES).order(ByteOrder.BIG_ENDIAN);
+        this.rawScoreBuffer = SCMemUtil.malloc(ScoreConstants.MAX_RECORD_SIZE_BYTES).order(ByteOrder.BIG_ENDIAN);
     }
 
     /**
@@ -104,7 +104,7 @@ public abstract class ScoreRecorder implements Closeable {
             this.hasTicked = false;
 
             long id = this.database.storeScore(this.rawScoreBuffer.flip());
-            MemoryUtil.memFree(this.rawScoreBuffer);
+            SCMemUtil.free(this.rawScoreBuffer);
             this.rawScoreBuffer = null;
             this.tickHeaderPointer = null;
 
@@ -126,7 +126,7 @@ public abstract class ScoreRecorder implements Closeable {
         // keep a pointer so we can write to the previous tick
         if (!this.hasTicked || this.currentTickSoundCount > 0) {
             if (this.rawScoreBuffer.remaining() < ScoreConstants.TICK_HEADER_SIZE_BYTES) this.stop();
-            this.tickHeaderPointer = MemoryUtil.memSlice(this.rawScoreBuffer, 0, ScoreConstants.TICK_HEADER_SIZE_BYTES);
+            this.tickHeaderPointer = SCMemUtil.slice(this.rawScoreBuffer, 0, ScoreConstants.TICK_HEADER_SIZE_BYTES);
             this.rawScoreBuffer.position(this.rawScoreBuffer.position() + 3);
             this.hasTicked = true;
         }
@@ -172,7 +172,7 @@ public abstract class ScoreRecorder implements Closeable {
     @Override
     public void close() {
         this.setRecording(false);
-        if (this.rawScoreBuffer != null) MemoryUtil.memFree(this.rawScoreBuffer);
+        if (this.rawScoreBuffer != null) SCMemUtil.free(this.rawScoreBuffer);
         this.rawScoreBuffer = null;
         this.tickHeaderPointer = null;
         this.closed = true;

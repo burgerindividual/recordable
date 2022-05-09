@@ -3,8 +3,12 @@ package com.github.burgerguy.recordable.shared.menu;
 import it.unimi.dsi.fastutil.ints.*;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import java.util.Set;
+import net.fabricmc.fabric.api.tag.convention.v1.ConventionalItemTags;
+import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.Item;
@@ -45,6 +49,23 @@ public class ColorPalette {
         this.addDye(DyeColor.YELLOW);
         this.addDye(DyeColor.BROWN);
         this.addDye(DyeColor.ORANGE);
+        // add all the items under the typical dye tags
+        this.addItemTagToDye(DyeColor.WHITE, ConventionalItemTags.WHITE_DYES);
+        this.addItemTagToDye(DyeColor.LIGHT_GRAY, ConventionalItemTags.LIGHT_GRAY_DYES);
+        this.addItemTagToDye(DyeColor.GRAY, ConventionalItemTags.GRAY_DYES);
+        this.addItemTagToDye(DyeColor.BLACK, ConventionalItemTags.BLACK_DYES);
+        this.addItemTagToDye(DyeColor.RED, ConventionalItemTags.RED_DYES);
+        this.addItemTagToDye(DyeColor.PINK, ConventionalItemTags.PINK_DYES);
+        this.addItemTagToDye(DyeColor.MAGENTA, ConventionalItemTags.MAGENTA_DYES);
+        this.addItemTagToDye(DyeColor.PURPLE, ConventionalItemTags.PURPLE_DYES);
+        this.addItemTagToDye(DyeColor.BLUE, ConventionalItemTags.BLUE_DYES);
+        this.addItemTagToDye(DyeColor.LIGHT_BLUE, ConventionalItemTags.LIGHT_BLUE_DYES);
+        this.addItemTagToDye(DyeColor.CYAN, ConventionalItemTags.CYAN_DYES);
+        this.addItemTagToDye(DyeColor.GREEN, ConventionalItemTags.GREEN_DYES);
+        this.addItemTagToDye(DyeColor.LIME, ConventionalItemTags.LIME_DYES);
+        this.addItemTagToDye(DyeColor.YELLOW, ConventionalItemTags.YELLOW_DYES);
+        this.addItemTagToDye(DyeColor.BROWN, ConventionalItemTags.BROWN_DYES);
+        this.addItemTagToDye(DyeColor.ORANGE, ConventionalItemTags.ORANGE_DYES);
     }
 
     /**
@@ -54,11 +75,39 @@ public class ColorPalette {
         this.rawColorToPaintColorMap.get(rawColor).addItem(dyeItem, level);
     }
 
+    public void addItemToRawColor(int rawColor, Item dyeItem) {
+        this.addItemToRawColor(rawColor, dyeItem, LabelerConstants.PAINT_LEVEL_PER_ITEM);
+    }
+
     /**
      * Helper method for {@link ColorPalette#addItemToRawColor(int, Item, int)}
      */
     public void addItemToDye(DyeColor dyeColor, Item dyeItem, int level) {
         this.addItemToRawColor(dyeColor.getTextColor(), dyeItem, level);
+    }
+
+    public void addItemToDye(DyeColor dyeColor, Item dyeItem) {
+        this.addItemToDye(dyeColor, dyeItem, LabelerConstants.PAINT_LEVEL_PER_ITEM);
+    }
+
+    public void addItemTagToDye(DyeColor dyeColor, TagKey<Item> itemTag, int level) {
+        for(Holder<Item> holder : Registry.ITEM.getTagOrEmpty(itemTag)) {
+            this.addItemToDye(dyeColor, holder.value(), level);
+        }
+    }
+
+    public void addItemTagToDye(DyeColor dyeColor, TagKey<Item> itemTag) {
+        this.addItemTagToDye(dyeColor, itemTag, LabelerConstants.PAINT_LEVEL_PER_ITEM);
+    }
+
+    public void addItemTagToRawColor(int rawColor, TagKey<Item> itemTag, int level) {
+        for(Holder<Item> holder : Registry.ITEM.getTagOrEmpty(itemTag)) {
+            this.addItemToRawColor(rawColor, holder.value(), level);
+        }
+    }
+
+    public void addItemTagToRawColor(int rawColor, TagKey<Item> itemTag) {
+        this.addItemTagToRawColor(rawColor, itemTag, LabelerConstants.PAINT_LEVEL_PER_ITEM);
     }
 
     public int getColorCount() {

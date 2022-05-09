@@ -3,7 +3,7 @@ package com.github.burgerguy.recordable.shared.util;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
-public class MenuUtil {
+public class BlockEntityUtil {
 
     // only called on server
     public static void updateBlockEntity(BlockEntity blockEntity) {

@@ -1,6 +1,6 @@
 # Recordable
 
-A (currently 1.18.x) lightweight quilt mod which adds user-recordable music discs with no external setup or file management.
+An optimized quilt mod for 1.18.x which adds user-recordable music discs with no external setup or file management.
 
 User recordable disks are made out of copper, and are written to directly via a Recorder. A custom Record Player block is used to play them, but support for the original Jukebox may be added at some point.
 

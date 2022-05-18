@@ -18,6 +18,7 @@ public class SCMemUtil {
 
     private static InternalMemoryUtil createInternalInstance() {
         try {
+            // check if MemoryUtil loads correctly
             Class.forName("org.lwjgl.system.MemoryUtil", false, SCMemUtil.class.getClassLoader());
             return new LWJGL();
         } catch (Throwable t) {

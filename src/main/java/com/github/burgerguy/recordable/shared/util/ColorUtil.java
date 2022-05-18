@@ -34,7 +34,7 @@ public class ColorUtil {
 
         return (((int) Math.sqrt(totalRSquared / totalColors) & 0xFF) << 16) |
                (((int) Math.sqrt(totalGSquared / totalColors) & 0xFF) << 8)  |
-               ((int) Math.sqrt(totalBSquared / totalColors) & 0xFF);
+                ((int) Math.sqrt(totalBSquared / totalColors) & 0xFF);
     }
 
     public static int blendColorsDirect(int... colors) {

@@ -14,24 +14,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class ItemModelGeneratorMixin {
     @Shadow
     @Final
-    @Mutable
     public static List<String> LAYERS;
 
     @Inject(method = "<clinit>", at = @At("RETURN"))
     private static void addLayers(CallbackInfo ci) {
-        LAYERS = List.of(
-                "layer0",
-                "layer1",
-                "layer2",
-                "layer3",
-                "layer4",
-                "layer5",
-                "layer6",
-                "layer7",
-                "layer8",
-                "layer9",
-                "layer10",
-                "layer11"
-        );
+        LAYERS.add("layer5");
+        LAYERS.add("layer5");
+        LAYERS.add("layer6");
+        LAYERS.add("layer7");
+        LAYERS.add("layer8");
+        LAYERS.add("layer9");
+        LAYERS.add("layer10");
+        LAYERS.add("layer11");
     }
 }

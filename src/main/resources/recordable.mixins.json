@@ -6,14 +6,15 @@
   "mixins": [
     "server.score.database.AbstractByteBufferProxyMixin",
     "server.score.database.MinecraftServerMixin",
+    "server.score.record.PlaySoundCommandMixin",
     "server.score.record.ServerLevelMixin",
     "shared.jukebox.JukeboxBlockEntityMixin",
     "shared.jukebox.JukeboxBlockMixin"
   ],
   "client": [
+    "client.render.item.ItemModelGeneratorMixin",
     "client.score.cache.ClientPacketListenerMixin",
-    "client.score.play.ClientPacketListenerMixin",
-    "client.render.item.ItemModelGeneratorMixin"
+    "client.score.play.ClientPacketListenerMixin"
   ],
   "injectors": {
     "defaultRequire": 1
